@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{4CA58FDE-E581-4269-82DD-166739E4114B}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SemiPatch</RootNamespace>
+    <AssemblyName>SemiPatch</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="Mono.Cecil">
+      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Mdb">
+      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Mdb.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Pdb">
+      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Pdb.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Rocks">
+      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Rocks.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoMod">
+      <HintPath>..\packages\MonoMod.20.3.5.1\lib\net35\MonoMod.exe</HintPath>
+    </Reference>
+    <Reference Include="MonoMod.Utils">
+      <HintPath>..\packages\MonoMod.Utils.20.4.3.1\lib\net35\MonoMod.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoMod.RuntimeDetour">
+      <HintPath>..\packages\MonoMod.RuntimeDetour.20.4.3.1\lib\net35\MonoMod.RuntimeDetour.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\Program.cs" />
+    <Compile Include="src\Attributes.cs" />
+    <Compile Include="src\SpecialAttributeData.cs" />
+    <Compile Include="src\PatchControl.cs" />
+    <Compile Include="src\SemiPatch.cs" />
+    <Compile Include="src\Analyzer\PatchData.cs" />
+    <Compile Include="src\Analyzer\PatchMethodData.cs" />
+    <Compile Include="src\Analyzer\PatchTypeData.cs" />
+    <Compile Include="src\Analyzer\Analyzer.cs" />
+    <Compile Include="src\Orig\VoidOrig.cs" />
+    <Compile Include="src\Orig\OrigFactory.cs" />
+    <Compile Include="src\Orig\Orig.cs" />
+    <Compile Include="src\RDAR\Support.cs" />
+    <Compile Include="src\Static\MonoModStaticConverter.cs" />
+    <Compile Include="src\Analyzer\PatchFieldData.cs" />
+    <Compile Include="src\Analyzer\PatchPropertyData.cs" />
+    <Compile Include="src\Static\Relinker.cs" />
+    <Compile Include="src\RDAR\RDARAgent.cs" />
+    <Compile Include="src\AsmDiff\AssemblyDiff.cs" />
+    <Compile Include="src\AsmDiff\Difference.cs" />
+    <Compile Include="src\Utils\Extensions.cs" />
+    <Compile Include="src\RDAR\IRDARAgent.cs" />
+    <Compile Include="src\RDAR\RDARStandardAgent.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\" />
+    <Folder Include="src\Analyzer\" />
+    <Folder Include="src\Orig\" />
+    <Folder Include="src\RDAR\" />
+    <Folder Include="src\Static\" />
+    <Folder Include="src\AsmDiff\" />
+    <Folder Include="src\Utils\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\libs\Logger\Logger.csproj">
+      <Project>{1C734127-AC83-4ECB-ABCA-32B98DFE49C7}</Project>
+      <Name>Logger</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+</Project>

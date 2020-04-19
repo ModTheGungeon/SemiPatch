@@ -1,0 +1,3 @@
+[submodule "libs/Logger"]
+	path = libs/Logger
+	url = https://github.com/modthegungeon/Logger
