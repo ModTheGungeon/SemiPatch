@@ -121,5 +121,45 @@ namespace SemiPatch {
 
             return data;
         }
+
+        public override int GetHashCode() {
+            var x = TargetType.BuildPrefixedSignature().GetHashCode();
+            x ^= PatchType.BuildPrefixedSignature().GetHashCode();
+            x ^= PatchModuleName.GetHashCode();
+            x ^= Methods.Count;
+            for (var i = 0; i < Methods.Count; i++) {
+                x ^= Methods[i].GetHashCode();
+            }
+            x ^= Fields.Count;
+            for (var i = 0; i < Fields.Count; i++) {
+                x ^= Fields[i].GetHashCode();
+            }
+            x ^= Properties.Count;
+            for (var i = 0; i < Properties.Count; i++) {
+                x ^= Properties[i].GetHashCode();
+            }
+            return x;
+        }
+
+        public bool Equals(PatchTypeData other) {
+            return GetHashCode() == other.GetHashCode();
+        }
+
+        public override bool Equals(object obj) {
+            if (obj == null || !(obj is PatchTypeData)) return false;
+            return Equals((PatchTypeData)obj);
+        }
+
+        public static bool operator ==(PatchTypeData a, PatchTypeData b) {
+            if (a is null && b is null) return true;
+            if (a is null || b is null) return false;
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(PatchTypeData a, PatchTypeData b) {
+            if (a is null && b is null) return true;
+            if (a is null || b is null) return false;
+            return !a.Equals(b);
+        }
     }
 }

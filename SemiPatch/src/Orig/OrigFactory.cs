@@ -258,7 +258,7 @@ namespace SemiPatch {
         }
 
 
-        public static string BuildMethodSignatureFromOrig(TypeReference orig, string name, Collection<GenericParameter> generic_param_source = null) {
+        public static Signature GetMethodSignatureFromOrig(TypeReference orig, string name, Collection<GenericParameter> generic_param_source = null) {
             if (!orig.IsGenericInstance) throw new ArgumentException("Argument must be an Orig or VoidOrig TypeReference", nameof(orig));
             var inst = (GenericInstanceType)orig;
             var is_void = TypeIsGenericVoidOrig(inst.ElementType);
@@ -328,7 +328,7 @@ namespace SemiPatch {
             //}
 
             s.Append(")");
-            return s.ToString();
+            return new Signature(s.ToString());
         }
     }
 }

@@ -6,13 +6,13 @@ using Mono.Cecil.Cil;
 using static SemiPatch.AssemblyDiff;
 
 namespace SemiPatch.RDAR {
-    public class RDARStandardAgent : IRDARAgent {
+    public class SimpleRDARAgent : IRDARAgent {
         public ModuleDefinition OldModule;
         public ModuleDefinition NewModule;
         public HashSet<string> ExcludedTypeAttributeSignatures;
-        public static Logger Logger = new Logger("RDARStandardAgent");
+        public static Logger Logger = new Logger(nameof(SimpleRDARAgent));
 
-        public RDARStandardAgent(ModuleDefinition old_mod, ModuleDefinition new_mod) {
+        public SimpleRDARAgent(ModuleDefinition old_mod, ModuleDefinition new_mod) {
             OldModule = old_mod;
             NewModule = new_mod;
             ExcludedTypeAttributeSignatures = new HashSet<string>();
@@ -107,12 +107,12 @@ namespace SemiPatch.RDAR {
 
                     if (old_hash != new_hash) {
                         Logger.Debug($"Method changed: {sig} (old hash: {old_hash}, new hash: {new_hash})");
-                        var diff = new MethodChanged(old_method_idx, i, old_method, method);
+                        var diff = new MethodChanged(method, method.ToPath());
                         diffs.Add(diff);
                     }
                 } else {
                     Logger.Debug($"Method added: {sig}");
-                    var diff = new MethodAdded(i, method);
+                    var diff = new MethodAdded(method, method.ToPath());
                     diffs.Add(diff);
                 }
             }
@@ -122,7 +122,7 @@ namespace SemiPatch.RDAR {
                 var sig = method.BuildSignature();
                 if (!new_method_map.ContainsKey(sig)) {
                     Logger.Debug($"Method removed: {sig}");
-                    var diff = new MethodRemoved(i, method);
+                    var diff = new MethodRemoved(method, method.ToPath());
                     diffs.Add(diff);
                 }
             }
@@ -133,37 +133,37 @@ namespace SemiPatch.RDAR {
             var new_field_map = new Dictionary<string, int>();
 
             for (var i = 0; i < old_fields.Count; i++) {
-                var method = old_fields[i];
-                old_field_map[method.BuildSignature()] = i;
+                var field = old_fields[i];
+                old_field_map[field.BuildSignature()] = i;
             }
 
             for (var i = 0; i < new_fields.Count; i++) {
-                var method = new_fields[i];
-                var sig = method.BuildSignature();
+                var field = new_fields[i];
+                var sig = field.BuildSignature();
                 new_field_map[sig] = i;
-                if (old_field_map.TryGetValue(sig, out int old_method_idx)) {
-                    var old_method = old_fields[old_method_idx];
-                    var old_hash = CalculateFieldHashCode(old_method);
-                    var new_hash = CalculateFieldHashCode(method);
+                if (old_field_map.TryGetValue(sig, out int old_field_idx)) {
+                    var old_field = old_fields[old_field_idx];
+                    var old_hash = CalculateFieldHashCode(old_field);
+                    var new_hash = CalculateFieldHashCode(field);
 
                     if (old_hash != new_hash) {
                         Logger.Debug($"Field changed: {sig} (old hash: {old_hash}, new hash: {new_hash})");
-                        var diff = new FieldChanged(old_method_idx, i, old_method, method);
+                        var diff = new FieldChanged(field, field.ToPath());
                         diffs.Add(diff);
                     }
                 } else {
                     Logger.Debug($"Field added: {sig}");
-                    var diff = new FieldAdded(i, method);
+                    var diff = new FieldAdded(field, field.ToPath());
                     diffs.Add(diff);
                 }
             }
 
             for (var i = 0; i < old_fields.Count; i++) {
-                var method = old_fields[i];
-                var sig = method.BuildSignature();
+                var field = old_fields[i];
+                var sig = field.BuildSignature();
                 if (!new_field_map.ContainsKey(sig)) {
                     Logger.Debug($"Field removed: {sig}");
-                    var diff = new FieldRemoved(i, method);
+                    var diff = new FieldRemoved(field, field.ToPath());
                     diffs.Add(diff);
                 }
             }
@@ -174,45 +174,45 @@ namespace SemiPatch.RDAR {
             var new_prop_map = new Dictionary<string, int>();
 
             for (var i = 0; i < old_props.Count; i++) {
-                var method = old_props[i];
-                old_prop_map[method.BuildSignature()] = i;
+                var prop = old_props[i];
+                old_prop_map[prop.BuildSignature()] = i;
             }
 
             for (var i = 0; i < new_props.Count; i++) {
-                var method = new_props[i];
-                var sig = method.BuildSignature();
+                var prop = new_props[i];
+                var sig = prop.BuildSignature();
                 new_prop_map[sig] = i;
-                if (old_prop_map.TryGetValue(sig, out int old_method_idx)) {
-                    var old_method = old_props[old_method_idx];
-                    var old_hash = CalculatePropertyHashCode(old_method);
-                    var new_hash = CalculatePropertyHashCode(method);
+                if (old_prop_map.TryGetValue(sig, out int old_prop_idx)) {
+                    var old_prop = old_props[old_prop_idx];
+                    var old_hash = CalculatePropertyHashCode(old_prop);
+                    var new_hash = CalculatePropertyHashCode(prop);
 
                     if (old_hash != new_hash) {
                         Logger.Debug($"Property changed: {sig} (old hash: {old_hash}, new hash: {new_hash})");
-                        var diff = new PropertyChanged(old_method_idx, i, old_method, method);
+                        var diff = new PropertyChanged(prop, prop.ToPath());
                         diffs.Add(diff);
                     }
                 } else {
                     Logger.Debug($"Property added: {sig}");
-                    var diff = new PropertyAdded(i, method);
+                    var diff = new PropertyAdded(prop, prop.ToPath());
                     diffs.Add(diff);
                 }
             }
 
             for (var i = 0; i < old_props.Count; i++) {
-                var method = old_props[i];
-                var sig = method.BuildSignature();
+                var prop = old_props[i];
+                var sig = prop.BuildSignature();
                 if (!new_prop_map.ContainsKey(sig)) {
                     Logger.Debug($"Property removed: {sig}");
-                    var diff = new PropertyRemoved(i, method);
+                    var diff = new PropertyRemoved(prop, prop.ToPath());
                     diffs.Add(diff);
                 }
             }
         }
 
 
-        public TypeChanged CalculateTypeChange(int old_type_idx, int new_type_idx, TypeDefinition old_type, TypeDefinition new_type) {
-            var change = new TypeChanged(old_type_idx, new_type_idx, old_type, new_type);
+        public TypeChanged CalculateTypeChange(TypeDefinition old_type, TypeDefinition new_type) {
+            var change = new TypeChanged(old_type, new_type);
             DoubleSearchMethods(change.MemberDifferences, old_type.Methods, new_type.Methods);
             DoubleSearchFields(change.MemberDifferences, old_type.Fields, new_type.Fields);
             DoubleSearchProperties(change.MemberDifferences, old_type.Properties, new_type.Properties);
@@ -248,14 +248,14 @@ namespace SemiPatch.RDAR {
                 new_type_map[sig] = i;
                 if (old_type_map.TryGetValue(sig, out int old_type_idx)) {
                     var old_type = old_types[old_type_idx];
-                    var diff = CalculateTypeChange(old_type_idx, i, old_type, type);
+                    var diff = CalculateTypeChange(old_type, type);
                     if (diff != null) {
                         Logger.Debug($"Type changed: {sig} - {diff.MemberDifferences.Count} member diff(s), {diff.NestedTypeDifferences.Count} nested type diff(s)");
                         diffs.Add(diff);
                     }
                 } else {
                     Logger.Debug($"Type added: {sig}");
-                    var diff = new TypeAdded(i, type);
+                    var diff = new TypeAdded(type);
                     diffs.Add(diff);
                 }
             }
@@ -267,7 +267,7 @@ namespace SemiPatch.RDAR {
                 var sig = type.BuildSignature();
                 if (!new_type_map.ContainsKey(sig)) {
                     Logger.Debug($"Type removed: {sig}");
-                    var diff = new TypeRemoved(i, type);
+                    var diff = new TypeRemoved(type);
                     diffs.Add(diff);
                 }
             }

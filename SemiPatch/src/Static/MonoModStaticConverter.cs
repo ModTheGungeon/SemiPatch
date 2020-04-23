@@ -37,7 +37,7 @@ namespace SemiPatch {
         public PatchData PatchData;
         public ModuleDefinition TargetModule;
         public Logger Logger;
-        public IDictionary<string, string> OrigNameMap;
+        public IDictionary<MethodPath, string> OrigNameMap;
         public Relinker Relinker;
 
         public List<KeyValuePair<MethodDefinition, string>> PostRelinkMethodRenames;
@@ -47,18 +47,18 @@ namespace SemiPatch {
             PatchData = data;
             TargetModule = data.TargetModule;
             Logger = new Logger($"MonoModStaticConverter({TargetModule.Name})");
-            OrigNameMap = new Dictionary<string, string>();
+            OrigNameMap = new Dictionary<MethodPath, string>();
             Relinker = new Relinker();
         }
 
         public string MapOrigForMethod(PatchMethodData method) {
-            var sig = method.PatchSignature;
-            if (OrigNameMap.TryGetValue(sig, out string name)) return $"orig_{name}";
+            var path = method.PatchPath;
+            if (OrigNameMap.TryGetValue(path, out string name)) return $"orig_{name}";
 
             var s = new StringBuilder();
             s.Append("$SEMIPATCH$ORIG$$");
             s.Append(method.TargetMethod.Name);
-            var new_name = OrigNameMap[sig] = s.ToString();
+            var new_name = OrigNameMap[path] = s.ToString();
             return $"orig_{new_name}";
         }
 
@@ -80,7 +80,7 @@ namespace SemiPatch {
         }
 
         public void ApplyForMethod(PatchMethodData method, List<PatchMethodData> methods_to_remove) {
-            Logger.Debug($"Applying for patch method: '{method.PatchSignature}' targetting '{method.TargetSignature}'");
+            Logger.Debug($"Applying for patch method: '{method.PatchPath}' targetting '{method.TargetPath}'");
 
             if (method.ExplicitlyIgnored) {
                 AddAttribute(method.PatchMethod.Module, method.PatchMethod, MonoModIgnoreAttributeConstructor);
@@ -92,7 +92,7 @@ namespace SemiPatch {
             }
 
             if (method.AliasedName != null) {
-                Logger.Debug($"Renaming method '{method.PatchSignature}' to {method.AliasedName}");
+                Logger.Debug($"Renaming method '{method.PatchPath}' to {method.AliasedName}");
                 AddAttribute(
                     method.PatchMethod.Module,
                     method.PatchMethod,
@@ -264,10 +264,10 @@ namespace SemiPatch {
         }
 
         public void ApplyForField(PatchFieldData field, IList<PatchFieldData> fields_to_remove) {
-            Logger.Debug($"Applying for patch field: '{field.PatchSignature}' targetting '{field.TargetSignature}'");
+            Logger.Debug($"Applying for patch field: '{field.PatchPath}' targetting '{field.TargetPath}'");
 
             if (field.AliasedName != null) {
-                Logger.Debug($"Renaming field '{field.PatchSignature}' to {field.AliasedName}");
+                Logger.Debug($"Renaming field '{field.PatchPath}' to {field.AliasedName}");
                 AddAttribute(
                     field.PatchField.Module,
                     field.PatchField,
@@ -290,9 +290,9 @@ namespace SemiPatch {
         }
 
         public void ApplyForProperty(PatchPropertyData prop, IList<PatchPropertyData> props_to_remove) {
-            Logger.Debug($"Applying for patch property: '{prop.PatchSignature}' targetting '{prop.TargetSignature}'");
+            Logger.Debug($"Applying for patch property: '{prop.PatchPath}' targetting '{prop.TargetPath}'");
             if (prop.AliasedName != null) {
-                Logger.Debug($"Renaming property '{prop.PatchSignature}' to {prop.AliasedName}");
+                Logger.Debug($"Renaming property '{prop.PatchPath}' to {prop.AliasedName}");
                 prop.PatchProperty.Name = prop.AliasedName;
             }
             if (prop.Proxy) {

@@ -10,9 +10,9 @@ namespace SemiPatch {
 
         public ModuleDefinition TargetModule;
         public IList<ModuleDefinition> PatchModules;
-        public IDictionary<string, MethodDefinition> MethodMap;
-        public IDictionary<string, FieldDefinition> FieldMap;
-        public IDictionary<string, PropertyDefinition> PropertyMap;
+        public IDictionary<MethodPath, MethodDefinition> MethodMap;
+        public IDictionary<FieldPath, FieldDefinition> FieldMap;
+        public IDictionary<PropertyPath, PropertyDefinition> PropertyMap;
 
         public HashSet<MethodDefinition> IgnoredMethods;
         public HashSet<FieldDefinition> IgnoredFields;
@@ -21,9 +21,9 @@ namespace SemiPatch {
 
         public Analyzer(string target_path, IList<string> patch_paths) {
             Logger.Debug($"New Patcher created from {patch_paths.Count} paths");
-            MethodMap = new Dictionary<string, MethodDefinition>();
-            FieldMap = new Dictionary<string, FieldDefinition>();
-            PropertyMap = new Dictionary<string, PropertyDefinition>();
+            MethodMap = new Dictionary<MethodPath, MethodDefinition>();
+            FieldMap = new Dictionary<FieldPath, FieldDefinition>();
+            PropertyMap = new Dictionary<PropertyPath, PropertyDefinition>();
             IgnoredMethods = new HashSet<MethodDefinition>();
             IgnoredFields = new HashSet<FieldDefinition>();
 
@@ -40,38 +40,35 @@ namespace SemiPatch {
             foreach (var type in TargetModule.Types) {
                 Logger.Debug($"Scanning type: {type.FullName}");
                 foreach (var method in type.Methods) {
-                    var sig = method.BuildSignature();
-                    var sig_prefixed = type.PrefixSignature(sig);
-                    Logger.Debug($"Caching method: '{sig_prefixed}'");
-                    MethodMap[sig_prefixed] = method;
+                    var path = method.ToPath();
+                    Logger.Debug($"Caching method: '{path}'");
+                    MethodMap[path] = method;
                 }
                 foreach (var field in type.Fields) {
-                    var sig = field.BuildSignature();
-                    var sig_prefixed = type.PrefixSignature(sig);
-                    Logger.Debug($"Caching field: '{sig_prefixed}'");
-                    FieldMap[sig_prefixed] = field;
+                    var path = field.ToPath();
+                    Logger.Debug($"Caching field: '{path}'");
+                    FieldMap[path] = field;
                 }
                 foreach (var prop in type.Properties) {
-                    var sig = prop.BuildSignature();
-                    var sig_prefixed = type.PrefixSignature(sig);
-                    Logger.Debug($"Caching property: '{sig_prefixed}'");
-                    PropertyMap[sig_prefixed] = prop;
+                    var path = prop.ToPath();
+                    Logger.Debug($"Caching property: '{path}'");
+                    PropertyMap[path] = prop;
                 }
             }
         }
 
-        public MethodDefinition TryGetTargetMethod(string sig) {
-            if (MethodMap.TryGetValue(sig, out MethodDefinition def)) return def;
+        public MethodDefinition TryGetTargetMethod(MethodPath path) {
+            if (MethodMap.TryGetValue(path, out MethodDefinition def)) return def;
             return null;
         }
 
-        public FieldDefinition TryGetTargetField(string sig) {
-            if (FieldMap.TryGetValue(sig, out FieldDefinition def)) return def;
+        public FieldDefinition TryGetTargetField(FieldPath path) {
+            if (FieldMap.TryGetValue(path, out FieldDefinition def)) return def;
             return null;
         }
 
-        public PropertyDefinition TryGetTargetProperty(string sig) {
-            if (PropertyMap.TryGetValue(sig, out PropertyDefinition def)) return def;
+        public PropertyDefinition TryGetTargetProperty(PropertyPath path) {
+            if (PropertyMap.TryGetValue(path, out PropertyDefinition def)) return def;
             return null;
         }
 
@@ -92,10 +89,9 @@ namespace SemiPatch {
                     continue;
                 }
 
-                var patch_sig = method.BuildSignature();
-                var patch_sig_prefixed = method.DeclaringType.PrefixSignature(patch_sig);
-                Logger.Debug($"Signature: '{patch_sig_prefixed}'");
-                var method_data = new PatchMethodData(method, patch_sig, receives_original: method_attrs.ReceiveOriginal);
+                var patch_path = method.ToPath();
+                Logger.Debug($"Path: '{patch_path}'");
+                var method_data = new PatchMethodData(method, patch_path, receives_original: method_attrs.ReceiveOriginal);
                 type_data.Methods.Add(method_data);
 
                 if (method_attrs.AliasedName != null) {
@@ -109,57 +105,56 @@ namespace SemiPatch {
                 }
 
                 if (method_attrs.ReceiveOriginal && method.Parameters.Count == 0) {
-                    throw new Exception($"Method '{patch_sig}' is marked as ReceiveOriginal, but it has no arguments.");
+                    throw new Exception($"Method '{patch_path}' is marked as ReceiveOriginal, but it has no arguments.");
                 }
 
                 var name = method_attrs.AliasedName ?? method.Name;
 
                 if (method_attrs.IsPropertyMethod) {
                     if (method_attrs.PropertyGetter != null && method_attrs.PropertySetter != null) {
-                        throw new Exception($"Method '{patch_sig_prefixed}' may not be marked as both Getter and Setter at the same time.");
+                        throw new Exception($"Method '{patch_path}' may not be marked as both Getter and Setter at the same time.");
                     }
 
-                    string target_prop_sig = null;
+                    PropertyPath target_prop_path = null;
 
                     if (method_attrs.PropertyGetter != null) {
                         name = $"get_{method_attrs.PropertyGetter}";
-                        target_prop_sig = method.BuildPropertySignatureFromGetter(method_attrs.PropertyGetter);
+                        target_prop_path = method.ToPropertyPathFromGetter(method_attrs.PropertyGetter);
                     } else if (method_attrs.PropertySetter != null) {
                         name = $"set_{method_attrs.PropertySetter}";
-                        target_prop_sig = method.BuildPropertySignatureFromSetter(method_attrs.PropertySetter);
+                        target_prop_path = method.ToPropertyPathFromSetter(method_attrs.PropertySetter, skip_first_arg: method_attrs.ReceiveOriginal);
                     }
 
                     method_data.AliasedName = name;
 
-                    var target_prop_sig_prefixed = type_data.TargetType.PrefixSignature(target_prop_sig);
+                    target_prop_path = target_prop_path.WithDeclaringType(type_data.TargetType.Resolve());
 
-                    var target_prop = TryGetTargetProperty(target_prop_sig_prefixed);
+                    var target_prop = TryGetTargetProperty(target_prop_path);
 
                     if (method_attrs.Insert) {
                         if (target_prop != null && ((target_prop.GetMethod != null && method_attrs.PropertyGetter != null) || (target_prop.SetMethod != null && method_attrs.PropertySetter != null))) {
-                            throw new Exception($"Found matching property '{target_prop_sig_prefixed}', but Getter/Setter patch method '{patch_sig_prefixed}' was marked Insert - drop the attribute if you want to modify the getter/setter of this property.");
+                            throw new Exception($"Found matching property '{target_prop_path}', but Getter/Setter patch method '{patch_path}' was marked Insert - drop the attribute if you want to modify the getter/setter of this property.");
                         }
                     } else {
                         if (target_prop == null) {
-                            throw new Exception($"Failed to locate property '{target_prop_sig_prefixed}' patched in Getter/Setter patch method '{patch_sig_prefixed}' - use the Insert attribute on a real property if you want to add one, or change the Getter/Setter attribute argument if you want to use a different attribute.");
+                            throw new Exception($"Failed to locate property '{target_prop_path}' patched in Getter/Setter patch method '{patch_path}' - use the Insert attribute on a real property if you want to add one, or change the Getter/Setter attribute argument if you want to use a different attribute.");
 
                         }
                         if (target_prop != null && ((target_prop.GetMethod == null && method_attrs.PropertyGetter != null) || (target_prop.SetMethod == null && method_attrs.PropertySetter != null))) {
-                            throw new Exception($"Found matching property '{target_prop_sig_prefixed}', but the getter/setter targetted by the patch method '{patch_sig_prefixed}' doesn't exist - use the Insert attribute on the Getter/Setter method to add it.");
+                            throw new Exception($"Found matching property '{target_prop_path}', but the getter/setter targetted by the patch method '{patch_path}' doesn't exist - use the Insert attribute on the Getter/Setter method to add it.");
                         }
                     }
                 }
 
-                var target_sig = method.BuildSignature(method_attrs.ReceiveOriginal, forced_name: name);
-                var target_sig_prefixed = type_data.TargetType.PrefixSignature(target_sig);
-                var target = TryGetTargetMethod(target_sig_prefixed);
+                var target_path = method.ToPath(method_attrs.ReceiveOriginal, forced_name: name).WithDeclaringType(type_data.TargetType.Resolve());
+                var target = TryGetTargetMethod(target_path);
 
                 if (method_attrs.Proxy) {
                     if (method_attrs.ReceiveOriginal) {
-                        throw new Exception($"Proxy method '{patch_sig_prefixed}' may not be marked as ReceiveOriginal");
+                        throw new Exception($"Proxy method '{patch_path}' may not be marked as ReceiveOriginal");
                     }
                     if (target == null) {
-                        throw new Exception($"Failed to locate method '{target_sig_prefixed}' proxied in '{patch_sig_prefixed}' - use the Insert attribute instead of Proxy if it should be added, or the TargetName attribute if you want to use a different name.");
+                        throw new Exception($"Failed to locate method '{target_path}' proxied in '{patch_path}' - use the Insert attribute instead of Proxy if it should be added, or the TargetName attribute if you want to use a different name.");
                     }
                     Logger.Debug($"Ignored (Proxy)!");
                     method_data.Proxy = true;
@@ -167,41 +162,41 @@ namespace SemiPatch {
                 }
 
                 if (method_attrs.ReceiveOriginal) {
-                    if (method.Parameters.Count == 0) throw new Exception($"Method '{patch_sig_prefixed}' is marked as ReceiveOriginal, but it has no arguments");
+                    if (method.Parameters.Count == 0) throw new Exception($"Method '{patch_path}' is marked as ReceiveOriginal, but it has no arguments");
                     var orig_type = method.Parameters[0].ParameterType;
                     if (OrigFactory.TypeIsGenericOrig(orig_type)) {
-                        if (is_void) throw new Exception($"First parameter of method '{patch_sig_prefixed}' (marked ReceiveOriginal) is of type Orig, but the method does not return anything.");
+                        if (is_void) throw new Exception($"First parameter of method '{patch_path}' (marked ReceiveOriginal) is of type Orig, but the method does not return anything.");
                     } else if (OrigFactory.TypeIsGenericVoidOrig(orig_type)) {
-                        if (!is_void) throw new Exception($"First parameter of method '{patch_sig_prefixed}' (marked ReceiveOriginal) is of type VoidOrig, but the method returns a non-void value.");
+                        if (!is_void) throw new Exception($"First parameter of method '{patch_path}' (marked ReceiveOriginal) is of type VoidOrig, but the method returns a non-void value.");
                     } else {
-                        throw new Exception($"First parameter of method '{patch_sig_prefixed}' (tagged with ReceiveOriginal) must be a Orig or VoidOrig delegate.");
+                        throw new Exception($"First parameter of method '{patch_path}' (tagged with ReceiveOriginal) must be a Orig or VoidOrig delegate.");
                     }
 
-                    var orig_sig = OrigFactory.BuildMethodSignatureFromOrig(orig_type, method_attrs.AliasedName ?? method.Name, method.GenericParameters);
-                    var maybe_new_orig_sig = OrigFactory.OrigTypeForMethod(method.Module, method, skip_first_arg: true).BuildSignature();
+                    var orig_sig = OrigFactory.GetMethodSignatureFromOrig(orig_type, method_attrs.AliasedName ?? method.Name, method.GenericParameters);
+                    var maybe_new_orig_sig = new Signature(OrigFactory.OrigTypeForMethod(method.Module, method, skip_first_arg: true));
 
-                    if (target_sig != orig_sig) {
-                        throw new Exception($"Orig mismatch detected in method '{patch_sig_prefixed}'. Method is tagged as ReceiveOriginal and contains an Orig parameter '{orig_type.BuildSignature()}'. The method's signature points to '{target_sig}', but the signature generated from the first argument of the method is '{orig_sig}'. Check if your patch method's signature matches the original method. If it is the Orig/VoidOrig parameter that's wrong, use this signature: '{maybe_new_orig_sig}'.");
+                    if (target_path.Signature != orig_sig) {
+                        throw new Exception($"Orig mismatch detected in method '{patch_path}'. Method is tagged as ReceiveOriginal and contains an Orig parameter '{orig_type.BuildSignature()}'. The method's signature points to '{target_path}', but the signature generated from the first argument of the method is '{orig_sig}'. Check if your patch method's signature matches the original method. If it is the Orig/VoidOrig parameter that's wrong, use this signature: '{maybe_new_orig_sig}'.");
                     }
                 } else {
                     if (method.Parameters.Count > 0 && (OrigFactory.TypeIsGenericOrig(method.Parameters[0].ParameterType) || OrigFactory.TypeIsGenericVoidOrig(method.Parameters[0].ParameterType))) {
-                        throw new Exception($"First parameter of method '{patch_sig_prefixed}' is an Orig or VoidOrig delegate, but the method is not marked with the ReceiveOriginal attribute. Please add the attribute if you wish to call the original method within the patch or get rid of the argument if you don't.");
+                        throw new Exception($"First parameter of method '{patch_path}' is an Orig or VoidOrig delegate, but the method is not marked with the ReceiveOriginal attribute. Please add the attribute if you wish to call the original method within the patch or get rid of the argument if you don't.");
                     }
                 }
 
 
-                method_data.PatchSignature = patch_sig;
+                method_data.PatchPath = patch_path;
                 method_data.ReceivesOriginal = method_attrs.ReceiveOriginal;
 
                 if (method_attrs.Insert) {
                     Logger.Debug($"Method is marked for insertion");
                     if (target != null) {
-                        throw new Exception($"Found matching method '{target_sig_prefixed}', but patch in '{patch_sig_prefixed}' was marked Insert - drop the attribute if you want to modify the method.");
+                        throw new Exception($"Found matching method '{target_path}', but patch in '{patch_path}' was marked Insert - drop the attribute if you want to modify the method.");
                     }
                 } else {
                     Logger.Debug($"Searching in target type");
                     if (target == null) {
-                        throw new Exception($"Failed to locate method '{target_sig_prefixed}' patched in '{patch_sig_prefixed}' - use the Insert attribute if it should be added, or the TargetName attribute if you want to use a different name.");
+                        throw new Exception($"Failed to locate method '{target_path}' patched in '{patch_path}' - use the Insert attribute if it should be added, or the TargetName attribute if you want to use a different name.");
                     }
 
                     var target_attrs = target.Attributes;
@@ -212,10 +207,10 @@ namespace SemiPatch {
                     }
 
                     if (target_attrs != patch_attrs) {
-                        throw new Exception($"Attribute mismatch in patch method '{patch_sig_prefixed}' targetting method '{target_sig_prefixed}' - patch attributes are '{method.Attributes}', but target attributes are '{target.Attributes}'. The mismatch is with the following attribute(s): '{((MethodAttributes)((uint)target_attrs ^ (uint)patch_attrs)).ToString().Replace("ReuseSlot, ", "")}'.");
+                        throw new Exception($"Attribute mismatch in patch method '{patch_path}' targetting method '{target_path}' - patch attributes are '{method.Attributes}', but target attributes are '{target.Attributes}'. The mismatch is with the following attribute(s): '{((MethodAttributes)((uint)target_attrs ^ (uint)patch_attrs)).ToString().Replace("ReuseSlot, ", "")}'.");
                     }
 
-                    method_data.TargetSignature = target_sig;
+                    method_data.TargetPath = target_path;
                     method_data.TargetMethod = target;
                 }
             }
@@ -228,12 +223,11 @@ namespace SemiPatch {
                     continue;
                 }
 
-                var patch_sig = field.BuildSignature();
-                var patch_sig_prefixed = type_data.PatchType.PrefixSignature(patch_sig);
+                var patch_path = field.ToPath();
 
                 Logger.Debug($"Scanning field: {field.FullName}");
                 var field_attrs = new SpecialAttributeData(field.CustomAttributes);
-                var field_data = new PatchFieldData(patch_sig, patch_sig, field);
+                var field_data = new PatchFieldData(patch_path, patch_path, field);
                 type_data.Fields.Add(field_data);
 
                 if (field_attrs.Ignore) {
@@ -246,27 +240,27 @@ namespace SemiPatch {
                     field_data.AliasedName = field_attrs.AliasedName;
                 }
 
-                var target_sig = field_attrs.AliasedName == null ? patch_sig : field.BuildSignature(forced_name: field_attrs.AliasedName);
-                var target_sig_prefixed = type_data.TargetType.PrefixSignature(target_sig);
+                var target_path = field_attrs.AliasedName == null ? patch_path : field.ToPath(forced_name: field_attrs.AliasedName);
+                target_path = target_path.WithDeclaringType(type_data.TargetType.Resolve());
 
-                field_data.TargetSignature = target_sig;
+                field_data.TargetPath = target_path;
 
-                var target_field = TryGetTargetField(target_sig_prefixed);
+                var target_field = TryGetTargetField(target_path);
 
                 if (field_attrs.Proxy) {
                     Logger.Debug($"Field is marked for proxying");
                     if (target_field == null) {
-                        throw new Exception($"Failed to locate field'{target_sig_prefixed}' proxied in patch field '{patch_sig_prefixed}'. Use the Insert attribute if you want to add the field.");
+                        throw new Exception($"Failed to locate field'{target_path}' proxied in patch field '{patch_path}'. Use the Insert attribute if you want to add the field.");
                     }
                     field_data.TargetField = target_field;
                 } else if (field_attrs.Insert) {
                     Logger.Debug($"Field is marked for insertion");
                     if (target_field != null) {
-                        throw new Exception($"Found matching field '{target_sig_prefixed}', but patch field '{patch_sig_prefixed}' was marked Insert - use the Proxy attribute instead if you want to access fields on the class.");
+                        throw new Exception($"Found matching field '{target_path}', but patch field '{patch_path}' was marked Insert - use the Proxy attribute instead if you want to access fields on the class.");
                     }
                     field_data.IsInsert = true;
                 } else {
-                    throw new Exception($"Field '{patch_sig_prefixed}' must be marked as either Ignore, Insert, or Proxy. Fields without attributes are not allowed.");
+                    throw new Exception($"Field '{patch_path}' must be marked as either Ignore, Insert, or Proxy. Fields without attributes are not allowed.");
                 }
             }
         }
@@ -275,17 +269,16 @@ namespace SemiPatch {
             for (var i = 0; i < props.Count; i++) {
                 var prop = props[i];
 
-                var patch_sig = prop.BuildSignature();
-                var patch_sig_prefixed = type_data.PatchType.PrefixSignature(patch_sig);
+                var patch_path = prop.ToPath();
 
                 Logger.Debug($"Scanning property: {prop.FullName}");
                 var prop_attrs = new SpecialAttributeData(prop.CustomAttributes);
 
                 if (!prop_attrs.Insert && !prop_attrs.Proxy && !prop_attrs.Ignore) {
-                    throw new Exception($"Failed patching property '{patch_sig_prefixed}'. Properties may not be used in a patch class unless they are marked with Insert, Proxy or Ignore. For patching properties, use the Getter and Setter attributes.");
+                    throw new Exception($"Failed patching property '{patch_path}'. Properties may not be used in a patch class unless they are marked with Insert, Proxy or Ignore. For patching properties, use the Getter and Setter attributes.");
                 }
 
-                var prop_data = new PatchPropertyData(patch_sig, patch_sig, prop);
+                var prop_data = new PatchPropertyData(patch_path, patch_path, prop);
                 type_data.Properties.Add(prop_data);
 
                 if (prop_attrs.Proxy) {
@@ -297,8 +290,8 @@ namespace SemiPatch {
                 }
 
                 if (prop.GetMethod != null) {
-                    var get_sig = prop.GetMethod.BuildSignature();
-                    var get_data = new PatchMethodData(prop.GetMethod, get_sig, get_sig);
+                    var get_path = prop.GetMethod.ToPath();
+                    var get_data = new PatchMethodData(prop.GetMethod, get_path, get_path);
                     if (prop_attrs.Proxy) get_data.Proxy = true;
                     if (prop_data.AliasedName != null) get_data.AliasedName = $"get_{prop_data.AliasedName}";
                     if (prop_attrs.Ignore) get_data.ExplicitlyIgnored = true;
@@ -307,8 +300,8 @@ namespace SemiPatch {
                 }
 
                 if (prop.SetMethod != null) {
-                    var set_sig = prop.SetMethod.BuildSignature();
-                    var set_data = new PatchMethodData(prop.SetMethod, set_sig, set_sig);
+                    var set_path = prop.SetMethod.ToPath();
+                    var set_data = new PatchMethodData(prop.SetMethod, set_path, set_path);
                     if (prop_attrs.Proxy) set_data.Proxy = true;
                     if (prop_data.AliasedName != null) set_data.AliasedName = $"set_{prop_data.AliasedName}";
                     if (prop_attrs.Ignore) set_data.ExplicitlyIgnored = true;
@@ -327,8 +320,8 @@ namespace SemiPatch {
                 }
 
                 if (backing_field != null) {
-                    var backing_field_sig = backing_field.BuildSignature();
-                    var backing_field_data = new PatchFieldData(backing_field_sig, backing_field_sig, backing_field);
+                    var backing_field_path = backing_field.ToPath();
+                    var backing_field_data = new PatchFieldData(backing_field_path, backing_field_path, backing_field);
                     if (prop_attrs.Proxy) backing_field_data.Proxy = true;
                     if (backing_field_data.AliasedName != null) backing_field_data.AliasedName = $"<{prop_data.AliasedName}>k__BackingField";
                     if (prop_attrs.Ignore) backing_field_data.ExplicitlyIgnored = true;
@@ -342,28 +335,28 @@ namespace SemiPatch {
                     continue;
                 }
 
-                var target_sig = prop_attrs.AliasedName == null ? patch_sig : prop.BuildSignature(forced_name: prop_attrs.AliasedName);
-                var target_sig_prefixed = type_data.TargetType.PrefixSignature(target_sig);
+                var target_path = prop_attrs.AliasedName == null ? patch_path : prop.ToPath(forced_name: prop_attrs.AliasedName);
+                target_path = target_path.WithDeclaringType(type_data.TargetType.Resolve());
 
-                prop_data.TargetSignature = target_sig;
+                prop_data.TargetPath = target_path;
 
-                var target_prop = TryGetTargetProperty(target_sig_prefixed);
+                var target_prop = TryGetTargetProperty(target_path);
 
                 if (prop_attrs.Insert) {
                     if (target_prop != null) {
-                        throw new Exception($"Property '{patch_sig_prefixed}' was marked with Insert, but the target class also contains this property - '{target_sig_prefixed}'. If you want to patch properties, use the Getter and Setter attributes.");
+                        throw new Exception($"Property '{patch_path}' was marked with Insert, but the target class also contains this property - '{target_path}'. If you want to patch properties, use the Getter and Setter attributes.");
                     }
                 } else if (prop_attrs.Proxy) {
                     if (target_prop == null) {
-                        throw new Exception($"Property '{patch_sig_prefixed}' was marked with Proxy, but the target class does not contain the property '{target_sig_prefixed}'. If you want to add properties, use the Insert attribute.");
+                        throw new Exception($"Property '{patch_path}' was marked with Proxy, but the target class does not contain the property '{target_path}'. If you want to add properties, use the Insert attribute.");
                     }
 
                     if (prop.GetMethod != null && target_prop.GetMethod == null) {
-                        throw new Exception($"Property '{patch_sig_prefixed}' was marked with Proxy and the target property '{target_sig_prefixed}' exists, but it does not have a getter. If you want to add the getter, use the Getter and Insert attributes on a method.");
+                        throw new Exception($"Property '{patch_path}' was marked with Proxy and the target property '{target_path}' exists, but it does not have a getter. If you want to add the getter, use the Getter and Insert attributes on a method.");
                     }
 
                     if (prop.SetMethod != null && target_prop.SetMethod == null) {
-                        throw new Exception($"Property '{patch_sig_prefixed}' was marked with Proxy and the target property '{target_sig_prefixed}' exists, but it does not have a setter. If you want to add the setter, use the Setter and Insert attributes on a method.");
+                        throw new Exception($"Property '{patch_path}' was marked with Proxy and the target property '{target_path}' exists, but it does not have a setter. If you want to add the setter, use the Setter and Insert attributes on a method.");
                     }
                 }
             }

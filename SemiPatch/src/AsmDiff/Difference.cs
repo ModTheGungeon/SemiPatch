@@ -11,8 +11,6 @@ namespace SemiPatch {
         }
 
         public class TypeChanged : TypeDifference {
-            public int OldIndex;
-            public int NewIndex;
             public TypeDefinition OldType;
             public TypeDefinition NewType;
             public IList<TypeDifference> NestedTypeDifferences;
@@ -21,9 +19,7 @@ namespace SemiPatch {
             public override bool ExistsInOld => true;
             public override bool ExistsInNew => true;
 
-            internal TypeChanged(int old_idx, int new_idx, TypeDefinition old_type, TypeDefinition new_type) {
-                OldIndex = old_idx;
-                NewIndex = new_idx;
+            internal TypeChanged(TypeDefinition old_type, TypeDefinition new_type) {
                 OldType = old_type;
                 NewType = new_type;
                 MemberDifferences = new List<MemberDifference>();
@@ -32,27 +28,23 @@ namespace SemiPatch {
         }
 
         public class TypeAdded : TypeDifference {
-            public int Index;
             public TypeDefinition Type;
 
             public override bool ExistsInOld => false;
             public override bool ExistsInNew => true;
 
-            internal TypeAdded(int idx, TypeDefinition type) {
-                Index = idx;
+            internal TypeAdded(TypeDefinition type) {
                 Type = type;
             }
         }
 
         public class TypeRemoved : TypeDifference {
-            public int Index;
             public TypeDefinition Type;
 
             public override bool ExistsInOld => true;
             public override bool ExistsInNew => false;
 
-            internal TypeRemoved(int idx, TypeDefinition type) {
-                Index = idx;
+            internal TypeRemoved(TypeDefinition type) {
                 Type = type;
             }
         }
@@ -67,107 +59,98 @@ namespace SemiPatch {
             public abstract bool ExistsInOld { get; }
             public abstract bool ExistsInNew { get; }
             public abstract MemberType MemberType { get; }
-            public string Signature;
+
+            public abstract object MemberObject { get; }
+            public abstract object TargetPathObject { get; }
+
         }
 
-        public abstract class MemberChanged<T> : MemberDifference {
-            public int OldIndex;
-            public int NewIndex;
-            public T OldMember;
-            public T NewMember;
+        public abstract class MemberDifference<T, U> : MemberDifference {
+            public T Member;
+            public U TargetPath;
 
+            public override object MemberObject => Member;
+            public override object TargetPathObject => TargetPath;
+
+            protected MemberDifference(T member, U path) {
+                Member = member;
+                TargetPath = path;
+            }
+        }
+
+        public abstract class MemberChanged<T, U> : MemberDifference<T, U> {
             public override bool ExistsInOld => true;
             public override bool ExistsInNew => true;
 
 
-            internal MemberChanged(int old_idx, int new_idx, T old_member, T new_member, string sig) {
-                OldIndex = old_idx;
-                NewIndex = new_idx;
-                OldMember = old_member;
-                NewMember = new_member;
-                Signature = sig;
-            }
+            internal MemberChanged(T member, U path) : base(member, path) {}
         }
 
-        public abstract class MemberAdded<T> : MemberDifference {
-            public int Index;
-            public T Member;
-
+        public abstract class MemberAdded<T, U> : MemberDifference<T, U> {
             public override bool ExistsInOld => false;
             public override bool ExistsInNew => true;
 
-            internal MemberAdded(int idx, T member, string sig) {
-                Index = idx;
-                Member = member;
-                Signature = sig;
-            }
+            internal MemberAdded(T member, U path) : base(member, path) {}
         }
 
-        public abstract class MemberRemoved<T> : MemberDifference {
-            public int Index;
-            public T Member;
-
+        public abstract class MemberRemoved<T, U> : MemberDifference<T, U> {
             public override bool ExistsInOld => true;
             public override bool ExistsInNew => false;
 
-            internal MemberRemoved(int idx, T member, string sig) {
-                Index = idx;
-                Member = member;
-                Signature = sig;
-            }
+            internal MemberRemoved(T member, U path) : base(member, path) {}
         }
 
-        public class MethodChanged : MemberChanged<MethodDefinition> {
-            public MethodChanged(int old_idx, int new_idx, MethodDefinition old_method, MethodDefinition new_method)
-                : base(old_idx, new_idx, old_method, new_method, old_method.BuildSignature()) { }
+        public class MethodChanged : MemberChanged<MethodDefinition, MethodPath> {
+            public MethodChanged(MethodDefinition method, MethodPath path)
+                : base(method, path) { }
             public override MemberType MemberType => MemberType.Method;
         }
 
-        public class MethodAdded : MemberAdded<MethodDefinition> {
-            public MethodAdded(int idx, MethodDefinition method)
-                : base(idx, method, method.BuildSignature()) { }
+        public class MethodAdded : MemberAdded<MethodDefinition, MethodPath> {
+            public MethodAdded(MethodDefinition method, MethodPath path)
+                : base(method, path) { }
             public override MemberType MemberType => MemberType.Method;
         }
 
-        public class MethodRemoved : MemberRemoved<MethodDefinition> {
-            public MethodRemoved(int idx, MethodDefinition method)
-                : base(idx, method, method.BuildSignature()) { }
+        public class MethodRemoved : MemberRemoved<MethodDefinition, MethodPath> {
+            public MethodRemoved(MethodDefinition method, MethodPath path)
+                : base(method, path) { }
             public override MemberType MemberType => MemberType.Method;
         }
 
-        public class FieldChanged : MemberChanged<FieldDefinition> {
-            public FieldChanged(int old_idx, int new_idx, FieldDefinition old_method, FieldDefinition new_method)
-                : base(old_idx, new_idx, old_method, new_method, old_method.BuildSignature()) { }
+        public class FieldChanged : MemberChanged<FieldDefinition, FieldPath> {
+            public FieldChanged(FieldDefinition method, FieldPath path)
+                : base(method, path) { }
             public override MemberType MemberType => MemberType.Field;
         }
 
-        public class FieldAdded : MemberAdded<FieldDefinition> {
-            public FieldAdded(int idx, FieldDefinition method)
-                : base(idx, method, method.BuildSignature()) { }
+        public class FieldAdded : MemberAdded<FieldDefinition, FieldPath> {
+            public FieldAdded(FieldDefinition method, FieldPath path)
+                : base(method, path) { }
             public override MemberType MemberType => MemberType.Field;
         }
 
-        public class FieldRemoved : MemberRemoved<FieldDefinition> {
-            public FieldRemoved(int idx, FieldDefinition method)
-                : base(idx, method, method.BuildSignature()) { }
+        public class FieldRemoved : MemberRemoved<FieldDefinition, FieldPath> {
+            public FieldRemoved(FieldDefinition method, FieldPath path)
+                : base(method, path) { }
             public override MemberType MemberType => MemberType.Field;
         }
 
-        public class PropertyChanged : MemberChanged<PropertyDefinition> {
-            public PropertyChanged(int old_idx, int new_idx, PropertyDefinition old_method, PropertyDefinition new_method)
-                : base(old_idx, new_idx, old_method, new_method, old_method.BuildSignature()) { }
+        public class PropertyChanged : MemberChanged<PropertyDefinition, PropertyPath> {
+            public PropertyChanged(PropertyDefinition method, PropertyPath path)
+                : base(method, path) { }
             public override MemberType MemberType => MemberType.Property;
         }
 
-        public class PropertyAdded : MemberAdded<PropertyDefinition> {
-            public PropertyAdded(int idx, PropertyDefinition method)
-                : base(idx, method, method.BuildSignature()) { }
+        public class PropertyAdded : MemberAdded<PropertyDefinition, PropertyPath> {
+            public PropertyAdded(PropertyDefinition method, PropertyPath path)
+                : base(method, path) { }
             public override MemberType MemberType => MemberType.Property;
         }
 
-        public class PropertyRemoved : MemberRemoved<PropertyDefinition> {
-            public PropertyRemoved(int idx, PropertyDefinition method)
-                : base(idx, method, method.BuildSignature()) { }
+        public class PropertyRemoved : MemberRemoved<PropertyDefinition, PropertyPath> {
+            public PropertyRemoved(PropertyDefinition method, PropertyPath path)
+                : base(method, path) { }
             public override MemberType MemberType => MemberType.Property;
         }
     }

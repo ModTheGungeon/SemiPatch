@@ -94,9 +94,9 @@ namespace SemiPatch {
             return method.DeclaringType.PrefixSignature(method.BuildSignature(skip_first_arg, forced_name, forced_first_arg));
         }
 
-        public static string BuildPropertySignatureFromSetter(this MethodReference method, string prop_name) {
+        public static string BuildPropertySignatureFromSetter(this MethodReference method, string prop_name, bool skip_first_arg = false) {
             var s = new StringBuilder();
-            s.Append(method.Parameters[0].ParameterType.BuildSignature());
+            s.Append(method.Parameters[skip_first_arg ? 1 : 0].ParameterType.BuildSignature());
             s.Append(" ");
             s.Append(prop_name);
             return s.ToString();
@@ -187,6 +187,10 @@ namespace SemiPatch {
             s.Append(" ");
             s.Append(forced_name ?? field.Name);
             return s.ToString();
+        }
+
+        public static string BuildPrefixedSignature(this FieldReference field) {
+            return field.DeclaringType.PrefixSignature(field.BuildSignature());
         }
 
         public static string PrefixSignature(this TypeReference type, string sig) {
@@ -284,6 +288,30 @@ namespace SemiPatch {
             return reader.ReadString();
         }
 
+        public static void Write(this BinaryWriter writer, MethodPath path) {
+            path.Serialize(writer);
+        }
+
+        public static void Write(this BinaryWriter writer, FieldPath path) {
+            path.Serialize(writer);
+        }
+
+        public static void Write(this BinaryWriter writer, PropertyPath path) {
+            path.Serialize(writer);
+        }
+
+        public static MethodPath ReadMethodPath(this BinaryReader reader) {
+            return MethodPath.Deserialize(reader);
+        }
+
+        public static FieldPath ReadFieldPath(this BinaryReader reader) {
+            return FieldPath.Deserialize(reader);
+        }
+
+        public static PropertyPath ReadPropertyPath(this BinaryReader reader) {
+            return PropertyPath.Deserialize(reader);
+        }
+
         public static MethodReference MakeReference(this MethodDefinition self) {
             var new_inst = new MethodReference(self.Name, self.ReturnType, self.DeclaringType);
             for (var i = 0; i < self.Parameters.Count; i++) {
@@ -303,101 +331,28 @@ namespace SemiPatch {
             return new_inst;
         }
 
-        public static int ScopelessHashCode(this TypeReference self) {
-            var x = 0;
-            x ^= self.FullName.GetHashCode();
-            x ^= self.GenericParameters.Count;
-            for (var i = 0; i < self.GenericParameters.Count; i++) {
-                x ^= self.GenericParameters[i].Name.GetHashCode();
-            }
-
-            if (self is TypeDefinition) {
-                var s = (TypeDefinition)self;
-                x ^= s.Methods.Count;
-                for (var i = 0; i < s.Methods.Count; i++) {
-                    x ^= s.Methods[i].ScopelessHashCode();
-                }
-                x ^= s.Fields.Count;
-                for (var i = 0; i < s.Fields.Count; i++) {
-                    x ^= s.Fields[i].ScopelessHashCode();
-                }
-                x ^= s.Properties.Count;
-                for (var i = 0; i < s.Properties.Count; i++) {
-                    x ^= s.Properties[i].ScopelessHashCode();
-                }
-                x ^= s.Interfaces.Count;
-                for (var i = 0; i < s.Interfaces.Count; i++) {
-                    x ^= s.Interfaces[i].InterfaceType.ScopelessHashCode();
-                }
-            } else if (self is GenericInstanceType) {
-                var s = (GenericInstanceType)self;
-                x ^= s.Resolve().ScopelessHashCode();
-                x ^= s.GenericArguments.Count;
-                for (var i = 0; i < s.GenericArguments.Count; i++) {
-                    var arg = s.GenericArguments[i];
-                    x ^= arg.ScopelessHashCode();
-                }
-            }
-
-            var r = self.Resolve();
-            if (r != null) {
-                x ^= r.ScopelessHashCode();
-            }
-            return x;
+        public static MethodPath ToPath(this MethodReference self, bool skip_first_arg = false, string forced_name = null) {
+            return new MethodPath(self.Resolve(), skip_first_arg: skip_first_arg, forced_name: forced_name);
         }
 
-        public static int ScopelessHashCode(this MethodReference self) {
-            var x = 0;
-
-            x ^= self.FullName.GetHashCode();
-            x ^= self.Parameters.Count;
-            x ^= self.GenericParameters.Count;
-            for (var i = 0; i < self.GenericParameters.Count; i++) {
-                x ^= self.GenericParameters[i].Name.GetHashCode();
-            }
-            x ^= self.Parameters.Count;
-            for (var i = 0; i < self.Parameters.Count; i++) {
-                var param = self.Parameters[i];
-                x ^= param.Name.GetHashCode();
-                x ^= param.ParameterType.GetHashCode();
-            }
-
-            if (self is GenericInstanceMethod) {
-                var s = (GenericInstanceMethod)self;
-                x ^= s.GenericArguments.Count;
-                for (var i = 0; i < s.GenericArguments.Count; i++) {
-                    var arg = s.GenericArguments[i];
-                    x ^= arg.ScopelessHashCode();
-                }
-            }
-
-            return x;
+        public static PropertyPath ToPropertyPathFromGetter(this MethodReference self, string prop_name) {
+            var d = self.Resolve();
+            var sig = d.BuildPropertySignatureFromGetter(prop_name);
+            return new PropertyPath(new Signature(sig), d.DeclaringType);
         }
 
-        public static int ScopelessHashCode(this FieldReference self) {
-            var x = 0;
-
-            x ^= self.FullName.GetHashCode();
-            x ^= self.FieldType.ScopelessHashCode();
-
-            return x;
+        public static PropertyPath ToPropertyPathFromSetter(this MethodReference self, string prop_name, bool skip_first_arg = false) {
+            var d = self.Resolve();
+            var sig = d.BuildPropertySignatureFromSetter(prop_name, skip_first_arg);
+            return new PropertyPath(new Signature(sig), d.DeclaringType);
         }
 
-        public static int ScopelessHashCode(this PropertyReference self) {
-            var x = 0;
+        public static FieldPath ToPath(this FieldReference self, string forced_name = null) {
+            return new FieldPath(self.Resolve(), forced_name: forced_name);
+        }
 
-            x ^= self.FullName.GetHashCode();
-            x ^= self.PropertyType.ScopelessHashCode();
-
-            if (self is PropertyDefinition) {
-                var s = (PropertyDefinition)self;
-                x ^= s.GetMethod?.ScopelessHashCode() ?? 0;
-                x ^= s.SetMethod?.ScopelessHashCode() ?? 0;
-            }
-
-            x ^= self.Resolve()?.ScopelessHashCode() ?? 0;
-
-            return x;
+        public static PropertyPath ToPath(this PropertyReference self, string forced_name = null) {
+            return new PropertyPath(self.Resolve(), forced_name: forced_name);
         }
     }
 }

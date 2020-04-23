@@ -69,12 +69,13 @@
     <Compile Include="src\Analyzer\PatchFieldData.cs" />
     <Compile Include="src\Analyzer\PatchPropertyData.cs" />
     <Compile Include="src\Static\Relinker.cs" />
-    <Compile Include="src\RDAR\RDARAgent.cs" />
     <Compile Include="src\AsmDiff\AssemblyDiff.cs" />
     <Compile Include="src\AsmDiff\Difference.cs" />
     <Compile Include="src\Utils\Extensions.cs" />
     <Compile Include="src\RDAR\IRDARAgent.cs" />
-    <Compile Include="src\RDAR\RDARStandardAgent.cs" />
+    <Compile Include="src\RDAR\SimpleRDARAgent.cs" />
+    <Compile Include="src\RDAR\SemiPatchRDARAgent.cs" />
+    <Compile Include="src\MemberPath.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\" />
