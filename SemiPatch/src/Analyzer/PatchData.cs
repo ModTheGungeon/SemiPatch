@@ -6,11 +6,15 @@ using Mono.Cecil;
 
 namespace SemiPatch {
     public class PatchData {
+        public const int CURRENT_VERSION = 2;
+
+        public readonly int Version;
         public readonly ModuleDefinition TargetModule;
         public readonly IList<ModuleDefinition> PatchModules;
         public readonly IList<PatchTypeData> Types;
 
         public PatchData(ModuleDefinition target, IList<ModuleDefinition> patches) {
+            Version = CURRENT_VERSION;
             TargetModule = target;
             PatchModules = patches;
             Types = new List<PatchTypeData>();
@@ -18,6 +22,8 @@ namespace SemiPatch {
 
         public string ToString(string indent) {
             var s = new StringBuilder();
+            s.Append("Version: ").Append(Version);
+            s.Append("\n").Append(indent);
             s.Append("Target Assembly: ").Append(TargetModule.Name);
             s.Append("\n").Append(indent);
             s.Append("Patch Assemblies: [");
@@ -38,6 +44,7 @@ namespace SemiPatch {
         public override string ToString() => ToString("");
 
         public void Serialize(BinaryWriter writer) {
+            writer.Write(Version);
             writer.Write(TargetModule.Assembly.FullName);
             writer.Write(PatchModules.Count);
             foreach (var mod in PatchModules) {
@@ -48,6 +55,11 @@ namespace SemiPatch {
         }
 
         public static PatchData Deserialize(BinaryReader reader, Dictionary<string, ModuleDefinition> fallback_patch_module_map = null) {
+            var version = reader.ReadInt32();
+            if (version != CURRENT_VERSION) {
+                throw new PatchDataVersionMismatchException(version);
+            }
+
             var target_module_name = reader.ReadString();
 
             var target_asm = System.Reflection.Assembly.ReflectionOnlyLoad(target_module_name);

@@ -142,10 +142,11 @@ namespace SemiPatch {
                 if (type.Name == "Int16") return "short";
                 if (type.Name == "UInt16") return "ushort";
                 if (type.Name == "Char") return "char";
+                if (type.Name == "Boolean") return "bool";
             }
 
             var s = new StringBuilder();
-            var name = type.FullName;
+            var name = type.Name;
             var grave_accent_index = name.IndexOf('`');
             if (grave_accent_index > -1) {
                 name = name.Substring(0, grave_accent_index);
@@ -428,6 +429,14 @@ namespace SemiPatch {
             if (member is FieldDefinition) return (PathType)(object)ToPath((FieldDefinition)(object)member);
             if (member is PropertyDefinition) return (PathType)(object)ToPath((PropertyDefinition)(object)member);
             throw new InvalidOperationException($"Unsupported IMemberDefinition in ToPath: {member?.GetType().Name ?? "<null>"}");
+        }
+
+        public static MemberPath<IMemberDefinition> ToPath(this IMemberDefinition member) {
+            return member.ToPath<IMemberDefinition, MemberPath<IMemberDefinition>>();
+        }
+
+        public static TypePath ToPath(this TypeDefinition type) {
+            return new TypePath(type);
         }
     }
 }

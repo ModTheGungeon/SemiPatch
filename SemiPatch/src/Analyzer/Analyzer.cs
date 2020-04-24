@@ -291,7 +291,7 @@ namespace SemiPatch {
 
                 if (prop.GetMethod != null) {
                     var get_path = prop.GetMethod.ToPath();
-                    var get_data = new PatchMethodData(prop.GetMethod, get_path, get_path);
+                    var get_data = new PatchMethodData(prop.GetMethod, get_path.WithDeclaringType(type_data.TargetType.Resolve()), get_path);
                     if (prop_attrs.Proxy) get_data.Proxy = true;
                     if (prop_data.AliasedName != null) get_data.AliasedName = $"get_{prop_data.AliasedName}";
                     if (prop_attrs.Ignore) get_data.ExplicitlyIgnored = true;
@@ -301,7 +301,7 @@ namespace SemiPatch {
 
                 if (prop.SetMethod != null) {
                     var set_path = prop.SetMethod.ToPath();
-                    var set_data = new PatchMethodData(prop.SetMethod, set_path, set_path);
+                    var set_data = new PatchMethodData(prop.SetMethod, set_path.WithDeclaringType(type_data.TargetType.Resolve()), set_path);
                     if (prop_attrs.Proxy) set_data.Proxy = true;
                     if (prop_data.AliasedName != null) set_data.AliasedName = $"set_{prop_data.AliasedName}";
                     if (prop_attrs.Ignore) set_data.ExplicitlyIgnored = true;

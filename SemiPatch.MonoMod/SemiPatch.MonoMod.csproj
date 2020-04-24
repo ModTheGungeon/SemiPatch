@@ -54,7 +54,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\RDAR\Support.cs" />
     <Compile Include="src\Static\MonoModStaticConverter.cs" />
-    <Compile Include="src\Static\Relinker.cs" />
     <Compile Include="src\Program.cs" />
   </ItemGroup>
   <ItemGroup>

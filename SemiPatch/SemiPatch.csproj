@@ -68,12 +68,14 @@
     <Compile Include="src\AsmDiff\AssemblyDiff.cs" />
     <Compile Include="src\AsmDiff\Difference.cs" />
     <Compile Include="src\Utils\Extensions.cs" />
-    <Compile Include="src\MemberPath.cs" />
+    <Compile Include="src\Paths.cs" />
     <Compile Include="src\Analyzer\PatchMemberData.cs" />
     <Compile Include="src\Utils\EndOfPositionalArguments.cs" />
     <Compile Include="src\AsmDiff\IDiffSource.cs" />
     <Compile Include="src\AsmDiff\SemiPatchDiffSource.cs" />
     <Compile Include="src\AsmDiff\CILDiffSource.cs" />
+    <Compile Include="src\Relinker\Relinker.cs" />
+    <Compile Include="src\Exceptions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\" />
@@ -81,6 +83,7 @@
     <Folder Include="src\Orig\" />
     <Folder Include="src\AsmDiff\" />
     <Folder Include="src\Utils\" />
+    <Folder Include="src\Relinker\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

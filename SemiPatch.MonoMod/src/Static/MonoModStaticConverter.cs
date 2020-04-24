@@ -9,7 +9,7 @@ using Mono.Collections.Generic;
 using MonoMod;
 using MonoMod.InlineRT;
 
-namespace SemiPatch {
+namespace SemiPatch.MonoMod {
     public class MonoModStaticConverter {
         public static ModuleDefinition MscorlibModule;
         public static TypeReference StringType;
@@ -25,7 +25,7 @@ namespace SemiPatch {
             MscorlibModule = ModuleDefinition.ReadModule(typeof(string).Assembly.Location);
             StringType = MscorlibModule.GetType("System.String");
 
-            MonoModModule = ModuleDefinition.ReadModule(typeof(MonoMod.MonoModder).Assembly.Location);
+            MonoModModule = ModuleDefinition.ReadModule(typeof(MonoModder).Assembly.Location);
             MonoModPatchAttributeConstructor = MonoModModule.GetType("MonoMod.MonoModPatch").Methods[0];
             MonoModConstructorAttributeConstructor = MonoModModule.GetType("MonoMod.MonoModConstructor").Methods[0];
             MonoModIgnoreAttributeConstructor = MonoModModule.GetType("MonoMod.MonoModIgnore").Methods[0];
@@ -79,7 +79,7 @@ namespace SemiPatch {
             obj.CustomAttributes.Add(attr);
         }
 
-        public void ApplyForMethod(PatchMethodData method, List<PatchMethodData> methods_to_remove) {
+        public void ApplyForMethod(PatchTypeData type, PatchMethodData method, List<PatchMethodData> methods_to_remove) {
             Logger.Debug($"Applying for patch method: '{method.PatchPath}' targetting '{method.TargetPath}'");
 
             if (method.ExplicitlyIgnored) {
@@ -99,7 +99,8 @@ namespace SemiPatch {
                     RDARSupportNameAliasedFromAttributeConstructor,
                     new CustomAttributeArgument(StringType, method.Patch.Name)
                 );
-                Relinker.QueueMethodRename(method.Patch, method.AliasedName);
+                Relinker.MapMethod(method.PatchPath, Relinker.Entry.FromPatchMemberData(type, method));
+                Relinker.ScheduleDefinitionRename(method.PatchPath, method.AliasedName);
             }
 
             if (method.Proxy) {
@@ -263,7 +264,7 @@ namespace SemiPatch {
             }
         }
 
-        public void ApplyForField(PatchFieldData field, IList<PatchFieldData> fields_to_remove) {
+        public void ApplyForField(PatchTypeData type, PatchFieldData field, IList<PatchFieldData> fields_to_remove) {
             Logger.Debug($"Applying for patch field: '{field.PatchPath}' targetting '{field.TargetPath}'");
 
             if (field.AliasedName != null) {
@@ -274,7 +275,8 @@ namespace SemiPatch {
                     RDARSupportNameAliasedFromAttributeConstructor,
                     new CustomAttributeArgument(StringType, field.Patch.Name)
                 );
-                Relinker.QueueFieldRename(field.Patch, field.AliasedName);
+                Relinker.MapField(field.PatchPath, Relinker.Entry.FromPatchMemberData(type, field));
+                Relinker.ScheduleDefinitionRename(field.PatchPath, field.AliasedName);
             }
 
             if (field.Proxy) {
@@ -289,7 +291,7 @@ namespace SemiPatch {
             }
         }
 
-        public void ApplyForProperty(PatchPropertyData prop, IList<PatchPropertyData> props_to_remove) {
+        public void ApplyForProperty(PatchTypeData type, PatchPropertyData prop, IList<PatchPropertyData> props_to_remove) {
             Logger.Debug($"Applying for patch property: '{prop.PatchPath}' targetting '{prop.TargetPath}'");
             if (prop.AliasedName != null) {
                 Logger.Debug($"Renaming property '{prop.PatchPath}' to {prop.AliasedName}");
@@ -314,7 +316,7 @@ namespace SemiPatch {
             for (var i = 0; i < type.Methods.Count; i++) {
                 var method = type.Methods[i];
 
-                ApplyForMethod(method, methods_to_remove);
+                ApplyForMethod(type, method, methods_to_remove);
             }
 
             for (var i = 0; i < methods_to_remove.Count; i++) {
@@ -326,7 +328,7 @@ namespace SemiPatch {
             for (var i = 0; i < type.Fields.Count; i++) {
                 var field = type.Fields[i];
 
-                ApplyForField(field, fields_to_remove);
+                ApplyForField(type, field, fields_to_remove);
             }
 
             for (var i = 0; i < fields_to_remove.Count; i++) {
@@ -338,7 +340,7 @@ namespace SemiPatch {
             for (var i = 0; i < type.Properties.Count; i++) {
                 var prop = type.Properties[i];
 
-                ApplyForProperty(prop, props_to_remove);
+                ApplyForProperty(type, prop, props_to_remove);
             }
 
             for (var i = 0; i < props_to_remove.Count; i++) {
@@ -359,7 +361,7 @@ namespace SemiPatch {
             for (var i = 0; i < PatchData.PatchModules.Count; i++) {
                 Relinker.Relink(PatchData.PatchModules[i]);
             }
-            Relinker.FixDefinitions();
+            Relinker.CommitDefinitionRenames();
         }
     }
 }

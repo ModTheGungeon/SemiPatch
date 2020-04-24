@@ -4,6 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using Mono.Cecil;
 using SemiPatch.RDAR;
+using SemiPatch.MonoMod;
 
 namespace SemiPatch {
     public static class Program {
@@ -31,14 +32,21 @@ namespace SemiPatch {
             using (var f = new BinaryWriter(File.OpenWrite("test.bin"))) data.Serialize(f);
 
 
-            using (var f = new BinaryReader(File.OpenRead("test.bin"))) {
-                var new_data = PatchData.Deserialize(f);
+            //using (var f = new BinaryReader(File.OpenRead("test.bin"))) {
+            //    var new_data = PatchData.Deserialize(f);
 
-                Console.WriteLine(new_data);
-            }
+            //    Console.WriteLine(new_data);
+            //}
 
             using (var f = new StreamWriter(File.OpenWrite("inserts.txt"))) {
                 data.WriteInsertList(f);
+            }
+
+            var sprelinker = new global::SemiPatch.Relinker();
+            sprelinker.LoadRelinkMapFrom(data);
+            sprelinker.Relink(data.PatchModules[0]);
+            using (var f = File.OpenWrite("relinked.dll")) {
+                data.PatchModules[0].Write(f);
             }
 
             var conv = new MonoModStaticConverter(data);
