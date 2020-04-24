@@ -6,7 +6,7 @@ using Mono.Cecil.Cil;
 
 namespace SemiPatch {
     /// <summary>
-    /// Extension methods used all over the place in <code>SemiPatch</code>.
+    /// Extension methods used all over the place in SemiPatch.
     /// TODO: document all these?
     /// </summary>
     public static class Extensions {

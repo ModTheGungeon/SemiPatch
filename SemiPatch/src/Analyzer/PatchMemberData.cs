@@ -48,22 +48,22 @@ namespace SemiPatch {
         public PathType PatchPath;
 
         /// <summary>
-        /// Only used on methods. If <code>true</code>, the method that represents
+        /// Only used on methods. If <c>true</c>, the method that represents
         /// this patch takes an additional argument (in the first position) of type
-        /// <code>Orig</code> or <code>VoidOrig</code>. See <see cref="ReceiveOriginalAttribute"/>
+        /// <c>Orig</c> or <c>VoidOrig</c>. See <see cref="ReceiveOriginalAttribute"/>
         /// to learn more about the attribute and its behavior.
         /// </summary>
         public bool ReceivesOriginal;
 
         /// <summary>
-        /// If <code>true</code>, the member representing this patch is ignored,
+        /// If <c>true</c>, the member representing this patch is ignored,
         /// no matter if it has any other attributes or data. See <see cref="IgnoreAttribute"/>
         /// to learn more about the attribute and its behavior.
         /// </summary>
         public bool ExplicitlyIgnored;
 
         /// <summary>
-        /// If not <code>null</code>, signifies that in the final executing
+        /// If not <c>null</c>, signifies that in the final executing
         /// product the member representing this patch should have the name
         /// specified in this field, as well as any references to the member
         /// must be renamed appropriately. See <see cref="TargetNameAttribute"/>
@@ -72,7 +72,7 @@ namespace SemiPatch {
         public string AliasedName;
 
         /// <summary>
-        /// If <code>true</code>, for all intents and purposes this patch is
+        /// If <c>true</c>, for all intents and purposes this patch is
         /// ignored, no matter if it has any other attributes or data. Unlike
         /// the <see cref="ExplicitlyIgnored"/> field however, Proxy members
         /// must always refer to an existing member within the target type.
@@ -94,8 +94,8 @@ namespace SemiPatch {
         /// Name of the kind of member this object represents (used only for
         /// hashing and equality comparison).
         /// </summary>
-        /// <value>The name of the member type (<code>Method</code>,
-        /// <code>Field</code>, <code>Property</code> etc.).</value>
+        /// <value>The name of the member type (<c>Method</c>,
+        /// <c>Field</c>, <c>Property</c> etc.).</value>
         public abstract string MemberTypeName { get; }
 
         protected PatchMemberData(

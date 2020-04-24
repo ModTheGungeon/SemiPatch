@@ -9,7 +9,7 @@ namespace SemiPatch {
     public class PatchAttribute : Attribute {
         /// <param name="type">
         /// Determines the target class, which is the one that will be altered
-        /// using data from the tagged patch class. Use a <code>typeof(...)</code>
+        /// using data from the tagged patch class. Use a <c>typeof(...)</c>
         /// expression here.
         /// </param>
         public PatchAttribute(Type type) {
@@ -100,7 +100,7 @@ namespace SemiPatch {
     /// public string SetAge(Orig&lt;string, int, string&gt; orig, string name, int number) {...}
     /// </code>
     /// 
-    /// Then, <code>orig</code> can be freely used, for example to alter the return
+    /// Then, <c>orig</c> can be freely used, for example to alter the return
     /// value of the method:
     /// 
     /// <code>
@@ -110,7 +110,7 @@ namespace SemiPatch {
     /// }
     /// </code>
     /// 
-    /// If the target method returns <code>void</code>, a variation of the
+    /// If the target method returns <c>void</c>, a variation of the
     /// <see cref="VoidOrig"/> type must be used, and the return type isn't included
     /// in the generic parameters for that type. In any other case, a variation of
     /// <see cref="Orig{}"/> must be used, and the return type is always the last
@@ -119,15 +119,15 @@ namespace SemiPatch {
     /// If static patching is used to inject this method, the method may be heavily
     /// rewritten. In the case of the MonoMod static patch generator, patch methods
     /// tagged with this attribute lose their special first argument. Any invocations
-    /// of the <code>orig</code> delegate become direct invocations of the old method,
+    /// of the <c>orig</c> delegate become direct invocations of the old method,
     /// while more uncommon usage of the delegate (such as passing it to other methods)
     /// is detected. If any such usage is found, a new local variable appears in the
     /// method body, which contains a real instance of the delegate type and is 
     /// initialized with the target method. A reference to this local variable
-    /// then replaces any such reference to the <code>orig</code> argument.
+    /// then replaces any such reference to the <c>orig</c> argument.
     /// 
     /// This means that with the MonoMod static patcher, directly calling the
-    /// orig delegate within a patch method tagged with <code>ReceiveOriginal</code>
+    /// orig delegate within a patch method tagged with <c>ReceiveOriginal</c>
     /// will always be optimized down to a simple and direct method call. At the
     /// same time, the behavior of the code will stay the same no matter what.
     /// </summary>
@@ -171,7 +171,7 @@ namespace SemiPatch {
     /// methods tagged with <see cref="GetterAttribute"/> and/or <see cref="SetterAttribute"/>.
     /// 
     /// This is superior to specifying the compiler-generated getter method directly
-    /// (e.g. <code>get_SomeProperty</code>), as it allows you to name the patch
+    /// (e.g. <c>get_SomeProperty</c>), as it allows you to name the patch
     /// method something different and also validates the existence of the targetted
     /// property.
     /// 
@@ -194,7 +194,7 @@ namespace SemiPatch {
     /// methods tagged with <see cref="GetterAttribute"/> and/or <see cref="SetterAttribute"/>.
     /// 
     /// This is superior to specifying the compiler-generated setter method directly
-    /// (e.g. <code>set_SomeProperty</code>), as it allows you to name the patch
+    /// (e.g. <c>set_SomeProperty</c>), as it allows you to name the patch
     /// method something different and also validates the existence of the targetted
     /// property.
     /// 

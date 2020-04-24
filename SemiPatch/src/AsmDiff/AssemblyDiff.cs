@@ -11,7 +11,7 @@ namespace SemiPatch {
     /// for purposes other than a direct diff between two DLLs - its main purpose
     /// is to represent the steps required to go from one state of an assembly
     /// to another. For example, <see cref="SemiPatchDiffSource"/> produces
-    /// <code>AssemblyDiff</code> to represent how an assembly should be patched
+    /// <c>AssemblyDiff</c> to represent how an assembly should be patched
     /// based on two iterations of metadata objects, unrelated to how the actual
     /// patches look in bytecode.
     /// </summary>
