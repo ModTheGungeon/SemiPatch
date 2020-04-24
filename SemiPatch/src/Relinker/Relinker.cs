@@ -83,7 +83,7 @@ namespace SemiPatch {
             }
         }
 
-        public static Logger Logger = new Logger("SPRelinker");
+        public static Logger Logger = new Logger(nameof(Relinker));
 
         public Dictionary<TypePath, Entry> TypeEntries = new Dictionary<TypePath, Entry>();
         public Dictionary<MethodPath, Entry> MethodEntries = new Dictionary<MethodPath, Entry>();
@@ -156,8 +156,10 @@ namespace SemiPatch {
             PropertyEntries[path] = entry;
         }
 
-        public void ScheduleDefinitionRename(MemberPath path, string name) {
+        public void ScheduleDefinitionRename<T>(T member, string name) where T : class, IMemberDefinition {
+            var path = member.ToPath<T, MemberPath<T>>();
             Logger.Debug($"Scheduled definition rename '{path}' to: {name}");
+            ScheduledRenames.Add(new KeyValuePair<IMemberDefinition, string>(member, name));
         }
 
         public void Relink(TypeReference type) {
@@ -351,7 +353,7 @@ namespace SemiPatch {
             for (var i = 0; i < ScheduledRenames.Count; i++) {
                 var kv = ScheduledRenames[i];
                 kv.Key.Name = kv.Value;
-                Logger.Debug($"Renamed '{kv.Key.ToPath()}' to '{kv.Value}'");
+                Logger.Debug($"Renamed '{kv.Key.ToPathInterface()}' to '{kv.Value}'");
             }
         }
     }

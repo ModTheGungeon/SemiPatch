@@ -435,8 +435,11 @@ namespace SemiPatch {
             throw new InvalidOperationException($"Unsupported IMemberDefinition in ToPath: {member?.GetType().Name ?? "<null>"}");
         }
 
-        public static MemberPath<IMemberDefinition> ToPath(this IMemberDefinition member) {
-            return member.ToPath<IMemberDefinition, MemberPath<IMemberDefinition>>();
+        public static MemberPath ToPathInterface(this IMemberDefinition member) {
+            if (member is MethodDefinition) return ToPath((MethodDefinition)(object)member);
+            if (member is FieldDefinition) return ToPath((FieldDefinition)(object)member);
+            if (member is PropertyDefinition) return ToPath((PropertyDefinition)(object)member);
+            throw new InvalidOperationException($"Unsupported IMemberDefinition in ToPathInterface: {member?.GetType().Name ?? "<null>"}");
         }
 
         public static TypePath ToPath(this TypeDefinition type) {
