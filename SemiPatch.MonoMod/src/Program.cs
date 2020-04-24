@@ -50,7 +50,7 @@ namespace SemiPatch {
             var old_dll = ModuleDefinition.ReadModule("TEST_PatchTest.dll");
             var new_dll = ModuleDefinition.ReadModule("PatchTest.dll");
 
-            var agent = new SemiPatchRDARAgent(
+            var agent = new SemiPatchDiffSource(
                 PatchData.ReadFrom("TEST_test.bin", new Dictionary<string, ModuleDefinition> {
                     [old_dll.Assembly.FullName] = ModuleDefinition.ReadModule("TEST_PatchTest.dll"),
                     [new_dll.Assembly.FullName] = ModuleDefinition.ReadModule("PatchTest.dll"),

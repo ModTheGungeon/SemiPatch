@@ -90,8 +90,13 @@ namespace SemiPatch {
                 }
 
                 var patch_path = method.ToPath();
+                var name = method_attrs.AliasedName ?? method.Name;
+                var target_path = method.ToPath(method_attrs.ReceiveOriginal, forced_name: name).WithDeclaringType(type_data.TargetType.Resolve());
+                var target = TryGetTargetMethod(target_path);
+
                 Logger.Debug($"Path: '{patch_path}'");
-                var method_data = new PatchMethodData(method, patch_path, receives_original: method_attrs.ReceiveOriginal);
+
+                var method_data = new PatchMethodData(method, target_path, patch_path, receives_original: method_attrs.ReceiveOriginal);
                 type_data.Methods.Add(method_data);
 
                 if (method_attrs.AliasedName != null) {
@@ -107,8 +112,7 @@ namespace SemiPatch {
                 if (method_attrs.ReceiveOriginal && method.Parameters.Count == 0) {
                     throw new Exception($"Method '{patch_path}' is marked as ReceiveOriginal, but it has no arguments.");
                 }
-
-                var name = method_attrs.AliasedName ?? method.Name;
+                
 
                 if (method_attrs.IsPropertyMethod) {
                     if (method_attrs.PropertyGetter != null && method_attrs.PropertySetter != null) {
@@ -146,9 +150,6 @@ namespace SemiPatch {
                     }
                 }
 
-                var target_path = method.ToPath(method_attrs.ReceiveOriginal, forced_name: name).WithDeclaringType(type_data.TargetType.Resolve());
-                var target = TryGetTargetMethod(target_path);
-
                 if (method_attrs.Proxy) {
                     if (method_attrs.ReceiveOriginal) {
                         throw new Exception($"Proxy method '{patch_path}' may not be marked as ReceiveOriginal");
@@ -185,7 +186,7 @@ namespace SemiPatch {
                 }
 
 
-                method_data.PatchPath = patch_path;
+                method_data.TargetPath = target_path;
                 method_data.ReceivesOriginal = method_attrs.ReceiveOriginal;
 
                 if (method_attrs.Insert) {
@@ -210,8 +211,7 @@ namespace SemiPatch {
                         throw new Exception($"Attribute mismatch in patch method '{patch_path}' targetting method '{target_path}' - patch attributes are '{method.Attributes}', but target attributes are '{target.Attributes}'. The mismatch is with the following attribute(s): '{((MethodAttributes)((uint)target_attrs ^ (uint)patch_attrs)).ToString().Replace("ReuseSlot, ", "")}'.");
                     }
 
-                    method_data.TargetPath = target_path;
-                    method_data.TargetMethod = target;
+                    method_data.Target = target;
                 }
             }
         }
@@ -223,11 +223,14 @@ namespace SemiPatch {
                     continue;
                 }
 
-                var patch_path = field.ToPath();
-
                 Logger.Debug($"Scanning field: {field.FullName}");
                 var field_attrs = new SpecialAttributeData(field.CustomAttributes);
-                var field_data = new PatchFieldData(patch_path, patch_path, field);
+
+                var patch_path = field.ToPath();
+                var target_path = field_attrs.AliasedName == null ? patch_path : field.ToPath(forced_name: field_attrs.AliasedName);
+                target_path = target_path.WithDeclaringType(type_data.TargetType.Resolve());
+
+                var field_data = new PatchFieldData(field, target_path, patch_path);
                 type_data.Fields.Add(field_data);
 
                 if (field_attrs.Ignore) {
@@ -240,11 +243,6 @@ namespace SemiPatch {
                     field_data.AliasedName = field_attrs.AliasedName;
                 }
 
-                var target_path = field_attrs.AliasedName == null ? patch_path : field.ToPath(forced_name: field_attrs.AliasedName);
-                target_path = target_path.WithDeclaringType(type_data.TargetType.Resolve());
-
-                field_data.TargetPath = target_path;
-
                 var target_field = TryGetTargetField(target_path);
 
                 if (field_attrs.Proxy) {
@@ -252,13 +250,12 @@ namespace SemiPatch {
                     if (target_field == null) {
                         throw new Exception($"Failed to locate field'{target_path}' proxied in patch field '{patch_path}'. Use the Insert attribute if you want to add the field.");
                     }
-                    field_data.TargetField = target_field;
+                    field_data.Target = target_field;
                 } else if (field_attrs.Insert) {
                     Logger.Debug($"Field is marked for insertion");
                     if (target_field != null) {
                         throw new Exception($"Found matching field '{target_path}', but patch field '{patch_path}' was marked Insert - use the Proxy attribute instead if you want to access fields on the class.");
                     }
-                    field_data.IsInsert = true;
                 } else {
                     throw new Exception($"Field '{patch_path}' must be marked as either Ignore, Insert, or Proxy. Fields without attributes are not allowed.");
                 }
@@ -269,16 +266,19 @@ namespace SemiPatch {
             for (var i = 0; i < props.Count; i++) {
                 var prop = props[i];
 
+                Logger.Debug($"Scanning property: {prop.FullName}");
+
                 var patch_path = prop.ToPath();
 
-                Logger.Debug($"Scanning property: {prop.FullName}");
                 var prop_attrs = new SpecialAttributeData(prop.CustomAttributes);
-
                 if (!prop_attrs.Insert && !prop_attrs.Proxy && !prop_attrs.Ignore) {
                     throw new Exception($"Failed patching property '{patch_path}'. Properties may not be used in a patch class unless they are marked with Insert, Proxy or Ignore. For patching properties, use the Getter and Setter attributes.");
                 }
 
-                var prop_data = new PatchPropertyData(patch_path, patch_path, prop);
+                var target_path = prop_attrs.AliasedName == null ? patch_path : prop.ToPath(forced_name: prop_attrs.AliasedName);
+                target_path = target_path.WithDeclaringType(type_data.TargetType.Resolve());
+
+                var prop_data = new PatchPropertyData(prop, target_path, patch_path);
                 type_data.Properties.Add(prop_data);
 
                 if (prop_attrs.Proxy) {
@@ -321,7 +321,7 @@ namespace SemiPatch {
 
                 if (backing_field != null) {
                     var backing_field_path = backing_field.ToPath();
-                    var backing_field_data = new PatchFieldData(backing_field_path, backing_field_path, backing_field);
+                    var backing_field_data = new PatchFieldData(backing_field, backing_field_path, backing_field_path);
                     if (prop_attrs.Proxy) backing_field_data.Proxy = true;
                     if (backing_field_data.AliasedName != null) backing_field_data.AliasedName = $"<{prop_data.AliasedName}>k__BackingField";
                     if (prop_attrs.Ignore) backing_field_data.ExplicitlyIgnored = true;
@@ -334,11 +334,6 @@ namespace SemiPatch {
                     prop_data.ExplicitlyIgnored = true;
                     continue;
                 }
-
-                var target_path = prop_attrs.AliasedName == null ? patch_path : prop.ToPath(forced_name: prop_attrs.AliasedName);
-                target_path = target_path.WithDeclaringType(type_data.TargetType.Resolve());
-
-                prop_data.TargetPath = target_path;
 
                 var target_prop = TryGetTargetProperty(target_path);
 
@@ -366,7 +361,6 @@ namespace SemiPatch {
             Logger.Info($"Scanning {types.Count} types");
             foreach (var type in types) {
                 Logger.Debug($"Scanning type: {type.Name}");
-                Logger.Debug($"Scanning type: {MonoModStaticConverter.BuildMonoModSignature(type)}");
                 var attrs = new SpecialAttributeData(type.CustomAttributes);
                 if (attrs.PatchType == null) continue;
                 if (attrs.Ignore) continue;

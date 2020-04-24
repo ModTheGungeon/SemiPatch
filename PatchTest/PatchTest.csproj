@@ -40,13 +40,17 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SemiPatch\SemiPatch.csproj">
-      <Project>{4CA58FDE-E581-4269-82DD-166739E4114B}</Project>
-      <Name>SemiPatch</Name>
-    </ProjectReference>
     <ProjectReference Include="..\TargetTest\TargetTest.csproj">
       <Project>{E6634779-C4A9-44E6-87BF-5CB68BB21193}</Project>
       <Name>TargetTest</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SemiPatch.MonoMod\SemiPatch.MonoMod.csproj">
+      <Project>{38143A7B-A727-4864-918E-84362D34F127}</Project>
+      <Name>SemiPatch.MonoMod</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SemiPatch\SemiPatch.csproj">
+      <Project>{4CA58FDE-E581-4269-82DD-166739E4114B}</Project>
+      <Name>SemiPatch</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

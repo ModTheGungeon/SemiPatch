@@ -288,15 +288,7 @@ namespace SemiPatch {
             return reader.ReadString();
         }
 
-        public static void Write(this BinaryWriter writer, MethodPath path) {
-            path.Serialize(writer);
-        }
-
-        public static void Write(this BinaryWriter writer, FieldPath path) {
-            path.Serialize(writer);
-        }
-
-        public static void Write(this BinaryWriter writer, PropertyPath path) {
+        public static void Write(this BinaryWriter writer, MemberPath path) {
             path.Serialize(writer);
         }
 
@@ -331,28 +323,111 @@ namespace SemiPatch {
             return new_inst;
         }
 
-        public static MethodPath ToPath(this MethodReference self, bool skip_first_arg = false, string forced_name = null) {
-            return new MethodPath(self.Resolve(), skip_first_arg: skip_first_arg, forced_name: forced_name);
+        public static MethodPath ToPath(this MethodDefinition self, bool skip_first_arg = false, string forced_name = null) {
+            return new MethodPath(self, skip_first_arg: skip_first_arg, forced_name: forced_name);
         }
 
-        public static PropertyPath ToPropertyPathFromGetter(this MethodReference self, string prop_name) {
-            var d = self.Resolve();
-            var sig = d.BuildPropertySignatureFromGetter(prop_name);
-            return new PropertyPath(new Signature(sig), d.DeclaringType);
+        public static PropertyPath ToPropertyPathFromGetter(this MethodDefinition self, string prop_name) {
+            var sig = self.BuildPropertySignatureFromGetter(prop_name);
+            return new PropertyPath(new Signature(sig), self.DeclaringType);
         }
 
-        public static PropertyPath ToPropertyPathFromSetter(this MethodReference self, string prop_name, bool skip_first_arg = false) {
-            var d = self.Resolve();
-            var sig = d.BuildPropertySignatureFromSetter(prop_name, skip_first_arg);
-            return new PropertyPath(new Signature(sig), d.DeclaringType);
+        public static PropertyPath ToPropertyPathFromSetter(this MethodDefinition self, string prop_name, bool skip_first_arg = false) {
+            var sig = self.BuildPropertySignatureFromSetter(prop_name, skip_first_arg);
+            return new PropertyPath(new Signature(sig), self.DeclaringType);
         }
 
-        public static FieldPath ToPath(this FieldReference self, string forced_name = null) {
-            return new FieldPath(self.Resolve(), forced_name: forced_name);
+        public static FieldPath ToPath(this FieldDefinition self, string forced_name = null) {
+            return new FieldPath(self, forced_name: forced_name);
         }
 
-        public static PropertyPath ToPath(this PropertyReference self, string forced_name = null) {
-            return new PropertyPath(self.Resolve(), forced_name: forced_name);
+        public static PropertyPath ToPath(this PropertyDefinition self, string forced_name = null) {
+            return new PropertyPath(self, forced_name: forced_name);
+        }
+
+        public static int CalculateHashCode(this MethodBody body) {
+            var x = body.Instructions.Count;
+            for (var i = 0; i < body.Instructions.Count; i++) {
+                var instr = body.Instructions[i];
+                x ^= instr.ToString().GetHashCode();
+            }
+            return x;
+        }
+
+        public static int CalculateHashCode(this CustomAttribute attrib) {
+            var x = attrib.Constructor.DeclaringType.PrefixSignature(attrib.Constructor.BuildSignature()).GetHashCode();
+            for (var i = 0; i < attrib.ConstructorArguments.Count; i++) {
+                var arg = attrib.ConstructorArguments[i];
+                x ^= arg.ToString().GetHashCode();
+            }
+            for (var i = 0; i < attrib.Fields.Count; i++) {
+                var field = attrib.Fields[i];
+                x ^= field.Name.GetHashCode();
+                x ^= field.Argument.Type.BuildSignature().GetHashCode();
+                x ^= field.Argument.Value.ToString().GetHashCode();
+            }
+            for (var i = 0; i < attrib.Properties.Count; i++) {
+                var prop = attrib.Properties[i];
+                x ^= prop.Name.GetHashCode();
+                x ^= prop.Argument.Type.BuildSignature().GetHashCode();
+                x ^= prop.Argument.Value.ToString().GetHashCode();
+            }
+            return x;
+        }
+
+        public static int CalculateHashCode(this MethodDefinition method) {
+            var x = method.Body.CalculateHashCode();
+            for (var i = 0; i < method.CustomAttributes.Count; i++) {
+                var attrib = method.CustomAttributes[i];
+                x ^= attrib.CalculateHashCode();
+            }
+            x ^= (int)method.Attributes * 2663;
+            x ^= (int)method.RVA * 4547;
+            x ^= (int)method.ImplAttributes * 6983;
+            x ^= (int)method.SemanticsAttributes * 9811;
+
+            return x;
+        }
+
+        public static int CalculateHashCode(this FieldDefinition field) {
+            var x = field.BuildSignature().GetHashCode();
+            for (var i = 0; i < field.CustomAttributes.Count; i++) {
+                var attrib = field.CustomAttributes[i];
+                x ^= attrib.CalculateHashCode();
+            }
+            x ^= (int)field.Attributes * 2663;
+            x ^= (int)field.RVA * 4547;
+            return x;
+        }
+
+        public static int CalculateHashCode(this PropertyDefinition prop) {
+            var x = prop.BuildSignature().GetHashCode();
+            for (var i = 0; i < prop.CustomAttributes.Count; i++) {
+                var attrib = prop.CustomAttributes[i];
+                x ^= attrib.CalculateHashCode();
+            }
+            x ^= (int)prop.Attributes * 2663;
+
+            if (prop.GetMethod != null) x ^= prop.GetMethod.CalculateHashCode();
+            if (prop.SetMethod != null) x ^= prop.SetMethod.CalculateHashCode();
+
+            return x;
+        }
+
+        public static int CalculateHashCode(this IMemberDefinition member) {
+            if (member is MethodDefinition) return CalculateHashCode((MethodDefinition)member);
+            if (member is FieldDefinition) return CalculateHashCode((FieldDefinition)member);
+            if (member is PropertyDefinition) return CalculateHashCode((PropertyDefinition)member);
+            throw new InvalidOperationException($"Unsupported IMemberDefinition in CalculateHashCode: {member?.GetType().Name ?? "<null>"}");
+        }
+
+        public static PathType ToPath<MemberDefinitionType, PathType>(this MemberDefinitionType member)
+        where MemberDefinitionType : class, IMemberDefinition
+        where PathType : MemberPath<MemberDefinitionType>{
+            if (member is MethodDefinition) return (PathType)(object)ToPath((MethodDefinition)(object)member);
+            if (member is FieldDefinition) return (PathType)(object)ToPath((FieldDefinition)(object)member);
+            if (member is PropertyDefinition) return (PathType)(object)ToPath((PropertyDefinition)(object)member);
+            throw new InvalidOperationException($"Unsupported IMemberDefinition in ToPath: {member?.GetType().Name ?? "<null>"}");
         }
     }
 }

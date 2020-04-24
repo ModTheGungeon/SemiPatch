@@ -16,8 +16,7 @@ namespace SemiPatch {
         public static TypeDefinition OrigType;
         public static TypeDefinition PatchControlType;
 
-        public static TypeDefinition RDARSupportNameAliasedFromAttribute;
-        public static TypeDefinition RDARSupportHasOriginalInAttribute;
+
 
         public static ModuleDefinition MscorlibModule;
         public static TypeReference VoidType;
@@ -38,9 +37,6 @@ namespace SemiPatch {
             SetterAttribute = SemiPatchModule.GetType("SemiPatch.SetterAttribute");
             OrigType = SemiPatchModule.GetType("SemiPatch.Orig");
             PatchControlType = SemiPatchModule.GetType("SemiPatch.PatchControl");
-
-            RDARSupportNameAliasedFromAttribute = SemiPatchModule.GetType("SemiPatch.RDAR.Support.NameAliasedFromAttribute");
-            RDARSupportHasOriginalInAttribute = SemiPatchModule.GetType("SemiPatch.RDAR.Support.HasOriginalInAttribute");
         }
     }
 }

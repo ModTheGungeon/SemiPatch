@@ -1,6 +1,6 @@
 ﻿using System;
 namespace SemiPatch.RDAR {
-    public interface IRDARAgent {
+    public interface IDiffSource {
         AssemblyDiff ProduceDifference();
     }
 }

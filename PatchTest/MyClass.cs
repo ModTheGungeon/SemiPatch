@@ -13,8 +13,18 @@ namespace PatchTest.Patches {
             orig(args);
         }
 
-        [Ignore]
-        public extern void Test();
+        [Insert]
+        public void Test() {
+            Console.WriteLine("test");
+        }
+
+        [Insert]
+        public int SomeFieldIAdded;
+
+        [Insert]
+        public int ANewProperty {
+            get => 0;
+        }
     }
 
     public class Blah {

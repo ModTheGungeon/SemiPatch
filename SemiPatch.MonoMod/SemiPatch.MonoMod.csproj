@@ -3,10 +3,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4CA58FDE-E581-4269-82DD-166739E4114B}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>SemiPatch</RootNamespace>
-    <AssemblyName>SemiPatch</AssemblyName>
+    <ProjectGuid>{38143A7B-A727-4864-918E-84362D34F127}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SemiPatch.MonoMod</RootNamespace>
+    <AssemblyName>SemiPatch.MonoMod</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -43,53 +43,37 @@
     <Reference Include="MonoMod">
       <HintPath>..\packages\MonoMod.20.3.5.1\lib\net35\MonoMod.exe</HintPath>
     </Reference>
-    <Reference Include="MonoMod.Utils">
-      <HintPath>..\packages\MonoMod.Utils.20.4.3.1\lib\net35\MonoMod.Utils.dll</HintPath>
-    </Reference>
     <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>..\packages\MonoMod.RuntimeDetour.20.4.3.1\lib\net35\MonoMod.RuntimeDetour.dll</HintPath>
+      <HintPath>..\packages\MonoMod.RuntimeDetour.20.3.5.1\lib\net35\MonoMod.RuntimeDetour.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoMod.Utils">
+      <HintPath>..\packages\MonoMod.Utils.20.3.5.1\lib\net35\MonoMod.Utils.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="src\Attributes.cs" />
-    <Compile Include="src\SpecialAttributeData.cs" />
-    <Compile Include="src\PatchControl.cs" />
-    <Compile Include="src\SemiPatch.cs" />
-    <Compile Include="src\Analyzer\PatchData.cs" />
-    <Compile Include="src\Analyzer\PatchMethodData.cs" />
-    <Compile Include="src\Analyzer\PatchTypeData.cs" />
-    <Compile Include="src\Analyzer\Analyzer.cs" />
-    <Compile Include="src\Orig\VoidOrig.cs" />
-    <Compile Include="src\Orig\OrigFactory.cs" />
-    <Compile Include="src\Orig\Orig.cs" />
-    <Compile Include="src\Analyzer\PatchFieldData.cs" />
-    <Compile Include="src\Analyzer\PatchPropertyData.cs" />
-    <Compile Include="src\AsmDiff\AssemblyDiff.cs" />
-    <Compile Include="src\AsmDiff\Difference.cs" />
-    <Compile Include="src\Utils\Extensions.cs" />
-    <Compile Include="src\MemberPath.cs" />
-    <Compile Include="src\Analyzer\PatchMemberData.cs" />
-    <Compile Include="src\Utils\EndOfPositionalArguments.cs" />
-    <Compile Include="src\AsmDiff\IDiffSource.cs" />
-    <Compile Include="src\AsmDiff\SemiPatchDiffSource.cs" />
-    <Compile Include="src\AsmDiff\CILDiffSource.cs" />
+    <Compile Include="src\RDAR\Support.cs" />
+    <Compile Include="src\Static\MonoModStaticConverter.cs" />
+    <Compile Include="src\Static\Relinker.cs" />
+    <Compile Include="src\Program.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="src\" />
-    <Folder Include="src\Analyzer\" />
-    <Folder Include="src\Orig\" />
-    <Folder Include="src\AsmDiff\" />
-    <Folder Include="src\Utils\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
+    <ProjectReference Include="..\SemiPatch\SemiPatch.csproj">
+      <Project>{4CA58FDE-E581-4269-82DD-166739E4114B}</Project>
+      <Name>SemiPatch</Name>
+    </ProjectReference>
     <ProjectReference Include="..\libs\Logger\Logger.csproj">
       <Project>{1C734127-AC83-4ECB-ABCA-32B98DFE49C7}</Project>
       <Name>Logger</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\" />
+    <Folder Include="src\RDAR\" />
+    <Folder Include="src\Static\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

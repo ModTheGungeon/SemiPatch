@@ -58,100 +58,83 @@ namespace SemiPatch {
         public abstract class MemberDifference {
             public abstract bool ExistsInOld { get; }
             public abstract bool ExistsInNew { get; }
-            public abstract MemberType MemberType { get; }
+            public MemberType MemberType;
 
             public abstract object MemberObject { get; }
             public abstract object TargetPathObject { get; }
 
+            public static MemberAdded<MethodDefinition, MethodPath> MethodAdded(MethodDefinition member, MethodPath path) {
+                return new MemberAdded<MethodDefinition, MethodPath>(MemberType.Method, member, path);
+            }
+
+            public static MemberChanged<MethodDefinition, MethodPath> MethodChanged(MethodDefinition member, MethodPath path) {
+                return new MemberChanged<MethodDefinition, MethodPath>(MemberType.Method, member, path);
+            }
+
+            public static MemberRemoved<MethodDefinition, MethodPath> MemberRemoved(MethodPath path) {
+                return new MemberRemoved<MethodDefinition, MethodPath>(MemberType.Method, path);
+            }
+
+            public static MemberAdded<FieldDefinition, FieldPath> FieldAdded(FieldDefinition member, FieldPath path) {
+                return new MemberAdded<FieldDefinition, FieldPath>(MemberType.Field, member, path);
+            }
+
+            public static MemberChanged<FieldDefinition, FieldPath> FieldChanged(FieldDefinition member, FieldPath path) {
+                return new MemberChanged<FieldDefinition, FieldPath>(MemberType.Field, member, path);
+            }
+
+            public static MemberRemoved<FieldDefinition, FieldPath> MemberRemoved(FieldPath path) {
+                return new MemberRemoved<FieldDefinition, FieldPath>(MemberType.Field, path);
+            }
+
+            public static MemberAdded<PropertyDefinition, PropertyPath> PropertyAdded(PropertyDefinition member, PropertyPath path) {
+                return new MemberAdded<PropertyDefinition, PropertyPath>(MemberType.Property, member, path);
+            }
+
+            public static MemberChanged<PropertyDefinition, PropertyPath> PropertyChanged(PropertyDefinition member, PropertyPath path) {
+                return new MemberChanged<PropertyDefinition, PropertyPath>(MemberType.Property, member, path);
+            }
+
+            public static MemberRemoved<PropertyDefinition, PropertyPath> MemberRemoved(PropertyPath path) {
+                return new MemberRemoved<PropertyDefinition, PropertyPath>(MemberType.Property, path);
+            }
         }
 
-        public abstract class MemberDifference<T, U> : MemberDifference {
+        public abstract class MemberDifference<T, U> : MemberDifference
+        where T : class, IMemberDefinition {
             public T Member;
             public U TargetPath;
 
             public override object MemberObject => Member;
             public override object TargetPathObject => TargetPath;
 
-            protected MemberDifference(T member, U path) {
+            protected MemberDifference(MemberType type, T member, U path) {
+                MemberType = type;
                 Member = member;
                 TargetPath = path;
             }
         }
 
-        public abstract class MemberChanged<T, U> : MemberDifference<T, U> {
+        public class MemberChanged<T, U> : MemberDifference<T, U> where T : class, IMemberDefinition {
             public override bool ExistsInOld => true;
             public override bool ExistsInNew => true;
 
 
-            internal MemberChanged(T member, U path) : base(member, path) {}
+            public MemberChanged(MemberType type, T member, U path) : base(type, member, path) {}
         }
 
-        public abstract class MemberAdded<T, U> : MemberDifference<T, U> {
+        public class MemberAdded<T, U> : MemberDifference<T, U> where T : class, IMemberDefinition {
             public override bool ExistsInOld => false;
             public override bool ExistsInNew => true;
 
-            internal MemberAdded(T member, U path) : base(member, path) {}
+            public MemberAdded(MemberType type, T member, U path) : base(type, member, path) { }
         }
 
-        public abstract class MemberRemoved<T, U> : MemberDifference<T, U> {
+        public class MemberRemoved<T, U> : MemberDifference<T, U> where T : class, IMemberDefinition {
             public override bool ExistsInOld => true;
             public override bool ExistsInNew => false;
 
-            internal MemberRemoved(T member, U path) : base(member, path) {}
-        }
-
-        public class MethodChanged : MemberChanged<MethodDefinition, MethodPath> {
-            public MethodChanged(MethodDefinition method, MethodPath path)
-                : base(method, path) { }
-            public override MemberType MemberType => MemberType.Method;
-        }
-
-        public class MethodAdded : MemberAdded<MethodDefinition, MethodPath> {
-            public MethodAdded(MethodDefinition method, MethodPath path)
-                : base(method, path) { }
-            public override MemberType MemberType => MemberType.Method;
-        }
-
-        public class MethodRemoved : MemberRemoved<MethodDefinition, MethodPath> {
-            public MethodRemoved(MethodDefinition method, MethodPath path)
-                : base(method, path) { }
-            public override MemberType MemberType => MemberType.Method;
-        }
-
-        public class FieldChanged : MemberChanged<FieldDefinition, FieldPath> {
-            public FieldChanged(FieldDefinition method, FieldPath path)
-                : base(method, path) { }
-            public override MemberType MemberType => MemberType.Field;
-        }
-
-        public class FieldAdded : MemberAdded<FieldDefinition, FieldPath> {
-            public FieldAdded(FieldDefinition method, FieldPath path)
-                : base(method, path) { }
-            public override MemberType MemberType => MemberType.Field;
-        }
-
-        public class FieldRemoved : MemberRemoved<FieldDefinition, FieldPath> {
-            public FieldRemoved(FieldDefinition method, FieldPath path)
-                : base(method, path) { }
-            public override MemberType MemberType => MemberType.Field;
-        }
-
-        public class PropertyChanged : MemberChanged<PropertyDefinition, PropertyPath> {
-            public PropertyChanged(PropertyDefinition method, PropertyPath path)
-                : base(method, path) { }
-            public override MemberType MemberType => MemberType.Property;
-        }
-
-        public class PropertyAdded : MemberAdded<PropertyDefinition, PropertyPath> {
-            public PropertyAdded(PropertyDefinition method, PropertyPath path)
-                : base(method, path) { }
-            public override MemberType MemberType => MemberType.Property;
-        }
-
-        public class PropertyRemoved : MemberRemoved<PropertyDefinition, PropertyPath> {
-            public PropertyRemoved(PropertyDefinition method, PropertyPath path)
-                : base(method, path) { }
-            public override MemberType MemberType => MemberType.Property;
+            public MemberRemoved(MemberType type, U path) : base(type, null, path) { }
         }
     }
 }

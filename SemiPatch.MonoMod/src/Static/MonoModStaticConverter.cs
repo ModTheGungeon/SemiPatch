@@ -30,8 +30,8 @@ namespace SemiPatch {
             MonoModConstructorAttributeConstructor = MonoModModule.GetType("MonoMod.MonoModConstructor").Methods[0];
             MonoModIgnoreAttributeConstructor = MonoModModule.GetType("MonoMod.MonoModIgnore").Methods[0];
             MonoModOriginalNameAttributeConstructor = MonoModModule.GetType("MonoMod.MonoModOriginalName").Methods[0];
-            RDARSupportNameAliasedFromAttributeConstructor = SemiPatch.RDARSupportNameAliasedFromAttribute.Methods[0];
-            RDARSupportHasOriginalInAttributeConstructor = SemiPatch.RDARSupportHasOriginalInAttribute.Methods[0];
+            RDARSupportNameAliasedFromAttributeConstructor = RDAR.Support.RDARSupport.RDARSupportNameAliasedFromAttribute.Methods[0];
+            RDARSupportHasOriginalInAttributeConstructor = RDAR.Support.RDARSupport.RDARSupportHasOriginalInAttribute.Methods[0];
         }
 
         public PatchData PatchData;
@@ -57,7 +57,7 @@ namespace SemiPatch {
 
             var s = new StringBuilder();
             s.Append("$SEMIPATCH$ORIG$$");
-            s.Append(method.TargetMethod.Name);
+            s.Append(method.Target.Name);
             var new_name = OrigNameMap[path] = s.ToString();
             return $"orig_{new_name}";
         }
@@ -83,23 +83,23 @@ namespace SemiPatch {
             Logger.Debug($"Applying for patch method: '{method.PatchPath}' targetting '{method.TargetPath}'");
 
             if (method.ExplicitlyIgnored) {
-                AddAttribute(method.PatchMethod.Module, method.PatchMethod, MonoModIgnoreAttributeConstructor);
+                AddAttribute(method.Patch.Module, method.Patch, MonoModIgnoreAttributeConstructor);
                 return;
             }
 
-            if (method.PatchMethod.IsConstructor) {
-                AddAttribute(method.PatchMethod.Module, method.PatchMethod, MonoModConstructorAttributeConstructor);
+            if (method.Patch.IsConstructor) {
+                AddAttribute(method.Patch.Module, method.Patch, MonoModConstructorAttributeConstructor);
             }
 
             if (method.AliasedName != null) {
                 Logger.Debug($"Renaming method '{method.PatchPath}' to {method.AliasedName}");
                 AddAttribute(
-                    method.PatchMethod.Module,
-                    method.PatchMethod,
+                    method.Patch.Module,
+                    method.Patch,
                     RDARSupportNameAliasedFromAttributeConstructor,
-                    new CustomAttributeArgument(StringType, method.PatchMethod.Name)
+                    new CustomAttributeArgument(StringType, method.Patch.Name)
                 );
-                Relinker.QueueMethodRename(method.PatchMethod, method.AliasedName);
+                Relinker.QueueMethodRename(method.Patch, method.AliasedName);
             }
 
             if (method.Proxy) {
@@ -114,23 +114,23 @@ namespace SemiPatch {
                 var orig_name = MapOrigForMethod(method);
                 Logger.Debug($"Creating orig method: '{orig_name}'");
 
-                var orig_def = new MethodDefinition(orig_name, method.PatchMethod.Attributes | MethodAttributes.PInvokeImpl, method.PatchMethod.ReturnType);
-                for (var i = 0; i < method.PatchMethod.GenericParameters.Count; i++) {
-                    var patch_param = method.PatchMethod.GenericParameters[i];
+                var orig_def = new MethodDefinition(orig_name, method.Patch.Attributes | MethodAttributes.PInvokeImpl, method.Patch.ReturnType);
+                for (var i = 0; i < method.Patch.GenericParameters.Count; i++) {
+                    var patch_param = method.Patch.GenericParameters[i];
                     var orig_param = new GenericParameter(patch_param.Name, orig_def);
                     orig_def.GenericParameters.Add(orig_param);
                 }
-                for (var i = 1; i < method.PatchMethod.Parameters.Count; i++) {
-                    orig_def.Parameters.Add(method.PatchMethod.Parameters[i]);
+                for (var i = 1; i < method.Patch.Parameters.Count; i++) {
+                    orig_def.Parameters.Add(method.Patch.Parameters[i]);
                 }
                 //var il = orig_def.Body.GetILProcessor();
                 //il.Append(Instruction.Create(OpCodes.Ret));
-                method.PatchMethod.DeclaringType.Methods.Add(orig_def);
-                orig_def.DeclaringType = method.PatchMethod.DeclaringType;
+                method.Patch.DeclaringType.Methods.Add(orig_def);
+                orig_def.DeclaringType = method.Patch.DeclaringType;
 
                 AddAttribute(
-                    method.PatchMethod.Module,
-                    method.PatchMethod,
+                    method.Patch.Module,
+                    method.Patch,
                     MonoModOriginalNameAttributeConstructor,
                     new CustomAttributeArgument(StringType, orig_name)
                 );
@@ -141,8 +141,8 @@ namespace SemiPatch {
                     VariableDefinition orig_delegate_local = null;
                     Logger.Debug($"Rewriting Orig/VoidOrig Invokes for ReceiveOriginal patch method");
 
-                    var il = method.PatchMethod.Body.GetILProcessor();
-                    method.PatchMethod.Body.SimplifyMacros();
+                    var il = method.Patch.Body.GetILProcessor();
+                    method.Patch.Body.SimplifyMacros();
 
                     for (var i = 0; i < il.Body.Instructions.Count; i++) {
                         var instr = il.Body.Instructions[i];
@@ -162,7 +162,7 @@ namespace SemiPatch {
                                     if (stack_count == orig_def.Parameters.Count + 1) {
                                         if (prev.OpCode == OpCodes.Ldarg) {
                                             var param = (ParameterReference)prev.Operand;
-                                            if (param == method.PatchMethod.Parameters[0]) {
+                                            if (param == method.Patch.Parameters[0]) {
                                                 orig_ldarg_instr = prev;
                                                 success = true;
                                                 break;
@@ -211,12 +211,12 @@ namespace SemiPatch {
 
                         if (instr.OpCode == OpCodes.Ldarg) {
                             var param = (ParameterReference)instr.Operand;
-                            if (param != method.PatchMethod.Parameters[0]) continue;    Instruction new_instr;
+                            if (param != method.Patch.Parameters[0]) continue;    Instruction new_instr;
 
                             if (orig_delegate_local == null) {
                                 orig_delegate_local = new VariableDefinition(orig);
-                                method.PatchMethod.Body.Variables.Add(orig_delegate_local);
-                                if (method.PatchMethod.IsStatic) {
+                                method.Patch.Body.Variables.Add(orig_delegate_local);
+                                if (method.Patch.IsStatic) {
                                     il.Replace(instr, new_instr = il.Create(OpCodes.Ldnull));
                                 } else {
                                     il.Replace(instr, new_instr = il.Create(OpCodes.Ldarg_0));
@@ -226,8 +226,8 @@ namespace SemiPatch {
                                 MethodReference orig_def_spec = orig_def;
                                 if (orig_def.HasGenericParameters) {
                                     var orig_def_spec_generic = new GenericInstanceMethod(orig_def);
-                                    for (var j = 0; j < method.PatchMethod.GenericParameters.Count; j++) {
-                                        orig_def_spec_generic.GenericArguments.Add(method.PatchMethod.GenericParameters[j]);
+                                    for (var j = 0; j < method.Patch.GenericParameters.Count; j++) {
+                                        orig_def_spec_generic.GenericArguments.Add(method.Patch.GenericParameters[j]);
                                     }
                                     orig_def_spec = orig_def_spec_generic;
                                 }
@@ -247,17 +247,17 @@ namespace SemiPatch {
                             }
                         }
                     }
-                    method.PatchMethod.Body.OptimizeMacros();
+                    method.Patch.Body.OptimizeMacros();
 
                     AddAttribute(
-                        method.PatchMethod.Module,
-                        method.PatchMethod,
+                        method.Patch.Module,
+                        method.Patch,
                         RDARSupportHasOriginalInAttributeConstructor,
                         new CustomAttributeArgument(StringType, orig_def.Name)
                     );
 
                     Logger.Debug($"Removing Orig/VoidOrig parameter");
-                    method.PatchMethod.Parameters.RemoveAt(0);
+                    method.Patch.Parameters.RemoveAt(0);
 
                 }
             }
@@ -269,12 +269,12 @@ namespace SemiPatch {
             if (field.AliasedName != null) {
                 Logger.Debug($"Renaming field '{field.PatchPath}' to {field.AliasedName}");
                 AddAttribute(
-                    field.PatchField.Module,
-                    field.PatchField,
+                    field.Patch.Module,
+                    field.Patch,
                     RDARSupportNameAliasedFromAttributeConstructor,
-                    new CustomAttributeArgument(StringType, field.PatchField.Name)
+                    new CustomAttributeArgument(StringType, field.Patch.Name)
                 );
-                Relinker.QueueFieldRename(field.PatchField, field.AliasedName);
+                Relinker.QueueFieldRename(field.Patch, field.AliasedName);
             }
 
             if (field.Proxy) {
@@ -284,7 +284,7 @@ namespace SemiPatch {
             }
 
             if (field.ExplicitlyIgnored || !field.IsInsert) {
-                AddAttribute(field.PatchField.Module, field.PatchField, MonoModIgnoreAttributeConstructor);
+                AddAttribute(field.Patch.Module, field.Patch, MonoModIgnoreAttributeConstructor);
                 return;
             }
         }
@@ -293,7 +293,7 @@ namespace SemiPatch {
             Logger.Debug($"Applying for patch property: '{prop.PatchPath}' targetting '{prop.TargetPath}'");
             if (prop.AliasedName != null) {
                 Logger.Debug($"Renaming property '{prop.PatchPath}' to {prop.AliasedName}");
-                prop.PatchProperty.Name = prop.AliasedName;
+                prop.Patch.Name = prop.AliasedName;
             }
             if (prop.Proxy) {
                 Logger.Debug($"Property marked for removal (proxy)");
@@ -319,7 +319,7 @@ namespace SemiPatch {
 
             for (var i = 0; i < methods_to_remove.Count; i++) {
                 var m = methods_to_remove[i];
-                m.PatchMethod.DeclaringType.Methods.Remove(m.PatchMethod);
+                m.Patch.DeclaringType.Methods.Remove(m.Patch);
             }
 
             var fields_to_remove = new List<PatchFieldData>();
@@ -331,7 +331,7 @@ namespace SemiPatch {
 
             for (var i = 0; i < fields_to_remove.Count; i++) {
                 var f = fields_to_remove[i];
-                f.PatchField.DeclaringType.Fields.Remove(f.PatchField);
+                f.Patch.DeclaringType.Fields.Remove(f.Patch);
             }
 
             var props_to_remove = new List<PatchPropertyData>();
@@ -343,7 +343,7 @@ namespace SemiPatch {
 
             for (var i = 0; i < props_to_remove.Count; i++) {
                 var p = props_to_remove[i];
-                p.PatchProperty.DeclaringType.Resolve().Properties.Remove(p.PatchProperty.Resolve());
+                p.Patch.DeclaringType.Resolve().Properties.Remove(p.Patch.Resolve());
             }
         }
 

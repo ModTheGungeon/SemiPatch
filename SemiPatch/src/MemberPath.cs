@@ -38,9 +38,16 @@ namespace SemiPatch {
         public static bool operator !=(Signature a, Signature b) {
             return a._Value != b._Value;
         }
+
+        public static Signature FromInterface(IMemberDefinition member, string forced_name = null) {
+            if (member is MethodDefinition) return new Signature((MethodDefinition)member, forced_name: forced_name);
+            if (member is FieldDefinition) return new Signature((FieldDefinition)member, forced_name: forced_name);
+            if (member is PropertyDefinition) return new Signature((PropertyDefinition)member, forced_name: forced_name);
+            throw new InvalidOperationException($"Unsupported IMemberDefinition in Signature.FromInterface: {member?.GetType().Name ?? "<null>"}");
+        }
     }
 
-    public abstract class MemberPath<T> {
+    public abstract class MemberPath {
         public string Namespace;
         protected string _TypeName;
         protected IList<string> _TypeNames;
@@ -73,8 +80,6 @@ namespace SemiPatch {
             }
         }
 
-        public abstract T FindIn(ModuleDefinition mod);
-
         private static void _InitTypePathRecursive(IList<string> list, TypeDefinition type) {
             if (type == null) return;
             _InitTypePathRecursive(list, type.DeclaringType);
@@ -103,6 +108,41 @@ namespace SemiPatch {
         public override int GetHashCode() {
             return ToString().GetHashCode();
         }
+
+        public void Serialize(BinaryWriter writer) {
+            writer.Write(Namespace);
+            if (_TypeName != null) {
+                writer.Write(1);
+                writer.Write(_TypeName);
+            } else {
+                writer.Write(_TypeNames.Count);
+                for (var i = 0; i < _TypeNames.Count; i++) {
+                    writer.Write(_TypeNames[i]);
+                }
+            }
+            writer.Write(Signature.ToString());
+        }
+
+        protected void InitializeFrom(BinaryReader reader) {
+            Namespace = reader.ReadString();
+            var type_name_count = reader.ReadInt32();
+            if (type_name_count == 1) {
+                _TypeName = reader.ReadString();
+            } else {
+                _TypeNames = new string[type_name_count];
+                for (var i = 0; i < type_name_count; i++) {
+                    _TypeNames[i] = reader.ReadString();
+                }
+            }
+            Signature = new Signature(reader.ReadString());
+        }
+    }
+
+    public abstract class MemberPath<T> : MemberPath {
+        protected MemberPath(TypeDefinition decl_type) : base(decl_type) {}
+        protected MemberPath() { }
+
+        public abstract T FindIn(ModuleDefinition mod);
 
         public bool Equals(MemberPath<T> member) {
             return member.GetHashCode() == GetHashCode();
@@ -154,34 +194,6 @@ namespace SemiPatch {
 
                 return found_type;
             }
-        }
-
-        public void Serialize(BinaryWriter writer) {
-            writer.Write(Namespace);
-            if (_TypeName != null) {
-                writer.Write(1);
-                writer.Write(_TypeName);
-            } else {
-                writer.Write(_TypeNames.Count);
-                for (var i = 0; i < _TypeNames.Count; i++) {
-                    writer.Write(_TypeNames[i]);
-                }
-            }
-            writer.Write(Signature.ToString());
-        }
-
-        protected void InitializeFrom(BinaryReader reader) {
-            Namespace = reader.ReadString();
-            var type_name_count = reader.ReadInt32();
-            if (type_name_count == 1) {
-                _TypeName = reader.ReadString();
-            } else {
-                _TypeNames = new string[type_name_count];
-                for (var i = 0; i < type_name_count; i++) {
-                    _TypeNames[i] = reader.ReadString();
-                }
-            }
-            Signature = new Signature(reader.ReadString());
         }
     }
 
