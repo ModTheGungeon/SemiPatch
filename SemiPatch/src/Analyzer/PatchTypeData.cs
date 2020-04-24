@@ -5,15 +5,48 @@ using System.Text;
 using System.IO;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Object containing data about a single patch of a type. See:
+    /// <see cref="PatchMemberData{,}"/> for information about patches of type
+    /// members.
+    /// </summary>
     public class PatchTypeData {
-        public TypeReference TargetType;
+        /// <summary>
+        /// The type object within the target assembly that this patch wants
+        /// to change. Unlike members, this will never be <code>null</code>,
+        /// as it's not possible (and illogical) to use the <code>Insert</code>
+        /// attribute on patch types (you can simply add the new type).
+        /// </summary>
+        public TypeDefinition TargetType;
+
+        /// <summary>
+        /// The type object within the patch assembly that contains members
+        /// outlining how to patch the target type.
+        /// </summary>
         public TypeDefinition PatchType;
+
+        /// <summary>
+        /// Fully qualified name of the assembly that <see cref="PatchType"/>
+        /// comes from.
+        /// </summary>
         public string PatchModuleName;
+
+        /// <summary>
+        /// List of objects representing method patches.
+        /// </summary>
         public IList<PatchMethodData> Methods;
+
+        /// <summary>
+        /// List of objects representing field patches.
+        /// </summary>
         public IList<PatchFieldData> Fields;
+
+        /// <summary>
+        /// List of objects representing property patches.
+        /// </summary>
         public IList<PatchPropertyData> Properties;
 
-        public PatchTypeData(TypeReference target, TypeDefinition patch) {
+        public PatchTypeData(TypeDefinition target, TypeDefinition patch) {
             TargetType = target;
             PatchType = patch;
             PatchModuleName = patch.Module.Assembly.FullName;

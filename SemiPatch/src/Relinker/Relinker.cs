@@ -6,6 +6,12 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Recursive relinker based on <code>Mono.Cecil</code>. Allows mapping types
+    /// and type members to <see cref="Entry"/> objects which specify how the
+    /// object should be altered. Recursively traverses through the type hierarchy,
+    /// attributes, method bodies etc.
+    /// </summary>
     public class Relinker {
         public struct Entry {
             public Exception RejectException;

@@ -4,6 +4,11 @@ using System.Text;
 using Mono.Cecil;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Abstract generic class representing an object with data about a single patch
+    /// of a type member. See: <see cref="PatchFieldData"/>, <see cref="PatchMethodData"/>,
+    /// <see cref="PatchPropertyData"/>.
+    /// </summary>
     public abstract class PatchMemberData<MemberDefinitionType, PathType>
     where MemberDefinitionType : class, IMemberDefinition
     where PathType : MemberPath<MemberDefinitionType> {
@@ -17,16 +22,80 @@ namespace SemiPatch {
         ) where TMemberDefinitionType : class, IMemberDefinition
           where TPathType : MemberPath<TMemberDefinitionType>;
 
+        /// <summary>
+        /// The member object within the target assembly that this patch wants to change.
+        /// Will not exist in the case of members tagged with the Insert attribute,
+        /// as no corresponding target member will exist for them before being patched in.
+        /// </summary>
         public MemberDefinitionType Target;
+
+        /// <summary>
+        /// The member object within the patch assembly. Will always exist.
+        /// </summary>
         public MemberDefinitionType Patch;
+
+        /// <summary>
+        /// Path of the member object that this patch is targetting. Will always
+        /// exist, even if the object is an Insert patch and <see cref="Target"/>
+        /// is <code>null</code>.
+        /// </summary>
         public PathType TargetPath;
+
+        /// <summary>
+        /// Path of the member object that represents this patch. Will always
+        /// exist.
+        /// </summary>
         public PathType PatchPath;
+
+        /// <summary>
+        /// Only used on methods. If <code>true</code>, the method that represents
+        /// this patch takes an additional argument (in the first position) of type
+        /// <code>Orig</code> or <code>VoidOrig</code>. See <see cref="ReceiveOriginalAttribute"/>
+        /// to learn more about the attribute and its behavior.
+        /// </summary>
         public bool ReceivesOriginal;
+
+        /// <summary>
+        /// If <code>true</code>, the member representing this patch is ignored,
+        /// no matter if it has any other attributes or data. See <see cref="IgnoreAttribute"/>
+        /// to learn more about the attribute and its behavior.
+        /// </summary>
         public bool ExplicitlyIgnored;
+
+        /// <summary>
+        /// If not <code>null</code>, signifies that in the final executing
+        /// product the member representing this patch should have the name
+        /// specified in this field, as well as any references to the member
+        /// must be renamed appropriately. See <see cref="TargetNameAttribute"/>
+        /// to learn more about the attribute and its behavior.
+        /// </summary>
         public string AliasedName;
+
+        /// <summary>
+        /// If <code>true</code>, for all intents and purposes this patch is
+        /// ignored, no matter if it has any other attributes or data. Unlike
+        /// the <see cref="ExplicitlyIgnored"/> field however, Proxy members
+        /// must always refer to an existing member within the target type.
+        /// See <see cref="ProxyAttribute"/> to learn more about the attribute
+        /// and its behavior.
+        /// </summary>
         public bool Proxy;
 
+        /// <summary>
+        /// Determines whether this patch represents inserting a member into the
+        /// target type, not changing an existing one.
+        /// </summary>
+        /// <value><c>true</c> if <see cref="Target"/> is <code>null</code>
+        /// (<see cref="InsertAttribute"/> was used on the member); otherwise,
+        /// <c>false</c>.</value>
         public bool IsInsert => Target == null;
+
+        /// <summary>
+        /// Name of the kind of member this object represents (used only for
+        /// hashing and equality comparison).
+        /// </summary>
+        /// <value>The name of the member type (<code>Method</code>,
+        /// <code>Field</code>, <code>Property</code> etc.).</value>
         public abstract string MemberTypeName { get; }
 
         protected PatchMemberData(

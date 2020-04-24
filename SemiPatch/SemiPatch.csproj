@@ -45,7 +45,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Attributes.cs" />
     <Compile Include="src\SpecialAttributeData.cs" />
-    <Compile Include="src\PatchControl.cs" />
     <Compile Include="src\SemiPatch.cs" />
     <Compile Include="src\Analyzer\PatchData.cs" />
     <Compile Include="src\Analyzer\PatchMethodData.cs" />

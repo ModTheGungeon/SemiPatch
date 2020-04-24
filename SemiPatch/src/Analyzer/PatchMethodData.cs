@@ -5,6 +5,11 @@ using System.Text;
 using System.IO;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Object containing data about a single method patch.
+    /// See <see cref="PatchMemberData{,}"/> for elements available on all type member
+    /// patches.
+    /// </summary>
     public class PatchMethodData : PatchMemberData<MethodDefinition, MethodPath> {
         public PatchMethodData(
             MethodDefinition target, MethodDefinition patch,

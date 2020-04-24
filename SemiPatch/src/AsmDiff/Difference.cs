@@ -7,7 +7,6 @@ namespace SemiPatch {
         public abstract class TypeDifference {
             public abstract bool ExistsInOld { get; }
             public abstract bool ExistsInNew { get; }
-
         }
 
         public class TypeChanged : TypeDifference {

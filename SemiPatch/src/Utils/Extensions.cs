@@ -5,6 +5,10 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Extension methods used all over the place in <code>SemiPatch</code>.
+    /// TODO: document all these?
+    /// </summary>
     public static class Extensions {
         public static bool IsSame(this TypeReference a, TypeReference b) {
             a = a.Resolve() ?? a;

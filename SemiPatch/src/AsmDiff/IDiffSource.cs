@@ -1,5 +1,5 @@
 ﻿using System;
-namespace SemiPatch.RDAR {
+namespace SemiPatch {
     public interface IDiffSource {
         AssemblyDiff ProduceDifference();
     }

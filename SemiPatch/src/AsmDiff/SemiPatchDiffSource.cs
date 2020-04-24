@@ -4,7 +4,14 @@ using ModTheGungeon;
 using Mono.Cecil;
 using static SemiPatch.AssemblyDiff;
 
-namespace SemiPatch.RDAR {
+namespace SemiPatch {
+    /// <summary>
+    /// Capable of producing an <see cref="AssemblyDiff"/> based on two
+    /// <see cref="PatchData"/> objects representing SemiPatch metadata.
+    /// This type shuold be used if what the user wants is the difference between
+    /// the *results* of two patch assemblies at runtime, not their physical
+    /// pytecode.
+    /// </summary>
     public struct SemiPatchDiffSource : IDiffSource {
         public PatchData OldPatchData;
         public PatchData NewPatchData;

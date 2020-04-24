@@ -4,6 +4,11 @@ using System.Text;
 using Mono.Cecil;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Object containing data about a single field patch.
+    /// See <see cref="PatchMemberData{,}"/> for elements available on all type member
+    /// patches.
+    /// </summary>
     public class PatchFieldData : PatchMemberData<FieldDefinition, FieldPath> {
         public PatchFieldData(
             FieldDefinition target, FieldDefinition patch,

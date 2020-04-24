@@ -5,8 +5,15 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using static SemiPatch.AssemblyDiff;
 
-namespace SemiPatch.RDAR {
-    public class CILDiffSource : IDiffSource {
+namespace SemiPatch {
+    /// <summary>
+    /// Capable of producing an <see cref="AssemblyDiff"/> based on the actual
+    /// contents of two modules. Additionally, <see cref="ExcludeTypesWithAttribute(TypeReference)"/>
+    /// can be used to exclude types tagged with certain attributes from the
+    /// algorithm, such as <see cref="PatchAttribute"/> (so that the more appropriate
+    /// <see cref="SemiPatchDiffSource"/> can be used separately).
+    /// </summary>
+    public struct CILDiffSource : IDiffSource {
         public ModuleDefinition OldModule;
         public ModuleDefinition NewModule;
         public HashSet<string> ExcludedTypeAttributeSignatures;

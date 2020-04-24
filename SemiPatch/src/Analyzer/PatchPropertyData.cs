@@ -4,6 +4,16 @@ using System.Text;
 using Mono.Cecil;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Object containing data about a single field patch.
+    /// See <see cref="PatchMemberData{,}"/> for elements available on all type member
+    /// patches.
+    /// It is worth noting that while properties are recognized as a kind of member
+    /// within .NET/Mono, they make use of method members for the getter and setter
+    /// as well as optionally a field member for the backing field (in C#). Therefore,
+    /// in essentially all cases this object will come alongside the respective
+    /// patch data objects for the members it depends on.
+    /// </summary>
     public class PatchPropertyData : PatchMemberData<PropertyDefinition, PropertyPath> {
         public PatchPropertyData(
             PropertyDefinition target, PropertyDefinition patch,
