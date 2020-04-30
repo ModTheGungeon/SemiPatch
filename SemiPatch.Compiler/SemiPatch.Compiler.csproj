@@ -3,11 +3,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{38143A7B-A727-4864-918E-84362D34F127}</ProjectGuid>
+    <ProjectGuid>{27B88F3A-6C72-4CCC-90F3-4CA848DB030A}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>SemiPatch.MonoMod</RootNamespace>
-    <AssemblyName>SemiPatch.MonoMod</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <RootNamespace>SemiPatch.Compiler</RootNamespace>
+    <AssemblyName>SemiPatch.Compiler</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -17,68 +16,61 @@
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
+    <ExternalConsole>true</ExternalConsole>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
+    <ExternalConsole>true</ExternalConsole>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="Mono.Cecil">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.dll</HintPath>
+      <HintPath>..\packages\Mono.Cecil.0.11.2\lib\net40\Mono.Cecil.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil.Mdb">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Mdb.dll</HintPath>
+      <HintPath>..\packages\Mono.Cecil.0.11.2\lib\net40\Mono.Cecil.Mdb.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil.Pdb">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Pdb.dll</HintPath>
+      <HintPath>..\packages\Mono.Cecil.0.11.2\lib\net40\Mono.Cecil.Pdb.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil.Rocks">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Rocks.dll</HintPath>
+      <HintPath>..\packages\Mono.Cecil.0.11.2\lib\net40\Mono.Cecil.Rocks.dll</HintPath>
     </Reference>
     <Reference Include="MonoMod">
-      <HintPath>..\packages\MonoMod.20.3.5.1\lib\net35\MonoMod.exe</HintPath>
+      <HintPath>..\packages\MonoMod.20.3.5.1\lib\net40\MonoMod.exe</HintPath>
     </Reference>
     <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>..\packages\MonoMod.RuntimeDetour.20.3.5.1\lib\net35\MonoMod.RuntimeDetour.dll</HintPath>
+      <HintPath>..\packages\MonoMod.RuntimeDetour.20.3.5.1\lib\net40\MonoMod.RuntimeDetour.dll</HintPath>
     </Reference>
     <Reference Include="MonoMod.Utils">
-      <HintPath>..\packages\MonoMod.Utils.20.3.5.1\lib\net35\MonoMod.Utils.dll</HintPath>
+      <HintPath>..\packages\MonoMod.Utils.20.3.5.1\lib\net40\MonoMod.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="CommandLine">
+      <HintPath>..\packages\CommandLineParser.2.7.82\lib\net40\CommandLine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="src\RDAR\Support.cs" />
-    <Compile Include="src\Static\MonoModStaticConverter.cs" />
     <Compile Include="src\Program.cs" />
-    <Compile Include="src\RDAR\RDARAgent.cs" />
-    <Compile Include="src\RDAR\ExplicitOrig.cs" />
-    <Compile Include="src\RDAR\ExplicitVoidOrig.cs" />
-    <Compile Include="src\RDAR\ExplicitOrigFactory.cs" />
-    <Compile Include="src\RDAR\RuntimePatchManager.cs" />
+    <Compile Include="src\ArraySpan.cs" />
+    <Compile Include="src\Options.cs" />
     <Compile Include="src\Exceptions.cs" />
-    <Compile Include="src\ReloadableModule\ReloadableModule.cs" />
-    <Compile Include="src\ReloadableModule\SpanStream.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="src\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SemiPatch.MonoMod\SemiPatch.MonoMod.csproj">
+      <Project>{38143A7B-A727-4864-918E-84362D34F127}</Project>
+      <Name>SemiPatch.MonoMod</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SemiPatch\SemiPatch.csproj">
       <Project>{4CA58FDE-E581-4269-82DD-166739E4114B}</Project>
       <Name>SemiPatch</Name>
     </ProjectReference>
-    <ProjectReference Include="..\libs\Logger\Logger.csproj">
-      <Project>{1C734127-AC83-4ECB-ABCA-32B98DFE49C7}</Project>
-      <Name>Logger</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="src\" />
-    <Folder Include="src\RDAR\" />
-    <Folder Include="src\Static\" />
-    <Folder Include="src\ReloadableModule\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

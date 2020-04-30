@@ -20,6 +20,11 @@ namespace TargetTest {
             return 42;
         }
 
+        public int Test(int a, string b) {
+            Console.WriteLine(PrepareString(StrToPrint));
+            return 42;
+        }
+
         public static string PrepareString<X>(X str) {
             return $"[{str}]";
         }
@@ -33,7 +38,28 @@ namespace TargetTest {
         }
     }
 
+    public class SmallClass {
+        public void Hello(string name) {
+            Console.WriteLine($"Hello {name}!");
+        }
+    }
+
     public static class MyClass {
+        public static bool TestBool;
+
+        public static bool ExecuteCommand(string cmd) {
+            if (cmd == "hello") {
+                var c = new SmallClass();
+                c.Hello("world");
+                return true;
+            }
+            if (cmd == "quit") {
+                Environment.Exit(0);
+            }
+
+            return false;
+        }
+
         public static void Main(string[] args) {
             var u = new UtilityClass<string>("Hello, world!");
             var r = u.PrintString();
@@ -41,6 +67,13 @@ namespace TargetTest {
             //Console.WriteLine(u.TestProp);
             //Console.WriteLine(u.GetOnlyProp);
             Console.WriteLine($"Result: {r}");
+
+            while (true) {
+                Console.Write("> ");
+                var cmd = Console.ReadLine();
+                var result = ExecuteCommand(cmd);
+                if (!result) Console.WriteLine($"Unknown command: {cmd}");
+            }
         }
     }
 }

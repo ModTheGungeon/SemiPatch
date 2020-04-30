@@ -18,7 +18,8 @@ namespace SemiPatch {
             bool receives_original = false,
             bool explicitly_ignored = false,
             string aliased_name = null,
-            bool proxy = false
+            bool proxy = false,
+            bool rejected_default_ctor = false
         ) : base(
             target, patch,
             target_path, patch_path,
@@ -26,7 +27,7 @@ namespace SemiPatch {
             explicitly_ignored: explicitly_ignored,
             aliased_name: aliased_name,
             proxy: proxy
-        ) { }
+        ) { FalseDefaultConstructor = rejected_default_ctor; }
 
         public PatchMethodData (
             MethodDefinition patch,
@@ -35,14 +36,16 @@ namespace SemiPatch {
             bool receives_original = false,
             bool explicitly_ignored = false,
             string aliased_name = null,
-            bool proxy = false
+            bool proxy = false,
+            bool rejected_default_ctor = false
         ) : this(
             null, patch,
             target_path, patch_path,
             receives_original: receives_original,
             explicitly_ignored: explicitly_ignored,
             aliased_name: aliased_name,
-            proxy: proxy
+            proxy: proxy,
+            rejected_default_ctor: rejected_default_ctor
         ) { }
 
         public static PatchMethodData Create(
@@ -64,10 +67,24 @@ namespace SemiPatch {
             );
         }
 
+        /// <summary>
+        /// If <c>true</c>, this data represents an empty, untagged, default
+        /// parameterless constructor in the patch class that does not actually
+        /// exist within the target class. This field is used for example in
+        /// <see cref="Relinker"/> to reject attempts to construct objects that
+        /// don't have a default constructor.
+        /// </summary>
+        public bool FalseDefaultConstructor = false;
+
         public override string MemberTypeName => "Method";
 
+        public override void Serialize(BinaryWriter writer) {
+            base.Serialize(writer);
+            writer.Write(FalseDefaultConstructor);
+        }
+
         public static PatchMethodData Deserialize(TypeDefinition target_type, TypeDefinition patch_type, BinaryReader reader) {
-            return Deserialize<PatchMethodData, MethodDefinition, MethodPath>(
+            var d = Deserialize<PatchMethodData, MethodDefinition, MethodPath>(
                 "method",
                 target_type,
                 patch_type,
@@ -77,6 +94,8 @@ namespace SemiPatch {
                 target_type.Methods,
                 patch_type.Methods
             );
+            d.FalseDefaultConstructor = reader.ReadBoolean();
+            return d;
         }
     }
 }

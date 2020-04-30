@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TargetTest", "TargetTest\Ta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemiPatch.MonoMod", "SemiPatch.MonoMod\SemiPatch.MonoMod.csproj", "{38143A7B-A727-4864-918E-84362D34F127}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemiPatch.Compiler", "SemiPatch.Compiler\SemiPatch.Compiler.csproj", "{27B88F3A-6C72-4CCC-90F3-4CA848DB030A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,5 +61,13 @@ Global
 		{38143A7B-A727-4864-918E-84362D34F127}.DebugLegacy|Any CPU.Build.0 = Debug|Any CPU
 		{38143A7B-A727-4864-918E-84362D34F127}.ReleaseLegacy|Any CPU.ActiveCfg = Debug|Any CPU
 		{38143A7B-A727-4864-918E-84362D34F127}.ReleaseLegacy|Any CPU.Build.0 = Debug|Any CPU
+		{27B88F3A-6C72-4CCC-90F3-4CA848DB030A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27B88F3A-6C72-4CCC-90F3-4CA848DB030A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27B88F3A-6C72-4CCC-90F3-4CA848DB030A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27B88F3A-6C72-4CCC-90F3-4CA848DB030A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27B88F3A-6C72-4CCC-90F3-4CA848DB030A}.DebugLegacy|Any CPU.ActiveCfg = Debug|Any CPU
+		{27B88F3A-6C72-4CCC-90F3-4CA848DB030A}.DebugLegacy|Any CPU.Build.0 = Debug|Any CPU
+		{27B88F3A-6C72-4CCC-90F3-4CA848DB030A}.ReleaseLegacy|Any CPU.ActiveCfg = Debug|Any CPU
+		{27B88F3A-6C72-4CCC-90F3-4CA848DB030A}.ReleaseLegacy|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal

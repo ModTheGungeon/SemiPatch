@@ -37,11 +37,19 @@ namespace SemiPatch {
 
             for (var i = 0; i < old_members.Count; i++) {
                 var member = old_members[i];
+                if (member is PatchMethodData) {
+                    if (((PatchMethodData)(object)member).FalseDefaultConstructor) continue;
+                }
+
                 old_member_map[member.TargetPath] = member;
             }
 
             for (var i = 0; i < new_members.Count; i++) {
                 var member = new_members[i];
+                if (member is PatchMethodData) {
+                    if (((PatchMethodData)(object)member).FalseDefaultConstructor) continue;
+                }
+
                 new_member_map[member.TargetPath] = member;
 
                 if (old_member_map.TryGetValue(member.TargetPath, out PatchMemberDataType old_member)) {
@@ -61,15 +69,18 @@ namespace SemiPatch {
             }
 
             for (var i = 0; i < old_members.Count; i++) {
-                var method = old_members[i];
+                var member = old_members[i];
+                if (member is PatchMethodData) {
+                    if (((PatchMethodData)(object)member).FalseDefaultConstructor) continue;
+                }
 
-                if (!old_member_map.ContainsKey(method.TargetPath)) {
-                    if (method.IsInsert) {
-                        Logger.Debug($"{member_type_name} removed (insert patch removed): {method.TargetPath} patched (removed) in {method.PatchPath}");
-                        diffs.Add(new MemberRemoved<MemberDefinitionType, PathType>(member_type, method.TargetPath));
+                if (!old_member_map.ContainsKey(member.TargetPath)) {
+                    if (member.IsInsert) {
+                        Logger.Debug($"{member_type_name} removed (insert patch removed): {member.TargetPath} patched (removed) in {member.PatchPath}");
+                        diffs.Add(new MemberRemoved<MemberDefinitionType, PathType>(member_type, member.TargetPath));
                     } else {
-                        Logger.Debug($"{member_type_name} changed (patch removed): {method.TargetPath} patched in {method.PatchPath}");
-                        diffs.Add(new MemberChanged<MemberDefinitionType, PathType>(member_type, method.Patch, method.TargetPath));
+                        Logger.Debug($"{member_type_name} changed (patch removed): {member.TargetPath} patched in {member.PatchPath}");
+                        diffs.Add(new MemberChanged<MemberDefinitionType, PathType>(member_type, member.Patch, member.TargetPath));
                     }
                 }
             }

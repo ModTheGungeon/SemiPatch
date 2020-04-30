@@ -175,7 +175,7 @@ namespace SemiPatch {
             return ToString("");
         }
 
-        public void Serialize(BinaryWriter writer) {
+        public virtual void Serialize(BinaryWriter writer) {
             writer.Write(IsInsert);
             writer.Write(TargetPath);
             writer.Write(PatchPath);
@@ -217,8 +217,8 @@ namespace SemiPatch {
         }
 
         public static bool operator !=(PatchMemberData<MemberDefinitionType, PathType> a, PatchMemberData<MemberDefinitionType, PathType> b) {
-            if (a is null && b is null) return true;
-            if (a is null || b is null) return false;
+            if (a is null && b is null) return false;
+            if (a is null || b is null) return true;
             return !a.Equals(b);
         }
 

@@ -234,6 +234,17 @@ namespace SemiPatch {
             return type.IsSame(VoidOrig_n0) || type.IsSame(VoidOrig_n1) || type.IsSame(VoidOrig_n2) || type.IsSame(VoidOrig_n3) || type.IsSame(VoidOrig_n4) || type.IsSame(VoidOrig_n5) || type.IsSame(VoidOrig_n6) || type.IsSame(VoidOrig_n7) || type.IsSame(VoidOrig_n8) || type.IsSame(VoidOrig_n9) || type.IsSame(VoidOrig_n10) || type.IsSame(VoidOrig_n11) || type.IsSame(VoidOrig_n12) || type.IsSame(VoidOrig_n13) || type.IsSame(VoidOrig_n14) || type.IsSame(VoidOrig_n15) || type.IsSame(VoidOrig_n16) || type.IsSame(VoidOrig_n17) || type.IsSame(VoidOrig_n18) || type.IsSame(VoidOrig_n19) || type.IsSame(VoidOrig_n20) || type.IsSame(VoidOrig_n21) || type.IsSame(VoidOrig_n22) || type.IsSame(VoidOrig_n23) || type.IsSame(VoidOrig_n24) || type.IsSame(VoidOrig_n25) || type.IsSame(VoidOrig_n26) || type.IsSame(VoidOrig_n27) || type.IsSame(VoidOrig_n28) || type.IsSame(VoidOrig_n29) || type.IsSame(VoidOrig_n30);
         }
 
+        public static int GetParameterCount(TypeReference type) {
+            if (type is GenericInstanceType generic_type) {
+                if (TypeIsGenericOrig(type)) return generic_type.GenericArguments.Count - 1;
+                if (TypeIsGenericVoidOrig(type)) return generic_type.GenericArguments.Count;
+            } else {
+                if (TypeIsGenericOrig(type)) return type.GenericParameters.Count - 1;
+                if (TypeIsGenericVoidOrig(type)) return type.GenericParameters.Count;
+            }
+            throw new ArgumentException("Type must be generic Orig or VoidOrig", nameof(type));
+        }
+
         public static MethodReference NativePointerConstructorForOrigType(ModuleDefinition module, TypeReference type) {
             if (!TypeIsGenericOrig(type) && !TypeIsGenericVoidOrig(type)) throw new ArgumentException("Argument must be an Orig or VoidOrig TypeReference", nameof(type));
             var resolved = type.Resolve();
@@ -331,7 +342,7 @@ namespace SemiPatch {
             //}
 
             s.Append(")");
-            return new Signature(s.ToString());
+            return new Signature(s.ToString(), orig.Name);
         }
     }
 }

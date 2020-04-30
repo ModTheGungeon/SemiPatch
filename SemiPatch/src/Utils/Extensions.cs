@@ -94,6 +94,60 @@ namespace SemiPatch {
             return s.ToString();
         }
 
+        public static string BuildSignature(this System.Reflection.MethodBase method, bool skip_first_arg = false, string forced_name = null, string forced_first_arg = null) {
+            var s = new StringBuilder();
+            var name = forced_name ?? method.Name;
+            if (method is System.Reflection.MethodInfo method_info) {
+                s.Append(method_info.ReturnType.BuildSignature());
+                s.Append(" ");
+            } else {
+                if (method.Name == ".ctor") {
+                    name = "<ctor>";
+                }
+            }
+
+            s.Append(name);
+            var i = 0;
+            if (method.IsGenericMethod) {
+                var generic_params = method.GetGenericArguments();
+                if (generic_params.Length > 0) {
+                    s.Append("<");
+                    var generic_arg_count = generic_params.Length;
+                    i = 0;
+                    foreach (var generic_param in generic_params) {
+                        s.Append(generic_param.BuildSignature());
+                        if (i < generic_arg_count - 1) s.Append(", ");
+                        i += 1;
+                    }
+                    s.Append(">");
+                }
+            }
+            s.Append("(");
+            var parameters = method.GetParameters();
+            var param_count = parameters.Length;
+            if (forced_first_arg != null) {
+                s.Append(forced_first_arg);
+                if (param_count > 0) s.Append(", ");
+            }
+            i = 0;
+            foreach (var param in parameters) {
+                if (i == 0 && skip_first_arg) {
+                    i = 1;
+                    continue;
+                }
+                s.Append(param.ParameterType.BuildSignature());
+                s.Append(" ");
+                s.Append("arg");
+                s.Append(i - (skip_first_arg ? 1 : 0));
+                if (i < param_count - 1) s.Append(", ");
+                i += 1;
+            }
+
+            s.Append(")");
+            return s.ToString();
+        }
+
+
         public static string BuildPrefixedSignature(this MethodReference method, bool skip_first_arg = false, string forced_name = null, string forced_first_arg = null) {
             return method.DeclaringType.PrefixSignature(method.BuildSignature(skip_first_arg, forced_name, forced_first_arg));
         }
@@ -150,7 +204,7 @@ namespace SemiPatch {
             }
 
             var s = new StringBuilder();
-            var name = type.Name;
+            var name = type.FullName;
             var grave_accent_index = name.IndexOf('`');
             if (grave_accent_index > -1) {
                 name = name.Substring(0, grave_accent_index);
@@ -177,6 +231,40 @@ namespace SemiPatch {
                     }
                     s.Append(">");
                 }
+            }
+            return s.ToString();
+        }
+
+        public static string BuildSignature(this Type type) {
+            if (type.Namespace == "System") {
+                if (type.Name == "Void") return "void";
+                if (type.Name == "String") return "string";
+                if (type.Name == "Int32") return "int";
+                if (type.Name == "UInt32") return "uint";
+                if (type.Name == "Int64") return "long";
+                if (type.Name == "UInt64") return "ulong";
+                if (type.Name == "Int16") return "short";
+                if (type.Name == "UInt16") return "ushort";
+                if (type.Name == "Char") return "char";
+                if (type.Name == "Boolean") return "bool";
+            }
+
+            var s = new StringBuilder();
+            var name = type.FullName ?? type.Name;
+            var grave_accent_index = name.IndexOf('`');
+            if (grave_accent_index > -1) {
+                name = name.Substring(0, grave_accent_index);
+            }
+            s.Append(name);
+            var generic_params = type.GetGenericArguments();
+            if (generic_params.Length > 0) {
+                s.Append("<");
+                for (var i = 0; i < generic_params.Length; i++) {
+                    var generic_param = generic_params[i];
+                    s.Append(generic_param.BuildSignature());
+                    if (i < generic_params.Length - 1) s.Append(", ");
+                }
+                s.Append(">");
             }
             return s.ToString();
         }
@@ -334,12 +422,12 @@ namespace SemiPatch {
 
         public static PropertyPath ToPropertyPathFromGetter(this MethodDefinition self, string prop_name) {
             var sig = self.BuildPropertySignatureFromGetter(prop_name);
-            return new PropertyPath(new Signature(sig), self.DeclaringType);
+            return new PropertyPath(new Signature(sig, prop_name), self.DeclaringType);
         }
 
         public static PropertyPath ToPropertyPathFromSetter(this MethodDefinition self, string prop_name, bool skip_first_arg = false) {
             var sig = self.BuildPropertySignatureFromSetter(prop_name, skip_first_arg);
-            return new PropertyPath(new Signature(sig), self.DeclaringType);
+            return new PropertyPath(new Signature(sig, prop_name), self.DeclaringType);
         }
 
         public static FieldPath ToPath(this FieldDefinition self, string forced_name = null) {
@@ -387,9 +475,18 @@ namespace SemiPatch {
                 x ^= attrib.CalculateHashCode();
             }
             x ^= (int)method.Attributes * 2663;
-            x ^= (int)method.RVA * 4547;
             x ^= (int)method.ImplAttributes * 6983;
             x ^= (int)method.SemanticsAttributes * 9811;
+
+            // we don't hash RVA for two reasons
+            // one is that we already hash the entire body, so rva is unnecessary
+            // two is that changing surrounding members will actually affect
+            // the rva - I'm not sure why, but I think it might have something
+            // to do with the compiler inserting nops to pad the size of the
+            // method to a specific byte boundary
+
+            // this leads to false positive differences being detected inboth
+            // SemiPatchDiffSource and CILDiffSource, so we just ignore it
 
             return x;
         }
@@ -444,6 +541,40 @@ namespace SemiPatch {
 
         public static TypePath ToPath(this TypeDefinition type) {
             return new TypePath(type);
+        }
+
+        public static Instruction FirstAfterNops(this Instruction instr) {
+            while (instr != null && instr.OpCode == OpCodes.Nop) {
+                instr = instr.Next;
+            }
+
+            return instr;
+        }
+
+        public static Type ToReflection(this TypeReference type) {
+            var resolved = type.Resolve();
+            var asm = System.Reflection.Assembly.Load(resolved.Module.Assembly.FullName);
+            var reflection_type = resolved.ToPath().FindIn(asm);
+
+            if (type is GenericInstanceType generic_type) {
+                var type_args = new Type[generic_type.GenericArguments.Count];
+                for (var i = 0; i < generic_type.GenericArguments.Count; i++) {
+                    type_args[i] = generic_type.GenericArguments[i].ToReflection();
+                }
+                reflection_type = reflection_type.MakeGenericType(type_args);
+            }
+
+            return reflection_type;
+        }
+
+        // https://stackoverflow.com/a/5730893
+        public static void CopyTo(this Stream input, Stream output) {
+            byte[] buffer = new byte[16 * 1024]; // Fairly arbitrary size
+            int byte_count;
+
+            while ((byte_count = input.Read(buffer, 0, buffer.Length)) > 0) {
+                output.Write(buffer, 0, byte_count);
+            }
         }
     }
 }

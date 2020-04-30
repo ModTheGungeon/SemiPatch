@@ -7,7 +7,9 @@ namespace SemiPatch.RDAR.Support {
     }
 
     public class HasOriginalInAttribute : Attribute {
-        public HasOriginalInAttribute(string name) { }
+        public string OrigName;
+
+        public HasOriginalInAttribute(string name) { OrigName = name; }
     }
 
     public static class RDARSupport {

@@ -42,12 +42,12 @@ namespace SemiPatch {
                 data.WriteInsertList(f);
             }
 
-            var sprelinker = new global::SemiPatch.Relinker();
-            sprelinker.LoadRelinkMapFrom(data);
-            sprelinker.Relink(data.PatchModules[0]);
-            using (var f = File.OpenWrite("relinked.dll")) {
-                data.PatchModules[0].Write(f);
-            }
+            //var sprelinker = new global::SemiPatch.Relinker();
+            //sprelinker.LoadRelinkMapFrom(data);
+            //sprelinker.Relink(new Relinker.State(data.PatchModules[0]), data.PatchModules[0]);
+            //using (var f = File.OpenWrite("relinked.dll")) {
+            //    data.PatchModules[0].Write(f);
+            //}
 
             var conv = new MonoModStaticConverter(data);
             conv.Apply();

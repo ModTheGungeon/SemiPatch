@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using ModTheGungeon;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
 
 namespace SemiPatch {
@@ -19,6 +20,8 @@ namespace SemiPatch {
 
         public PatchData PatchData;
 
+        private Dictionary<TypePath, MethodReference> _ParameterlessCtorCache;
+
         public Analyzer(string target_path, IList<string> patch_paths) {
             Logger.Debug($"New Patcher created from {patch_paths.Count} paths");
             MethodMap = new Dictionary<MethodPath, MethodDefinition>();
@@ -26,6 +29,8 @@ namespace SemiPatch {
             PropertyMap = new Dictionary<PropertyPath, PropertyDefinition>();
             IgnoredMethods = new HashSet<MethodDefinition>();
             IgnoredFields = new HashSet<FieldDefinition>();
+
+            _ParameterlessCtorCache = new Dictionary<TypePath, MethodReference>();
 
             PatchModules = new ModuleDefinition[patch_paths.Count];
             var i = 0;
@@ -57,6 +62,19 @@ namespace SemiPatch {
             }
         }
 
+        public MethodReference TryGetParameterlessCtor(TypeReference type) {
+            var r = type.Resolve();
+            var path = r.ToPath();
+            if (_ParameterlessCtorCache.TryGetValue(path, out MethodReference method)) return method;
+            for (var i = 0; i < r.Methods.Count; i++) {
+                var typemethod = r.Methods[i];
+                if (typemethod.IsConstructor && typemethod.Parameters.Count == 0) {
+                    return _ParameterlessCtorCache[path] = typemethod;
+                }
+            }
+            return _ParameterlessCtorCache[path] = null;
+        }
+
         public MethodDefinition TryGetTargetMethod(MethodPath path) {
             if (MethodMap.TryGetValue(path, out MethodDefinition def)) return def;
             return null;
@@ -84,15 +102,48 @@ namespace SemiPatch {
                 Logger.Debug($"Scanning method: {method.BuildSignature()}");
                 var method_attrs = new SpecialAttributeData(method.CustomAttributes);
 
-                if (method.IsConstructor && !method_attrs.TreatConstructorLikeMethod) {
-                    Logger.Debug($"Skipping constructor");
-                    continue;
-                }
-
                 var patch_path = method.ToPath();
                 var name = method_attrs.AliasedName ?? method.Name;
                 var target_path = method.ToPath(method_attrs.ReceiveOriginal, forced_name: name).WithDeclaringType(type_data.TargetType.Resolve());
                 var target = TryGetTargetMethod(target_path);
+
+                if (method.IsConstructor) {
+                    if (!method_attrs.TreatConstructorLikeMethod) {
+                        if (method.Parameters.Count != 0) throw new Exception($"Only a single untagged, empty and parameterless constructor can exist in a patch class. If you wish to patch, insert or otherwise alter '{patch_path}', tag it with the TreatLikeMethod attribute.");
+                        if (method.Body.Instructions.Count == 0) {
+                            Logger.Debug($"Skipping default constructor with 0 instructions (some weirdness is afoot?)");
+                            continue;
+                        }
+
+                        var instr = method.Body.Instructions[0];
+                        instr = instr.FirstAfterNops();
+                        if (instr == null || instr.OpCode != OpCodes.Ldarg_0) {
+                            throw new Exception($"If untagged, the default parameterless constructor ('{patch_path}') must remain empty (or not defined at all within the class). If you wish to alter or proxy the default constructor, tag it with the TreatLikeMethod attribute.");
+                        }
+                        var base_type_ctor_path = TryGetParameterlessCtor(type_data.PatchType.BaseType).Resolve().ToPath();
+                        instr = instr.Next?.FirstAfterNops();
+                        if (instr == null || (instr.OpCode != OpCodes.Call || ((MethodReference)instr.Operand).Resolve().ToPath() != base_type_ctor_path)) {
+                            throw new Exception($"If untagged, the default parameterless constructor ('{patch_path}') must remain empty (or not defined at all within the class). If you wish to alter or proxy the default constructor, tag it with the TreatLikeMethod attribute.");
+                        }
+
+                        instr = instr.Next?.FirstAfterNops();
+                        if (instr == null || instr.OpCode != OpCodes.Ret) {
+                            throw new Exception($"If untagged, the default parameterless constructor ('{patch_path}') must remain empty (or not defined at all within the class). If you wish to alter or proxy the default constructor, tag it with the TreatLikeMethod attribute.");
+                        }
+
+                        Logger.Debug($"Adding empty default constructor as Proxy: '{patch_path}' -> '{target_path}'");
+
+                        var ctor_data = new PatchMethodData(target, method, target_path, patch_path, proxy: true);
+                        type_data.Methods.Add(ctor_data);
+
+                        if (target == null) {
+                            Logger.Warn($"Empty default constructor '{patch_path}' doesn't exist in target under '{target_path}' - it will be marked as FalseDefaultConstructor, and Relinker will reject calls.");
+                            ctor_data.FalseDefaultConstructor = true;
+
+                        }
+                        continue;
+                    }
+                }
 
                 Logger.Debug($"Path: '{patch_path}'");
 

@@ -99,7 +99,7 @@ namespace SemiPatch.MonoMod {
                     RDARSupportNameAliasedFromAttributeConstructor,
                     new CustomAttributeArgument(StringType, method.Patch.Name)
                 );
-                Relinker.MapMethod(method.PatchPath, Relinker.Entry.FromPatchMemberData(type, method));
+                Relinker.MapMethod(method.PatchPath, Relinker.MemberEntry<MethodDefinition>.FromPatchData(method.Target.Module, type, method));
                 Relinker.ScheduleDefinitionRename(method.Patch, method.AliasedName);
             }
 
@@ -275,7 +275,7 @@ namespace SemiPatch.MonoMod {
                     RDARSupportNameAliasedFromAttributeConstructor,
                     new CustomAttributeArgument(StringType, field.Patch.Name)
                 );
-                Relinker.MapField(field.PatchPath, Relinker.Entry.FromPatchMemberData(type, field));
+                Relinker.MapField(field.PatchPath, Relinker.MemberEntry<FieldDefinition>.FromPatchData(field.Target.Module, type, field));
                 Relinker.ScheduleDefinitionRename(field.Patch, field.AliasedName);
             }
 

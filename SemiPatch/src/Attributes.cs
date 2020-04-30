@@ -10,7 +10,7 @@ namespace SemiPatch {
         /// <param name="type">
         /// Determines the target class, which is the one that will be altered
         /// using data from the tagged patch class. Use a <c>typeof(...)</c>
-        /// expression here.
+        /// expression here, e.g. <c>[PatchAttribute(typeof(Foo))]</c>.
         /// </param>
         public PatchAttribute(Type type) {
             Type = type;
