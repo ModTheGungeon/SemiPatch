@@ -5,6 +5,7 @@ using Mono.Cecil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using SemiPatch;
+using SemiPatch.MonoMod;
 using SemiPatch.RDAR;
 
 using BindingFlags = System.Reflection.BindingFlags;
@@ -12,7 +13,7 @@ using BindingFlags = System.Reflection.BindingFlags;
 namespace PatchTest.Patches {
     public static class NewClass {
         public static void PrintText() {
-            Console.WriteLine($"Hello, world!");
+            Console.WriteLine($"changed at runtime!");
         }
     }
 
@@ -30,6 +31,7 @@ namespace PatchTest.Patches {
         [ReceiveOriginal]
         public void Hello(VoidOrig<string> orig, string name) {
             NewClass.PrintText();
+            Console.WriteLine($"added at runtime!");
             Console.WriteLine($"orig = {orig}");
             Console.WriteLine($"name = {name}");
             orig(name);
@@ -39,24 +41,20 @@ namespace PatchTest.Patches {
     [Patch(type: typeof(TargetTest.MyClass))]
     public static class XClass {
         [Insert]
-        public static PatchData CurrentPatchData;
+        public static ReloadableModule CurrentModule;
 
         [Insert]
-        public static ModuleDefinition PatchModule;
-
-        [Insert]
-        public static ModuleDefinition TargetModule;
-
-        [Insert]
-        public static ModuleDefinition StaticallyPatchedModule;
-
-        [Insert]
-        public static SemiPatch.MonoMod.RuntimePatchManager PatchManager;
+        public static SingleTargetClient RDARClient;
 
         [Insert]
         [TreatLikeMethod]
         static XClass() {
-            Console.WriteLine($"cctor");
+            RDARClient = new SingleTargetClient(
+                typeof(TargetTest.SmallClass).Assembly,
+                ModuleDefinition.ReadModule("TargetTest.exe"),
+                ModuleDefinition.ReadModule("MONOMODDED_TargetTest.exe")
+            );
+            CurrentModule = ReloadableModule.Read("PatchTest.spr", RDARClient.TargetModule);
         }
 
         [Insert]
@@ -65,16 +63,6 @@ namespace PatchTest.Patches {
         [ReceiveOriginal]
         public static void Main(VoidOrig<string[]> orig, string[] args) {
             Console.WriteLine($"Injected.");
-            CurrentPatchData = PatchData.ReadFrom("test.bin");
-            PatchModule = ModuleDefinition.ReadModule("PatchTest.dll");
-            TargetModule = ModuleDefinition.ReadModule("TargetTest.exe");
-            StaticallyPatchedModule = ModuleDefinition.ReadModule("MONOMODDED_TargetTest.exe");
-            PatchManager = new SemiPatch.MonoMod.RuntimePatchManager(
-                typeof(TargetTest.SmallClass).Assembly,
-                StaticallyPatchedModule
-            );
-            Console.WriteLine($"Loaded SemiPatch data:");
-            Console.WriteLine(CurrentPatchData);
             orig(args);
         }
 
@@ -90,29 +78,12 @@ namespace PatchTest.Patches {
             }
 
             if (cmd == "reload") {
-                var module = ModuleDefinition.ReadModule("TEST_PatchTest.dll");
+                var rm = ReloadableModule.Read("PatchTest.spr", RDARClient.TargetModule);
 
-                Console.WriteLine($"fully qualified name: {module.Assembly.FullName}");
-                var new_patch_data = PatchData.ReadFrom("test.bin", new Dictionary<string, ModuleDefinition> {
-                    [TargetModule.Assembly.FullName] = TargetModule,
-                    [module.Assembly.FullName] = module
-                });
-                Console.WriteLine(new_patch_data);
-                var diffsource = new SemiPatchDiffSource(CurrentPatchData, new_patch_data);
-                var diff = diffsource.ProduceDifference();
-                var relinker = new SemiPatch.Relinker();
-                relinker.LoadRelinkMapFrom(new_patch_data, StaticallyPatchedModule);
-                CurrentPatchData = new_patch_data;
-
-                PatchManager.ResetDetours();
-                PatchManager.ProcessDifference(relinker, diff);
-
-                var xmodule = ModuleDefinition.ReadModule("PatchTest.dll");
-
-                var diffsource2 = new CILDiffSource(PatchModule, xmodule);
-                diffsource2.ExcludeTypesWithAttribute(SemiPatch.SemiPatch.PatchAttribute);
-                var diff2 = diffsource2.ProduceDifference();
-                PatchManager.ProcessDifference(relinker, diff2);
+                RDARClient.Reset();
+                RDARClient.Preload(rm);
+                RDARClient.Process(CurrentModule, rm);
+                CurrentModule = rm;
 
                 return true;
             }

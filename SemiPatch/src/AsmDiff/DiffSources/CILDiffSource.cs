@@ -103,6 +103,7 @@ namespace SemiPatch {
         public bool IsTypeExcluded(TypeDefinition type) {
             for (var i = 0; i < type.CustomAttributes.Count; i++) {
                 var attr = type.CustomAttributes[i];
+                if (attr.AttributeType.IsSame(SemiPatch.PatchAttribute)) return true;
                 var prefixed_sig = attr.AttributeType.BuildPrefixedSignature();
                 if (ExcludedTypeAttributeSignatures.Contains(prefixed_sig)) return true;
             }
@@ -158,10 +159,8 @@ namespace SemiPatch {
             ExcludedTypeAttributeSignatures.Add(prefixed_sig);
         }
 
-        public AssemblyDiff ProduceDifference() {
-            var diffs = new List<TypeDifference>();
+        public void ProduceDifference(IList<TypeDifference> diffs) {
             DoubleSearchTypes(diffs, OldModule.Types, NewModule.Types);
-            return new AssemblyDiff(diffs);
         }
     }
 }

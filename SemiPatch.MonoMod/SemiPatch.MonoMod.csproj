@@ -55,7 +55,6 @@
     <Compile Include="src\RDAR\Support.cs" />
     <Compile Include="src\Static\MonoModStaticConverter.cs" />
     <Compile Include="src\Program.cs" />
-    <Compile Include="src\RDAR\RDARAgent.cs" />
     <Compile Include="src\RDAR\ExplicitOrig.cs" />
     <Compile Include="src\RDAR\ExplicitVoidOrig.cs" />
     <Compile Include="src\RDAR\ExplicitOrigFactory.cs" />
@@ -63,6 +62,8 @@
     <Compile Include="src\Exceptions.cs" />
     <Compile Include="src\ReloadableModule\ReloadableModule.cs" />
     <Compile Include="src\ReloadableModule\SpanStream.cs" />
+    <Compile Include="src\RDAR\UniversalClient.cs" />
+    <Compile Include="src\RDAR\SingleTargetClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SemiPatch\SemiPatch.csproj">

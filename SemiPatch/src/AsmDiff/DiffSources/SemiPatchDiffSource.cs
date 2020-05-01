@@ -156,10 +156,8 @@ namespace SemiPatch {
             }
         }
 
-        public AssemblyDiff ProduceDifference() {
-            var diffs = new List<TypeDifference>();
+        public void ProduceDifference(IList<TypeDifference> diffs) {
             DoubleSearchTypes(diffs, OldPatchData.Types, NewPatchData.Types);
-            return new AssemblyDiff(diffs);
         }
     }
 }

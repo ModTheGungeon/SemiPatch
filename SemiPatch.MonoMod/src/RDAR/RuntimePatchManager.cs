@@ -211,6 +211,40 @@ namespace SemiPatch.MonoMod {
             }
         }
 
+        private bool _CanPatchTypeAtRuntime(TypeChanged type_changed) {
+            for (var i = 0; i < type_changed.MemberDifferences.Count; i++) {
+                var member = type_changed.MemberDifferences[i];
+                if (member.MemberType == MemberType.Method) {
+                    if (!(member is MemberChanged<MethodDefinition, MethodPath>)) {
+                        return false;
+                    }
+                } else return false;
+            }
+
+            for (var i = 0; i < type_changed.NestedTypeDifferences.Count; i++) {
+                var nested_type = type_changed.NestedTypeDifferences[i];
+                if (nested_type is TypeChanged nested_type_changed) {
+                    if (!_CanPatchTypeAtRuntime(nested_type_changed)) {
+                        return false;
+                    }
+                } else return false;
+            }
+
+            return true;
+        }
+
+        public bool CanPatchAtRuntime(AssemblyDiff diff) {
+            for (var i = 0; i < diff.TypeDifferences.Count; i++) {
+                var type = diff.TypeDifferences[i];
+
+                if (type is TypeChanged type_changed) {
+                    if (!_CanPatchTypeAtRuntime(type_changed)) return false;
+                } else return false;
+            }
+
+            return true;
+        }
+
         public void ProcessDifference(Relinker relinker, AssemblyDiff diff, bool update_running_module = false) {
             for (var i = 0; i < diff.TypeDifferences.Count; i++) {
                 _ProcessTypeDifference(relinker, diff.TypeDifferences[i], update_running_module);

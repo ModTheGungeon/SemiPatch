@@ -80,7 +80,6 @@ namespace SemiPatch.MonoMod {
         public static readonly byte[] MAGIC = { (byte)'S', (byte)'P', (byte)'R' };
 
         private ModuleDefinition _TargetModule;
-        private ModuleDefinition _RunningModule;
 
         private Stream _SourceStream;
 
@@ -162,14 +161,12 @@ namespace SemiPatch.MonoMod {
 
         public ReloadableModule(
             ModuleDefinition target_module,
-            ModuleDefinition running_module,
             Stream patch_asm_stream,
             Stream mmsg_asm_stream,
             Stream rdbs_asm_stream,
             Stream patch_data_stream
         ) {
             _TargetModule = target_module;
-            _RunningModule = running_module;
 
             PatchAssemblyStream = patch_asm_stream;
             MMSGAssemblyStream = mmsg_asm_stream;
@@ -179,14 +176,12 @@ namespace SemiPatch.MonoMod {
 
         public ReloadableModule(
             ModuleDefinition target_module,
-            ModuleDefinition running_module,
             ModuleDefinition patch_module,
             ModuleDefinition mmsg_module,
             ModuleDefinition rdbs_module,
             PatchData patch_data
         ) {
             _TargetModule = target_module;
-            _RunningModule = running_module;
 
             _PatchModule = patch_module;
             _MMSGModule = mmsg_module;
@@ -196,7 +191,6 @@ namespace SemiPatch.MonoMod {
 
         public ReloadableModule(
             ModuleDefinition target_module,
-            ModuleDefinition running_module,
             ModuleDefinition patch_module = null,
             ModuleDefinition mmsg_module = null,
             ModuleDefinition rdbs_module = null,
@@ -207,7 +201,6 @@ namespace SemiPatch.MonoMod {
             Stream patch_data_stream = null
         ) {
             _TargetModule = target_module;
-            _RunningModule = running_module;
 
             PatchAssemblyStream = patch_asm_stream;
             MMSGAssemblyStream = mmsg_asm_stream;
@@ -221,6 +214,26 @@ namespace SemiPatch.MonoMod {
 
         }
 
+        public static AssemblyDiff Compare(ReloadableModule a, ReloadableModule b) {
+            if (a == null && b == null) return AssemblyDiff.Empty;
+            if (b == null) {
+                return new AssemblyDiff(
+                    new CILAbsoluteDiffSource(AbsoluteDiffSourceMode.AllRemoved, a.PatchModule),
+                    new SemiPatchAbsoluteDiffSource(AbsoluteDiffSourceMode.AllRemoved, a.PatchData)
+                );
+            }
+            if (a == null) {
+                return new AssemblyDiff(
+                    new CILAbsoluteDiffSource(AbsoluteDiffSourceMode.AllAdded, b.PatchModule),
+                    new SemiPatchAbsoluteDiffSource(AbsoluteDiffSourceMode.AllAdded, b.PatchData)
+                );
+            }
+            return new AssemblyDiff(
+                new CILDiffSource(a.PatchModule, b.PatchModule),
+                new SemiPatchDiffSource(a.PatchData, b.PatchData)
+            );
+        }
+
         public static bool IsSPRMagic(byte[] ary) {
             if (ary.Length != 3) return false;
             if (ary[0] != MAGIC[0]) return false;
@@ -229,13 +242,12 @@ namespace SemiPatch.MonoMod {
             return true;
         }
 
-
-        public static ReloadableModule Read(string file_path, ModuleDefinition target_module, ModuleDefinition running_module) {
+        public static ReloadableModule Read(string file_path, ModuleDefinition target_module) {
             Stream stream = File.Open(file_path, FileMode.Open, FileAccess.Read, FileShare.Read);
-            return Read(stream, target_module, running_module);
+            return Read(stream, target_module);
         }
 
-        public static ReloadableModule Read(Stream stream, ModuleDefinition target_module, ModuleDefinition running_module) {
+        public static ReloadableModule Read(Stream stream, ModuleDefinition target_module) {
             var compression_flag = stream.ReadByte();
             if (compression_flag == 1) {
                 var file_stream = stream;
@@ -281,7 +293,6 @@ namespace SemiPatch.MonoMod {
 
             return new ReloadableModule(
                 target_module,
-                running_module,
                 patch_asm_stream,
                 mmsg_asm_stream,
                 rdbs_asm_stream,

@@ -10,16 +10,21 @@ namespace SemiPatch {
     /// Representation of a difference between assemblies. This may be used
     /// for purposes other than a direct diff between two DLLs - its main purpose
     /// is to represent the steps required to go from one state of an assembly
-    /// to another. For example, <see cref="SemiPatchDiffSource"/> produces
-    /// <c>AssemblyDiff</c> to represent how an assembly should be patched
-    /// based on two iterations of metadata objects, unrelated to how the actual
-    /// patches look in bytecode.
+    /// to another.
     /// </summary>
     public partial struct AssemblyDiff {
         public IList<TypeDifference> TypeDifferences;
 
-        public AssemblyDiff(IList<TypeDifference> diffs) {
-            TypeDifferences = diffs;
+        public static AssemblyDiff Empty => new AssemblyDiff { TypeDifferences = new List<TypeDifference>() };
+
+        public bool HasChanges => TypeDifferences != null && TypeDifferences.Count > 0;
+
+        public AssemblyDiff(params IDiffSource[] sources) {
+            TypeDifferences = new List<TypeDifference>();
+
+            for (var i = 0; i < sources.Length; i++) {
+                sources[i].ProduceDifference(TypeDifferences);
+            }
         }
     }
 }

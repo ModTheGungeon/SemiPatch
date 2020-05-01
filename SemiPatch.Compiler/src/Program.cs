@@ -87,7 +87,7 @@ namespace SemiPatch.MonoMod.Compiler {
 
                 f.Position = 0;
 
-                using (var spr = ReloadableModule.Read(f, null, null)) {
+                using (var spr = ReloadableModule.Read(f, null)) {
                     if (spr.HasMMSG) Console.Write(", with MMSG assembly");
                     if (spr.HasRDBS) Console.Write(", with RDBS assembly");
                 }
@@ -103,7 +103,7 @@ namespace SemiPatch.MonoMod.Compiler {
 
             if (!Directory.Exists(opts.OutputDir)) Directory.CreateDirectory(opts.OutputDir);
 
-            using (var spr = ReloadableModule.Read(opts.Path, null, null)) {
+            using (var spr = ReloadableModule.Read(opts.Path, null)) {
                 using (var f = File.OpenWrite(Path.Combine(opts.OutputDir, "patch_asm.dll")))
                     spr.PatchAssemblyStream.CopyTo(f);
 
