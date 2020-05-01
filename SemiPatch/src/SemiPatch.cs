@@ -2,15 +2,16 @@
 using Mono.Cecil;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Represents the kind of a .NET type member.
+    /// </summary>
     public enum MemberType {
         Method,
         Field,
         Property
     }
 
-    public class SemiPatch {
-
-
+    internal static class SemiPatch {
         public static ModuleDefinition SemiPatchModule;
         public static TypeDefinition PatchAttribute;
         public static TypeDefinition InsertAttribute;

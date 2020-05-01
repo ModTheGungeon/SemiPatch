@@ -50,25 +50,6 @@ namespace SemiPatch {
             rejected_default_ctor: rejected_default_ctor
         ) { }
 
-        public static PatchMethodData Create(
-            MethodDefinition target, MethodDefinition patch,
-            MethodPath target_path, MethodPath patch_path,
-            EndOfPositionalArguments end = default(EndOfPositionalArguments),
-            bool receives_original = false,
-            bool explicitly_ignored = false,
-            string aliased_name = null,
-            bool proxy = false
-        ) {
-            return new PatchMethodData(
-                target, patch,
-                target_path, patch_path,
-                receives_original: receives_original,
-                explicitly_ignored: explicitly_ignored,
-                aliased_name: aliased_name,
-                proxy: proxy
-            );
-        }
-
         /// <summary>
         /// If <c>true</c>, this data represents an empty, untagged, default
         /// parameterless constructor in the patch class that does not actually
@@ -78,10 +59,16 @@ namespace SemiPatch {
         /// </summary>
         public bool FalseDefaultConstructor = false;
 
+        /// <summary>
+        /// Typed version of <see cref="PatchMemberData.TargetMember"/>;
+        /// </summary>
         public MethodDefinition Target => (MethodDefinition)TargetMember;
+        /// <summary>
+        /// Typed version of <see cref="PatchMemberData.PatchMember"/>;
+        /// </summary>
         public MethodDefinition Patch => (MethodDefinition)PatchMember;
 
-        public override string MemberTypeName => "Method";
+        public override MemberType MemberType => MemberType.Method;
 
         public override void Serialize(BinaryWriter writer) {
             base.Serialize(writer);

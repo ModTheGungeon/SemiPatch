@@ -46,29 +46,16 @@ namespace SemiPatch {
             proxy: proxy
         ) { }
 
-        public static PatchFieldData Create(
-            FieldDefinition target, FieldDefinition patch,
-            FieldPath target_path, FieldPath patch_path,
-            EndOfPositionalArguments end = default(EndOfPositionalArguments),
-            bool receives_original = false,
-            bool explicitly_ignored = false,
-            string aliased_name = null,
-            bool proxy = false
-        ) {
-            return new PatchFieldData(
-                target, patch,
-                target_path, patch_path,
-                receives_original: receives_original,
-                explicitly_ignored: explicitly_ignored,
-                aliased_name: aliased_name,
-                proxy: proxy
-            );
-        }
-
+        /// <summary>
+        /// Typed version of <see cref="PatchMemberData.TargetMember"/>;
+        /// </summary>
         public FieldDefinition Target => (FieldDefinition)TargetMember;
+        /// <summary>
+        /// Typed version of <see cref="PatchMemberData.PatchMember"/>;
+        /// </summary>
         public FieldDefinition Patch => (FieldDefinition)PatchMember;
 
-        public override string MemberTypeName => "Field";
+        public override MemberType MemberType => MemberType.Field;
 
         public static PatchFieldData Deserialize(TypeDefinition target_type, TypeDefinition patch_type, BinaryReader reader) {
             var member = new PatchFieldData();

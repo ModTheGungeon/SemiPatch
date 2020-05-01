@@ -5,10 +5,7 @@ using Mono.Cecil.Rocks;
 using Mono.Collections.Generic;
 
 namespace SemiPatch {
-    /// <summary>
-    /// Internal class. TODO: change to <code>internal</code>.
-    /// </summary>
-    public class OrigFactory {
+    internal class OrigFactory {
         public static TypeReference VoidOrig_n0 = SemiPatch.SemiPatchModule.GetType("SemiPatch.VoidOrig");
         public static TypeReference VoidOrig_n1 = SemiPatch.SemiPatchModule.GetType("SemiPatch.VoidOrig`1");
         public static TypeReference VoidOrig_n2 = SemiPatch.SemiPatchModule.GetType("SemiPatch.VoidOrig`2");

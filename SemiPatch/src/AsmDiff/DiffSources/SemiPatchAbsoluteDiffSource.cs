@@ -5,6 +5,11 @@ using Mono.Cecil;
 using static SemiPatch.AssemblyDiff;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Produces a difference using only one SemiPatch metadata as input by either comparing
+    /// its contents to nothing (<see cref="AbsoluteDiffSourceMode.AllRemoved"/>),
+    /// or by comparing nothing to its contents (<see cref="AbsoluteDiffSourceMode.AllAdded"/>).
+    /// </summary>
     public struct SemiPatchAbsoluteDiffSource : IDiffSource {
         public AbsoluteDiffSourceMode Mode;
         public PatchData PatchData;

@@ -6,11 +6,11 @@ using static SemiPatch.AssemblyDiff;
 
 namespace SemiPatch {
     /// <summary>
-    /// Capable of producing an <see cref="AssemblyDiff"/> based on two
-    /// <see cref="PatchData"/> objects representing SemiPatch metadata.
-    /// This type shuold be used if what the user wants is the difference between
-    /// the *results* of two patch assemblies at runtime, not their physical
-    /// pytecode.
+    /// Produces a difference between the after-patch state of two SemiPatch
+    /// metadata objects (<see cref="PatchData"/>). In other words, it produces
+    /// an <see cref="AssemblyDiff"/> that represents the steps needed to take
+    /// to go from the state of an assembly patched using the old metadata to the
+    /// state that it would be in if it was patched using the new metadata.
     /// </summary>
     public struct SemiPatchDiffSource : IDiffSource {
         public PatchData OldPatchData;

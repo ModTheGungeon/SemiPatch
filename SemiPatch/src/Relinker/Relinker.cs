@@ -7,10 +7,11 @@ using Mono.Cecil.Cil;
 
 namespace SemiPatch {
     /// <summary>
-    /// Recursive relinker based on <code>Mono.Cecil</code>. Allows mapping types
-    /// and type members to <see cref="Entry"/> objects which specify how the
-    /// object should be altered. Recursively traverses through the type hierarchy,
-    /// attributes, method bodies etc.
+    /// Recursive relinker based on <c>Mono.Cecil</c>. Allows executing various
+    /// operations primarily based on matching types and members and modifying them.
+    /// SemiPatch uses Relinker to repoint references to members and types within patch
+    /// classes towards the target, as well as do additional validation (such as
+    /// rejecting calls to methods tagged with <see cref="ReceiveOriginalAttribute"/>).
     /// </summary>
     public class Relinker {
         public struct MemberEntry {

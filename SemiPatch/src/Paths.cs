@@ -6,14 +6,12 @@ using Mono.Cecil;
 using BindingFlags = System.Reflection.BindingFlags;
 
 namespace SemiPatch {
-    public class TypePathSearchException : Exception {
-        public TypePathSearchException(TypePath path) : base($"Failed to find type path '{path}'") { }
-    }
-
-    public class MemberPathSearchException : Exception {
-        public MemberPathSearchException(MemberPath path) : base($"Failed to find member path '{path}'") { }
-    }
-
+    /// <summary>
+    /// Represents a unique signature of a type or type member. In the case of
+    /// type members, this signature is only guaranteed to be unique within the
+    /// scope of its declaring type. For an identifier that's unique at the level
+    /// of the assembly, see <see cref="TypePath"/> or <see cref="MemberPath"/>.
+    /// </summary>
     public struct Signature {
         private readonly string _Value;
         public readonly string Name;
@@ -60,6 +58,10 @@ namespace SemiPatch {
         }
     }
 
+    /// <summary>
+    /// Represents an identifier and path to a type member. Unique within
+    /// the context of the declaring assembly.
+    /// </summary>
     public abstract class MemberPath {
         public string Namespace;
         protected string _TypeName;
@@ -303,6 +305,10 @@ namespace SemiPatch {
         }
     }
 
+    /// <summary>
+    /// Represents an identifier and path to a method. Unique within the context
+    /// of its declaring assembly.
+    /// </summary>
     public class MethodPath : MemberPath {
         public MethodPath(MethodDefinition method, bool skip_first_arg = false, string forced_name = null) : base(method.DeclaringType) {
             Signature = new Signature(method, skip_first_arg, forced_name);
@@ -386,6 +392,10 @@ namespace SemiPatch {
         }
     }
 
+    /// <summary>
+    /// Represents an identifier and path to a field. Unique within the context
+    /// of its declaring assembly.
+    /// </summary>
     public class FieldPath : MemberPath {
         public FieldPath(FieldDefinition field, string forced_name = null) : base(field.DeclaringType) {
             Signature = new Signature(field, forced_name: forced_name);
@@ -435,6 +445,10 @@ namespace SemiPatch {
         }
     }
 
+    /// <summary>
+    /// Represents an identifier and path to a property. Unique within the context
+    /// of its declaring assembly.
+    /// </summary>
     public class PropertyPath : MemberPath {
         public PropertyPath(PropertyDefinition prop, string forced_name = null) : base(prop.DeclaringType) {
             Signature = new Signature(prop, forced_name: forced_name);
@@ -484,6 +498,10 @@ namespace SemiPatch {
         }
     }
 
+    /// <summary>
+    /// Represents an identifier and path to a type. Unique within the context
+    /// of its declaring assembly.
+    /// </summary>
     public class TypePath {
         public string Namespace;
         internal string _TypeName;

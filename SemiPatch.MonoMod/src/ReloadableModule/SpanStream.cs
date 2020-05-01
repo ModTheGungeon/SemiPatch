@@ -2,6 +2,11 @@
 using System.IO;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Utility class that represents a thread-safe readonly limited view of a
+    /// seekable stream. Works by seeking the base stream to the right position
+    /// when reading and then restoring its state.
+    /// </summary>
     public class SpanStream : Stream, IDisposable {
         public Stream BaseStream;
         public long BaseStreamOffset;

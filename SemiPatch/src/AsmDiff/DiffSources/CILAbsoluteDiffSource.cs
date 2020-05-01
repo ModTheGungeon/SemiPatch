@@ -6,6 +6,11 @@ using Mono.Cecil.Cil;
 using static SemiPatch.AssemblyDiff;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Produces a difference using only one assembly as input by either comparing
+    /// its contents to nothing (<see cref="AbsoluteDiffSourceMode.AllRemoved"/>),
+    /// or by comparing nothing to its contents (<see cref="AbsoluteDiffSourceMode.AllAdded"/>).
+    /// </summary>
     public struct CILAbsoluteDiffSource : IDiffSource {
         public AbsoluteDiffSourceMode Mode;
         public ModuleDefinition Module;

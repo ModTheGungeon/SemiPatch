@@ -10,6 +10,12 @@ using BindingFlags = System.Reflection.BindingFlags;
 using static SemiPatch.AssemblyDiff;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Powerful low level interface to <see cref="MonoMod.RuntimeDetour"/>, capable
+    /// of generating and reloading methods at runtime. It is recommended to use
+    /// the slightly higher level <see cref="RuntimeClient"/> type to perform
+    /// loading and runtime reloading of SemiPatch patches.
+    /// </summary>
     public class RuntimePatchManager : IDisposable {
         public static TypeDefinition RuntimeTypeHandleType = SemiPatch.MscorlibModule.GetType("System.RuntimeTypeHandle");
         public static TypeDefinition TypeType = SemiPatch.MscorlibModule.GetType("System.Type");

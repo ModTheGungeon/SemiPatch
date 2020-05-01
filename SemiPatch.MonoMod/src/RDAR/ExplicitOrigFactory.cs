@@ -5,7 +5,7 @@ using Mono.Cecil.Rocks;
 using Mono.Collections.Generic;
 
 namespace SemiPatch {
-    public class ExplicitOrigFactory {
+    internal class ExplicitOrigFactory {
         public static ModuleDefinition SemiPatchMonoModModule = ModuleDefinition.ReadModule(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
         public static TypeReference ExplicitVoidOrig_n0 = SemiPatchMonoModModule.GetType("SemiPatch.ExplicitVoidOrig`1");

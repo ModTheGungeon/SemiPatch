@@ -5,6 +5,10 @@ using ModTheGungeon;
 using Mono.Cecil;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Runtime SemiPatch client, capable of loading SPR modules and reloading them
+    /// during runtime using RDAR. For static patching, see <see cref="StaticClient"/>;
+    /// </summary>
     public class RuntimeClient : Client {
         public enum Result {
             Success,

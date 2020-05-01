@@ -3,6 +3,10 @@ using System.IO;
 using Mono.Cecil;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Base type of a SemiPatch client capable of loading <see cref="ReloadableModule"/>s
+    /// and using them for patching and assembly manipulation.
+    /// </summary>
     public abstract class Client : IDisposable {
         public ModuleDefinition TargetModule;
 

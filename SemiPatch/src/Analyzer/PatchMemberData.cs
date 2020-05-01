@@ -5,9 +5,9 @@ using Mono.Cecil;
 
 namespace SemiPatch {
     /// <summary>
-    /// Abstract generic class representing an object with data about a single patch
+    /// Abstract class representing an object with data about a single patch
     /// of a type member. See: <see cref="PatchFieldData"/>, <see cref="PatchMethodData"/>,
-    /// <see cref="PatchPropertyData"/>.
+    /// <see cref="PatchPropertyData"/> for implementations.
     /// </summary>
     public abstract class PatchMemberData {
         /// <summary>
@@ -79,12 +79,10 @@ namespace SemiPatch {
         public bool IsInsert => TargetMember == null;
 
         /// <summary>
-        /// Name of the kind of member this object represents (used only for
-        /// hashing and equality comparison).
+        /// The type of member that this object represents. Used only for
+        /// hashing and equality comparison.
         /// </summary>
-        /// <value>The name of the member type (<c>Method</c>,
-        /// <c>Field</c>, <c>Property</c> etc.).</value>
-        public abstract string MemberTypeName { get; }
+        public abstract MemberType MemberType { get; }
 
         protected PatchMemberData() { } 
 
@@ -129,11 +127,11 @@ namespace SemiPatch {
             if (IsInsert) {
                 s.Append("Inserted ");
             } else {
-                s.Append($"Target {MemberTypeName}: ").Append(TargetMember.FullName).Append("\n");
+                s.Append($"Target {MemberType}: ").Append(TargetMember.FullName).Append("\n");
                 s.Append(indent);
                 s.Append("Patch ");
             }
-            s.Append($"{MemberTypeName}: ").Append(PatchMember.FullName);
+            s.Append($"{MemberType}: ").Append(PatchMember.FullName);
             if (AliasedName != null) {
                 s.Append("\n").Append(indent);
                 s.Append("Target Name: ").Append(AliasedName);
@@ -184,7 +182,7 @@ namespace SemiPatch {
             x ^= PatchMember.CalculateHashCode();
             x ^= TargetMember?.CalculateHashCode() ?? 0;
 
-            x ^= MemberTypeName.GetHashCode();
+            x ^= MemberType.GetHashCode();
 
             return x;
         }

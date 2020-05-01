@@ -10,6 +10,10 @@ using MonoMod;
 using MonoMod.InlineRT;
 
 namespace SemiPatch {
+    /// <summary>
+    /// Type capable of converting SemiPatch-compliant patch assemblies to 
+    /// ones that will be accepted and used by the MonoMod static patcher.
+    /// </summary>
     public class MonoModStaticConverter {
         public static ModuleDefinition MscorlibModule;
         public static TypeReference StringType;

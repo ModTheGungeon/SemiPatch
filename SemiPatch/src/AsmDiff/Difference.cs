@@ -4,11 +4,18 @@ using Mono.Cecil;
 
 namespace SemiPatch {
     public partial struct AssemblyDiff {
+        /// <summary>
+        /// Abstract class that represents a diff of a type.
+        /// </summary>
         public abstract class TypeDifference {
             public abstract bool ExistsInOld { get; }
             public abstract bool ExistsInNew { get; }
         }
 
+        /// <summary>
+        /// Represents a changed type, that is a type in which the set of members
+        /// and/or the metadata are different.
+        /// </summary>
         public class TypeChanged : TypeDifference {
             public TypeDefinition OldType;
             public TypeDefinition NewType;
@@ -26,6 +33,9 @@ namespace SemiPatch {
             }
         }
 
+        /// <summary>
+        /// Represents an added type.
+        /// </summary>
         public class TypeAdded : TypeDifference {
             public TypeDefinition Type;
 
@@ -37,6 +47,9 @@ namespace SemiPatch {
             }
         }
 
+        /// <summary>
+        /// Represents a removed type.
+        /// </summary>
         public class TypeRemoved : TypeDifference {
             public TypeDefinition Type;
 
@@ -48,6 +61,9 @@ namespace SemiPatch {
             }
         }
 
+        /// <summary>
+        /// Abstract class that represents the diff of a type member.
+        /// </summary>
         public abstract class MemberDifference {
             public abstract bool ExistsInOld { get; }
             public abstract bool ExistsInNew { get; }
@@ -63,6 +79,10 @@ namespace SemiPatch {
             }
         }
 
+        /// <summary>
+        /// Represents a member that had its data changed (e.g. the contents of
+        /// a method, or the attributes on other members).
+        /// </summary>
         public class MemberChanged : MemberDifference {
             public override bool ExistsInOld => true;
             public override bool ExistsInNew => true;
@@ -71,6 +91,9 @@ namespace SemiPatch {
             : base(member, path) {}
         }
 
+        /// <summary>
+        /// Represents an added member.
+        /// </summary>
         public class MemberAdded : MemberDifference {
             public override bool ExistsInOld => false;
             public override bool ExistsInNew => true;
@@ -79,6 +102,9 @@ namespace SemiPatch {
             : base(member, path) { }
         }
 
+        /// <summary>
+        /// Represents a removed member.
+        /// </summary>
         public class MemberRemoved : MemberDifference {
             public override bool ExistsInOld => true;
             public override bool ExistsInNew => false;

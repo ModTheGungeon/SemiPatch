@@ -6,8 +6,14 @@ using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
 
 namespace SemiPatch {
+    /// <summary>
+    /// The SemiPatch analyzer is the first thing you will ever run when
+    /// patching with SP. The analyzer reads through the types of a patch assembly
+    /// and extracts information specifically tagged for SemiPatch, such as
+    /// which classes actually patch something, what members they patch, etc.
+    /// </summary>
     public class Analyzer {
-        public static Logger Logger = new Logger("SemiPatch");
+        public static Logger Logger = new Logger("Analyzer");
 
         public ModuleDefinition TargetModule;
         public IList<ModuleDefinition> PatchModules;

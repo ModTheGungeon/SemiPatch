@@ -3,7 +3,7 @@ using Mono.Collections.Generic;
 using Mono.Cecil;
 
 namespace SemiPatch {
-    public struct SpecialAttributeData {
+    internal struct SpecialAttributeData {
         public TypeDefinition PatchType;
         public bool Insert;
         public bool Ignore;

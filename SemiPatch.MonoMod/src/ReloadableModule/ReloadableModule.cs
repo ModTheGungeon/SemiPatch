@@ -7,16 +7,9 @@ using Mono.Cecil;
 using System.Collections.Generic;
 
 namespace SemiPatch {
-    public class CorruptedReloadableModuleException : SemiPatchException {
-        public CorruptedReloadableModuleException(string section)
-            : base($"Attempted to load corrupted reloadable module. Error while reading section: '{section}'.") { }
-    }
-
-    public class InvalidVersionReloadableModuleException : SemiPatchException {
-        public InvalidVersionReloadableModuleException(int version)
-            : base($"Attempted to load a reloadable module that is either too new or too old. Current format version is {ReloadableModule.VERSION}, but version you're trying to load is {version}.") { }
-    }
-
+    /// <summary>
+    /// Runtime representation of a SemiPatch Reloadable module file (SPR).
+    /// </summary>
     public class ReloadableModule : IDisposable {
         public enum SPRFileType {
             Embedded,
