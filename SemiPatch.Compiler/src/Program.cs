@@ -10,6 +10,8 @@ using System.IO.Compression;
 
 namespace SemiPatch.MonoMod.Compiler {
     public class MainClass {
+        public static StreamWriter Stderr;
+
         public static int BuildMain(BuildOptions opts) {
             var target_path = opts.TargetPath;
             var patch_path = opts.PatchPath;
@@ -122,6 +124,39 @@ namespace SemiPatch.MonoMod.Compiler {
             return 0;
         }
 
+        public static int StaticPatchMain(StaticPatchOptions opts) {
+            var target = ModuleDefinition.ReadModule(opts.TargetPath);
+
+            var client = new StaticClient(target);
+
+            var any_module_has_mmsg = false;
+            for (var i = 0; i < opts.PatchModules.Count; i++) {
+                var patch_path = opts.PatchModules[i];
+                var result = client.Preload(client.Load(patch_path));
+                if (result == StaticClient.PreloadResult.NoMMSGModule) {
+                    Stderr.WriteLine($"WARNING: Patch module '{patch_path}' has no MMSG module, and will therefore not be patched.");
+                } else any_module_has_mmsg = true;
+            }
+
+            if (!any_module_has_mmsg) {
+                Stderr.WriteLine($"ERROR: No modules to patch.");
+                return 1;
+            }
+
+            var output_path = opts.OutputPath;
+            if (output_path == null) {
+                output_path = Path.Combine(
+                    Path.GetDirectoryName(opts.TargetPath),
+                    "PATCHED_" + Path.GetFileName(opts.TargetPath)
+                );
+            }
+
+            client.Commit();
+            client.WriteResult(output_path);
+
+            return 0;
+        }
+
         public static int HandleErrors(IEnumerable<Error> errors) {
             var error_status = false;
             using (var stderr = new StreamWriter(Console.OpenStandardError())) {
@@ -138,10 +173,13 @@ namespace SemiPatch.MonoMod.Compiler {
         }
 
         public static int Main(string[] args) {
+            Stderr = new StreamWriter(Console.OpenStandardError());
+
             var result = Parser.Default.ParseArguments<
                 TypeOptions,
                 BuildOptions,
-                ExtractOptions
+                ExtractOptions,
+                StaticPatchOptions
             >(args);
 
             try {
@@ -149,6 +187,7 @@ namespace SemiPatch.MonoMod.Compiler {
                     (TypeOptions opts) => TypeMain(opts),
                     (BuildOptions opts) => BuildMain(opts),
                     (ExtractOptions opts) => ExtractMain(opts),
+                    (StaticPatchOptions opts) => StaticPatchMain(opts),
                     errors => HandleErrors(errors)
                 );
             } catch (Exception e) {

@@ -10,7 +10,7 @@ using BindingFlags = System.Reflection.BindingFlags;
 using static SemiPatch.AssemblyDiff;
 
 namespace SemiPatch {
-    public class RuntimePatchManager {
+    public class RuntimePatchManager : IDisposable {
         public static TypeDefinition RuntimeTypeHandleType = SemiPatch.MscorlibModule.GetType("System.RuntimeTypeHandle");
         public static TypeDefinition TypeType = SemiPatch.MscorlibModule.GetType("System.Type");
         public static TypeDefinition MethodInfoType = SemiPatch.MscorlibModule.GetType("System.Reflection.MethodInfo");
@@ -257,6 +257,12 @@ namespace SemiPatch {
             }
 
             _Detours.Clear();
+        }
+
+        public void Dispose() {
+            for (var i = 0; i < _Detours.Count; i++) {
+                _Detours[i].Dispose();
+            }
         }
 
         private static void _RewriteOrigToExplicitOrig(MethodDefinition method, TypeReference explicit_orig_type, ParameterDefinition orig_param) {

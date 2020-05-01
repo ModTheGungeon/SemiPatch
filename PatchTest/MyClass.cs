@@ -5,14 +5,13 @@ using Mono.Cecil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using SemiPatch;
-using SemiPatch.MonoMod;
 
 using BindingFlags = System.Reflection.BindingFlags;
 
 namespace PatchTest.Patches {
     public static class NewClass {
         public static void PrintText() {
-            Console.WriteLine($"X2!");
+            Console.WriteLine($"a lot has");
         }
     }
 
@@ -30,7 +29,10 @@ namespace PatchTest.Patches {
         [ReceiveOriginal]
         public void Hello(VoidOrig<string> orig, string name) {
             NewClass.PrintText();
-            Console.WriteLine($"X1!");
+            Console.WriteLine($"changed");
+            Console.WriteLine($"at");
+            Console.WriteLine($"runtime!");
+            orig("test");
             Console.WriteLine($"orig = {orig}");
             Console.WriteLine($"name = {name}");
             orig(name);
@@ -43,17 +45,17 @@ namespace PatchTest.Patches {
         public static ReloadableModule CurrentModule;
 
         [Insert]
-        public static SingleTargetClient RDARClient;
+        public static RuntimeClient Client;
 
         [Insert]
         [TreatLikeMethod]
         static XClass() {
-            RDARClient = new SingleTargetClient(
+            Client = new RuntimeClient(
                 typeof(TargetTest.SmallClass).Assembly,
                 ModuleDefinition.ReadModule("TargetTest.exe"),
-                ModuleDefinition.ReadModule("MONOMODDED_TargetTest.exe")
+                ModuleDefinition.ReadModule("PATCHED_TargetTest.exe")
             );
-            CurrentModule = ReloadableModule.Read("PatchTest.spr", RDARClient.TargetModule);
+            CurrentModule = Client.Load("PatchTest.spr");
         }
 
         [Insert]
@@ -72,16 +74,15 @@ namespace PatchTest.Patches {
             if (result) return true;
 
             if (cmd == "testpatch") {
-                Console.WriteLine($"Patched.");
+                Console.WriteLine($"Really changed at runtime!!!");
                 return true;
             }
 
             if (cmd == "reload") {
-                var rm = ReloadableModule.Read("PatchTest.spr", RDARClient.TargetModule);
-
-                RDARClient.Reset();
-                RDARClient.Preload(rm);
-                RDARClient.Process(CurrentModule, rm);
+                var rm = Client.Load("PatchTest.spr");
+                Client.Reset();
+                Client.Preload(rm);
+                Client.Process(CurrentModule, rm);
                 CurrentModule = rm;
 
                 return true;

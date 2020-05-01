@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using CommandLine;
 
 namespace SemiPatch.Compiler.Options {
@@ -27,5 +28,17 @@ namespace SemiPatch.Compiler.Options {
 
         [Option('o', "output", HelpText = "Path to the directory that will contain the extracted files. Will be created if doesn't exist.", Required = true)]
         public string OutputDir { get; set; } = null;
+    }
+
+    [Verb("staticpatch", HelpText = "Patch a target statically using MonoMod.")]
+    public class StaticPatchOptions {
+        [Value(0, MetaName = "target_dll_path", HelpText = "Path to the target assembly.", Required = true)]
+        public string TargetPath { get; set; }
+
+        [Value(1, MetaName = "patch_modules", HelpText = "List of SemiPatch Reloadable modules to patch the target with.", Required = true)]
+        public IList<string> PatchModules { get; set; }
+
+        [Option('o', "output", HelpText = "Path to write the resulting patched assembly into.")]
+        public string OutputPath { get; set; } = null;
     }
 }

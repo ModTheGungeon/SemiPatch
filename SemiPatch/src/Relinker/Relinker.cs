@@ -228,6 +228,12 @@ namespace SemiPatch {
             ScheduledRenames.Add(new KeyValuePair<IMemberDefinition, string>(member, name));
         }
 
+        public void Clear() {
+            TypeEntries.Clear();
+            MemberEntries.Clear();
+            ScheduledRenames.Clear();
+        }
+
         public TypeReference Relink(State state, TypeReference type) {
             if (type == null) return type;
             if (type is GenericParameter) return type;
