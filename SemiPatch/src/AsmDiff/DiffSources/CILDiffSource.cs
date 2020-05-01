@@ -25,16 +25,15 @@ namespace SemiPatch {
             ExcludedTypeAttributeSignatures = new HashSet<string>();
         }
 
-        public void DoubleSearchMembers<MemberDefinitionType, PathType>(
+        public void DoubleSearchMembers<T>(
             MemberType member_type,
             IList<MemberDifference> diffs,
-            IList<MemberDefinitionType> old_members,
-            IList<MemberDefinitionType> new_members
+            IList<T> old_members,
+            IList<T> new_members
         )
-        where MemberDefinitionType : class, IMemberDefinition
-        where PathType : MemberPath<MemberDefinitionType> {
-            var old_method_map = new Dictionary<Signature, MemberDefinitionType>();
-            var new_method_map = new Dictionary<Signature, MemberDefinitionType>();
+        where T : class, IMemberDefinition {
+            var old_method_map = new Dictionary<Signature, T>();
+            var new_method_map = new Dictionary<Signature, T>();
             var member_type_name = member_type.ToString();
 
             for (var i = 0; i < old_members.Count; i++) {
@@ -47,18 +46,18 @@ namespace SemiPatch {
                 var member = new_members[i];
                 var sig = Signature.FromInterface(member);
                 new_method_map[sig] = member;
-                if (old_method_map.TryGetValue(sig, out MemberDefinitionType old_member)) {
+                if (old_method_map.TryGetValue(sig, out T old_member)) {
                     var old_hash = old_member.CalculateHashCode();
                     var new_hash = member.CalculateHashCode();
 
                     if (old_hash != new_hash) {
                         Logger.Debug($"{member_type_name} changed: {sig} (old hash: {old_hash}, new hash: {new_hash})");
-                        var diff = new MemberChanged<MemberDefinitionType, PathType>(member_type, member, member.ToPath<MemberDefinitionType, PathType>());
+                        var diff = new MemberChanged(member, member.ToPathGeneric());
                         diffs.Add(diff);
                     }
                 } else {
                     Logger.Debug($"{member_type_name} added: {sig}");
-                    var diff = new MemberAdded<MemberDefinitionType, PathType>(member_type, member, member.ToPath<MemberDefinitionType, PathType>());
+                    var diff = new MemberAdded(member, member.ToPathGeneric());
                     diffs.Add(diff);
                 }
             }
@@ -68,7 +67,7 @@ namespace SemiPatch {
                 var sig = Signature.FromInterface(member);
                 if (!new_method_map.ContainsKey(sig)) {
                     Logger.Debug($"{member_type_name} removed: {sig}");
-                    var diff = new MemberRemoved<MemberDefinitionType, PathType>(member_type, member.ToPath<MemberDefinitionType, PathType>());
+                    var diff = new MemberRemoved(member.ToPathGeneric());
                     diffs.Add(diff);
                 }
             }
@@ -77,19 +76,19 @@ namespace SemiPatch {
 
         public TypeChanged CalculateTypeChange(TypeDefinition old_type, TypeDefinition new_type) {
             var change = new TypeChanged(old_type, new_type);
-            DoubleSearchMembers<MethodDefinition, MethodPath>(
+            DoubleSearchMembers(
                 MemberType.Method,
                 change.MemberDifferences,
                 old_type.Methods,
                 new_type.Methods
             );
-            DoubleSearchMembers<FieldDefinition, FieldPath>(
+            DoubleSearchMembers(
                MemberType.Field,
                change.MemberDifferences,
                old_type.Fields,
                new_type.Fields
            );
-            DoubleSearchMembers<PropertyDefinition, PropertyPath>(
+            DoubleSearchMembers(
                 MemberType.Property,
                 change.MemberDifferences,
                 old_type.Properties,

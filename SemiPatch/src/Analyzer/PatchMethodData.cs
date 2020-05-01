@@ -7,10 +7,12 @@ using System.IO;
 namespace SemiPatch {
     /// <summary>
     /// Object containing data about a single method patch.
-    /// See <see cref="PatchMemberData{,}"/> for elements available on all type member
+    /// See <see cref="PatchMemberData"/> for elements available on all type member
     /// patches.
     /// </summary>
-    public class PatchMethodData : PatchMemberData<MethodDefinition, MethodPath> {
+    public class PatchMethodData : PatchMemberData {
+        private PatchMethodData() { }
+
         public PatchMethodData(
             MethodDefinition target, MethodDefinition patch,
             MethodPath target_path, MethodPath patch_path,
@@ -76,6 +78,9 @@ namespace SemiPatch {
         /// </summary>
         public bool FalseDefaultConstructor = false;
 
+        public MethodDefinition Target => (MethodDefinition)TargetMember;
+        public MethodDefinition Patch => (MethodDefinition)PatchMember;
+
         public override string MemberTypeName => "Method";
 
         public override void Serialize(BinaryWriter writer) {
@@ -84,18 +89,16 @@ namespace SemiPatch {
         }
 
         public static PatchMethodData Deserialize(TypeDefinition target_type, TypeDefinition patch_type, BinaryReader reader) {
-            var d = Deserialize<PatchMethodData, MethodDefinition, MethodPath>(
+            var member = new PatchMethodData();
+            member.DeserializeMemberBase(
                 "method",
-                target_type,
-                patch_type,
                 reader,
-                Create,
                 (r) => r.ReadMethodPath(),
                 target_type.Methods,
                 patch_type.Methods
             );
-            d.FalseDefaultConstructor = reader.ReadBoolean();
-            return d;
+            member.FalseDefaultConstructor = reader.ReadBoolean();
+            return member;
         }
     }
 }

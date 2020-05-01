@@ -9,43 +9,31 @@ namespace SemiPatch {
     /// of a type member. See: <see cref="PatchFieldData"/>, <see cref="PatchMethodData"/>,
     /// <see cref="PatchPropertyData"/>.
     /// </summary>
-    public abstract class PatchMemberData<MemberDefinitionType, PathType>
-    where MemberDefinitionType : class, IMemberDefinition
-    where PathType : MemberPath<MemberDefinitionType> {
-        public delegate T PatchMemberDataConstructor<T, TMemberDefinitionType, TPathType>(
-             TMemberDefinitionType target,
-             TMemberDefinitionType patch,
-             TPathType target_type, TPathType patch_type,
-             EndOfPositionalArguments end,
-             bool receives_original, bool explicitly_ignored,
-             string aliased_name, bool proxy
-        ) where TMemberDefinitionType : class, IMemberDefinition
-          where TPathType : MemberPath<TMemberDefinitionType>;
-
+    public abstract class PatchMemberData {
         /// <summary>
         /// The member object within the target assembly that this patch wants to change.
         /// Will not exist in the case of members tagged with the Insert attribute,
         /// as no corresponding target member will exist for them before being patched in.
         /// </summary>
-        public MemberDefinitionType Target;
+        public IMemberDefinition TargetMember;
 
         /// <summary>
         /// The member object within the patch assembly. Will always exist.
         /// </summary>
-        public MemberDefinitionType Patch;
+        public IMemberDefinition PatchMember;
 
         /// <summary>
         /// Path of the member object that this patch is targetting. Will always
-        /// exist, even if the object is an Insert patch and <see cref="Target"/>
+        /// exist, even if the object is an Insert patch and <see cref="TargetMember"/>
         /// is <code>null</code>.
         /// </summary>
-        public PathType TargetPath;
+        public MemberPath TargetPath;
 
         /// <summary>
         /// Path of the member object that represents this patch. Will always
         /// exist.
         /// </summary>
-        public PathType PatchPath;
+        public MemberPath PatchPath;
 
         /// <summary>
         /// Only used on methods. If <c>true</c>, the method that represents
@@ -85,10 +73,10 @@ namespace SemiPatch {
         /// Determines whether this patch represents inserting a member into the
         /// target type, not changing an existing one.
         /// </summary>
-        /// <value><c>true</c> if <see cref="Target"/> is <code>null</code>
+        /// <value><c>true</c> if <see cref="TargetMember"/> is <code>null</code>
         /// (<see cref="InsertAttribute"/> was used on the member); otherwise,
         /// <c>false</c>.</value>
-        public bool IsInsert => Target == null;
+        public bool IsInsert => TargetMember == null;
 
         /// <summary>
         /// Name of the kind of member this object represents (used only for
@@ -98,17 +86,18 @@ namespace SemiPatch {
         /// <c>Field</c>, <c>Property</c> etc.).</value>
         public abstract string MemberTypeName { get; }
 
+        protected PatchMemberData() { } 
+
         protected PatchMemberData(
-            MemberDefinitionType target, MemberDefinitionType patch,
-            PathType target_path, PathType patch_path,
-            EndOfPositionalArguments end = default(EndOfPositionalArguments),
-            bool receives_original = false,
-            bool explicitly_ignored = false,
-            string aliased_name = null,
-            bool proxy = false
+            IMemberDefinition target, IMemberDefinition patch,
+            MemberPath target_path, MemberPath patch_path,
+            bool receives_original,
+            bool explicitly_ignored,
+            string aliased_name,
+            bool proxy
         ) {
-            Target = target;
-            Patch = patch;
+            TargetMember = target;
+            PatchMember = patch;
             TargetPath = target_path;
             PatchPath = patch_path;
 
@@ -119,13 +108,12 @@ namespace SemiPatch {
         }
 
         protected PatchMemberData(
-            MemberDefinitionType patch,
-            PathType target_path, PathType patch_path,
-            EndOfPositionalArguments end = default(EndOfPositionalArguments),
-            bool receives_original = false,
-            bool explicitly_ignored = false,
-            string aliased_name = null,
-            bool proxy = false
+            IMemberDefinition patch,
+            MemberPath target_path, MemberPath patch_path,
+            bool receives_original,
+            bool explicitly_ignored,
+            string aliased_name,
+            bool proxy
         ) : this(
             null, patch,
             target_path, patch_path,
@@ -141,11 +129,11 @@ namespace SemiPatch {
             if (IsInsert) {
                 s.Append("Inserted ");
             } else {
-                s.Append($"Target {MemberTypeName}: ").Append(Target.FullName).Append("\n");
+                s.Append($"Target {MemberTypeName}: ").Append(TargetMember.FullName).Append("\n");
                 s.Append(indent);
                 s.Append("Patch ");
             }
-            s.Append($"{MemberTypeName}: ").Append(Patch.FullName);
+            s.Append($"{MemberTypeName}: ").Append(PatchMember.FullName);
             if (AliasedName != null) {
                 s.Append("\n").Append(indent);
                 s.Append("Target Name: ").Append(AliasedName);
@@ -193,48 +181,42 @@ namespace SemiPatch {
             x ^= ExplicitlyIgnored ? 52211 : 8773;
             x ^= AliasedName?.GetHashCode() ?? 26207;
             x ^= Proxy ? 73699 : 136061;
-            x ^= Patch.CalculateHashCode();
-            x ^= Target?.CalculateHashCode() ?? 0;
+            x ^= PatchMember.CalculateHashCode();
+            x ^= TargetMember?.CalculateHashCode() ?? 0;
 
             x ^= MemberTypeName.GetHashCode();
 
             return x;
         }
 
-        public bool Equals(PatchMemberData<MemberDefinitionType, PathType> other) {
+        public bool Equals(PatchMemberData other) {
             return GetHashCode() == other.GetHashCode();
         }
 
         public override bool Equals(object obj) {
-            if (obj == null || !(obj is PatchMemberData<MemberDefinitionType, PathType>)) return false;
-            return Equals((PatchMemberData<MemberDefinitionType, PathType>)obj);
+            if (obj == null || !(obj is PatchMemberData)) return false;
+            return Equals((PatchMemberData)obj);
         }
 
-        public static bool operator ==(PatchMemberData<MemberDefinitionType, PathType> a, PatchMemberData<MemberDefinitionType, PathType> b) {
+        public static bool operator ==(PatchMemberData a, PatchMemberData b) {
             if (a is null && b is null) return true;
             if (a is null || b is null) return false;
             return a.Equals(b);
         }
 
-        public static bool operator !=(PatchMemberData<MemberDefinitionType, PathType> a, PatchMemberData<MemberDefinitionType, PathType> b) {
+        public static bool operator !=(PatchMemberData a, PatchMemberData b) {
             if (a is null && b is null) return false;
             if (a is null || b is null) return true;
             return !a.Equals(b);
         }
 
-        public static T Deserialize<T, TMemberDefinitionType, TPathType>(
+        protected void DeserializeMemberBase<T>(
             string member_type_name,
-            TypeReference target_type,
-            TypeReference patch_type,
             BinaryReader reader,
-            PatchMemberDataConstructor<T, TMemberDefinitionType, TPathType> ctor,
-            Func<BinaryReader, TPathType> read_path_func,
-            Mono.Collections.Generic.Collection<TMemberDefinitionType> target_members,
-            Mono.Collections.Generic.Collection<TMemberDefinitionType> patch_members
-        )
-        where T : PatchMemberData<MemberDefinitionType, PathType>
-        where TMemberDefinitionType : class, IMemberDefinition
-        where TPathType : MemberPath<TMemberDefinitionType> {
+            Func<BinaryReader, MemberPath> read_path_func,
+            Mono.Collections.Generic.Collection<T> target_members,
+            Mono.Collections.Generic.Collection<T> patch_members
+        ) where T : class, IMemberDefinition {
             var insert = reader.ReadBoolean();
             var target_path = read_path_func(reader);
             var patch_path = read_path_func(reader);
@@ -243,8 +225,8 @@ namespace SemiPatch {
             var aliased_name = reader.ReadNullableString();
             var proxy = reader.ReadBoolean();
 
-            TMemberDefinitionType patch = null;
-            TMemberDefinitionType target = null;
+            IMemberDefinition patch = null;
+            IMemberDefinition target = null;
 
             foreach (var member in patch_members) {
                 var candidate_sig = Signature.FromInterface(member);
@@ -253,13 +235,17 @@ namespace SemiPatch {
                     break;
                 }
             }
-            if (patch == null) throw new Exception($"Deserialization error: Failed to find patch {member_type_name} in {patch_type.FullName} with signature '{patch_path}'");
+            if (patch == null) throw new Exception($"Deserialization error: Failed to find patch {member_type_name} with signature '{patch_path}'");
 
-            if (insert) return ctor(
-                null, patch, target_path, patch_path,
-                default(EndOfPositionalArguments),
-                receives_original, explicitly_ignored, aliased_name, proxy
-            );
+            PatchMember = patch;
+            TargetPath = target_path;
+            PatchPath = patch_path;
+            ReceivesOriginal = receives_original;
+            ExplicitlyIgnored = explicitly_ignored;
+            AliasedName = aliased_name;
+            Proxy = proxy;
+
+            if (insert) return;
 
             foreach (var member in target_members) {
                 var candidate_sig = Signature.FromInterface(member);
@@ -268,13 +254,8 @@ namespace SemiPatch {
                     break;
                 }
             }
-            if (target == null) throw new Exception($"Deserialization error: Failed to find target {member_type_name} in {target_type.FullName} with signature '{target_path}' - patch was not marked as Insert");
 
-            return ctor(
-                target, patch, target_path, patch_path,
-                default(EndOfPositionalArguments),
-                receives_original, explicitly_ignored, aliased_name, proxy
-            );
+            TargetMember = target;
         }
     }
 }

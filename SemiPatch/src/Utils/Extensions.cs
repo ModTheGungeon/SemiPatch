@@ -523,20 +523,12 @@ namespace SemiPatch {
             throw new InvalidOperationException($"Unsupported IMemberDefinition in CalculateHashCode: {member?.GetType().Name ?? "<null>"}");
         }
 
-        public static PathType ToPath<MemberDefinitionType, PathType>(this MemberDefinitionType member)
-        where MemberDefinitionType : class, IMemberDefinition
-        where PathType : MemberPath<MemberDefinitionType>{
-            if (member is MethodDefinition) return (PathType)(object)ToPath((MethodDefinition)(object)member);
-            if (member is FieldDefinition) return (PathType)(object)ToPath((FieldDefinition)(object)member);
-            if (member is PropertyDefinition) return (PathType)(object)ToPath((PropertyDefinition)(object)member);
-            throw new InvalidOperationException($"Unsupported IMemberDefinition in ToPath: {member?.GetType().Name ?? "<null>"}");
-        }
-
-        public static MemberPath ToPathInterface(this IMemberDefinition member) {
+        public static MemberPath ToPathGeneric<T>(this T member)
+        where T : class, IMemberDefinition {
             if (member is MethodDefinition) return ToPath((MethodDefinition)(object)member);
             if (member is FieldDefinition) return ToPath((FieldDefinition)(object)member);
             if (member is PropertyDefinition) return ToPath((PropertyDefinition)(object)member);
-            throw new InvalidOperationException($"Unsupported IMemberDefinition in ToPathInterface: {member?.GetType().Name ?? "<null>"}");
+            throw new InvalidOperationException($"Unsupported IMemberDefinition in ToPath: {member?.GetType().Name ?? "<null>"}");
         }
 
         public static TypePath ToPath(this TypeDefinition type) {

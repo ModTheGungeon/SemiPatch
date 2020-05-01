@@ -52,7 +52,7 @@ namespace SemiPatch.MonoMod {
         }
 
         public string MapOrigForMethod(PatchMethodData method) {
-            var path = method.PatchPath;
+            var path = method.PatchPath as MethodPath;
             if (OrigNameMap.TryGetValue(path, out string name)) return $"orig_{name}";
 
             var s = new StringBuilder();
@@ -99,7 +99,7 @@ namespace SemiPatch.MonoMod {
                     RDARSupportNameAliasedFromAttributeConstructor,
                     new CustomAttributeArgument(StringType, method.Patch.Name)
                 );
-                Relinker.MapMethod(method.PatchPath, Relinker.MemberEntry<MethodDefinition>.FromPatchData(method.Target.Module, type, method));
+                Relinker.Map(method.PatchPath, Relinker.MemberEntry.FromPatchData(method.Target.Module, type, method));
                 Relinker.ScheduleDefinitionRename(method.Patch, method.AliasedName);
             }
 
@@ -275,7 +275,7 @@ namespace SemiPatch.MonoMod {
                     RDARSupportNameAliasedFromAttributeConstructor,
                     new CustomAttributeArgument(StringType, field.Patch.Name)
                 );
-                Relinker.MapField(field.PatchPath, Relinker.MemberEntry<FieldDefinition>.FromPatchData(field.Target.Module, type, field));
+                Relinker.Map(field.PatchPath, Relinker.MemberEntry.FromPatchData(field.Target.Module, type, field));
                 Relinker.ScheduleDefinitionRename(field.Patch, field.AliasedName);
             }
 

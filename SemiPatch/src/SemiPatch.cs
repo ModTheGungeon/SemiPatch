@@ -2,7 +2,15 @@
 using Mono.Cecil;
 
 namespace SemiPatch {
+    public enum MemberType {
+        Method,
+        Field,
+        Property
+    }
+
     public class SemiPatch {
+
+
         public static ModuleDefinition SemiPatchModule;
         public static TypeDefinition PatchAttribute;
         public static TypeDefinition InsertAttribute;

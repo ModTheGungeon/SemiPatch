@@ -6,10 +6,12 @@ using Mono.Cecil;
 namespace SemiPatch {
     /// <summary>
     /// Object containing data about a single field patch.
-    /// See <see cref="PatchMemberData{,}"/> for elements available on all type member
+    /// See <see cref="PatchMemberData"/> for elements available on all type member
     /// patches.
     /// </summary>
-    public class PatchFieldData : PatchMemberData<FieldDefinition, FieldPath> {
+    public class PatchFieldData : PatchMemberData {
+        protected PatchFieldData() { }
+
         public PatchFieldData(
             FieldDefinition target, FieldDefinition patch,
             FieldPath target_path, FieldPath patch_path,
@@ -63,19 +65,21 @@ namespace SemiPatch {
             );
         }
 
+        public FieldDefinition Target => (FieldDefinition)TargetMember;
+        public FieldDefinition Patch => (FieldDefinition)PatchMember;
+
         public override string MemberTypeName => "Field";
 
         public static PatchFieldData Deserialize(TypeDefinition target_type, TypeDefinition patch_type, BinaryReader reader) {
-            return Deserialize<PatchFieldData, FieldDefinition, FieldPath>(
+            var member = new PatchFieldData();
+            member.DeserializeMemberBase(
                 "field",
-                target_type,
-                patch_type,
                 reader,
-                Create,
                 (r) => r.ReadFieldPath(),
                 target_type.Fields,
                 patch_type.Fields
             );
+            return member;
         }
     }
 }

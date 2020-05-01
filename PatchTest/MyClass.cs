@@ -13,7 +13,7 @@ using BindingFlags = System.Reflection.BindingFlags;
 namespace PatchTest.Patches {
     public static class NewClass {
         public static void PrintText() {
-            Console.WriteLine($"changed at runtime!");
+            Console.WriteLine($"X2!");
         }
     }
 
@@ -31,7 +31,7 @@ namespace PatchTest.Patches {
         [ReceiveOriginal]
         public void Hello(VoidOrig<string> orig, string name) {
             NewClass.PrintText();
-            Console.WriteLine($"added at runtime!");
+            Console.WriteLine($"X1!");
             Console.WriteLine($"orig = {orig}");
             Console.WriteLine($"name = {name}");
             orig(name);

@@ -22,18 +22,15 @@ namespace SemiPatch {
             NewPatchData = new_data;
         }
 
-        public void DoubleSearchMembers<PatchMemberDataType, MemberDefinitionType, PathType>(
+        public void DoubleSearchMembers<T> (
             MemberType member_type,
             IList<MemberDifference> diffs,
-            IList<PatchMemberDataType> old_members,
-            IList<PatchMemberDataType> new_members
-        )
-        where MemberDefinitionType : class, IMemberDefinition
-        where PathType : MemberPath<MemberDefinitionType>
-        where PatchMemberDataType : PatchMemberData<MemberDefinitionType, PathType> {
+            IList<T> old_members,
+            IList<T> new_members
+        ) where T : PatchMemberData {
             var member_type_name = member_type.ToString();
-            var old_member_map = new Dictionary<PathType, PatchMemberDataType>();
-            var new_member_map = new Dictionary<PathType, PatchMemberDataType>();
+            var old_member_map = new Dictionary<MemberPath, T>();
+            var new_member_map = new Dictionary<MemberPath, T>();
 
             for (var i = 0; i < old_members.Count; i++) {
                 var member = old_members[i];
@@ -52,18 +49,18 @@ namespace SemiPatch {
 
                 new_member_map[member.TargetPath] = member;
 
-                if (old_member_map.TryGetValue(member.TargetPath, out PatchMemberDataType old_member)) {
+                if (old_member_map.TryGetValue(member.TargetPath, out T old_member)) {
                     if (member != old_member) {
                         Logger.Debug($"{member_type_name} changed (patch changed): {member.TargetPath} patched in {member.PatchPath}");
-                        diffs.Add(new MemberChanged<MemberDefinitionType, PathType>(member_type, member.Patch, member.TargetPath));
+                        diffs.Add(new MemberChanged(member.PatchMember, member.TargetPath));
                     }
                 } else {
                     if (member.IsInsert) {
-                        Logger.Debug($"{member_type_name} added (insert patch added): {member.TargetPath} patched (added) in {member.PatchPath}");
-                        diffs.Add(new MemberAdded<MemberDefinitionType, PathType>(member_type, member.Patch, member.TargetPath));
+                        Logger.Debug($"{member_type_name} added (insert patch added: {member.TargetPath} patched (added) in {member.PatchPath}");
+                        diffs.Add(new MemberAdded(member.PatchMember, member.TargetPath));
                     } else {
                         Logger.Debug($"{member_type_name} changed (patch added): {member.TargetPath} patched in {member.PatchPath}");
-                        diffs.Add(new MemberChanged<MemberDefinitionType, PathType>(member_type, member.Patch, member.TargetPath));
+                        diffs.Add(new MemberChanged(member.PatchMember, member.TargetPath));
                     }
                 }
             }
@@ -77,10 +74,10 @@ namespace SemiPatch {
                 if (!old_member_map.ContainsKey(member.TargetPath)) {
                     if (member.IsInsert) {
                         Logger.Debug($"{member_type_name} removed (insert patch removed): {member.TargetPath} patched (removed) in {member.PatchPath}");
-                        diffs.Add(new MemberRemoved<MemberDefinitionType, PathType>(member_type, member.TargetPath));
+                        diffs.Add(new MemberRemoved(member.TargetPath));
                     } else {
                         Logger.Debug($"{member_type_name} changed (patch removed): {member.TargetPath} patched in {member.PatchPath}");
-                        diffs.Add(new MemberChanged<MemberDefinitionType, PathType>(member_type, member.Patch, member.TargetPath));
+                        diffs.Add(new MemberChanged(member.PatchMember, member.TargetPath));
                     }
                 }
             }
@@ -88,19 +85,19 @@ namespace SemiPatch {
 
         public TypeChanged CalculateTypeChange(PatchTypeData old_type, PatchTypeData new_type) {
             var change = new TypeChanged(old_type.TargetType.Resolve(), old_type.TargetType.Resolve());
-            DoubleSearchMembers<PatchMethodData, MethodDefinition, MethodPath>(
+            DoubleSearchMembers(
                 MemberType.Method,
                 change.MemberDifferences,
                 old_type.Methods,
                 new_type.Methods
             );
-            DoubleSearchMembers<PatchFieldData, FieldDefinition, FieldPath>(
+            DoubleSearchMembers(
                 MemberType.Field,
                 change.MemberDifferences,
                 old_type.Fields,
                 new_type.Fields
             );
-            DoubleSearchMembers<PatchPropertyData, PropertyDefinition, PropertyPath>(
+            DoubleSearchMembers(
                 MemberType.Property,
                 change.MemberDifferences,
                 old_type.Properties,
@@ -114,7 +111,7 @@ namespace SemiPatch {
             var change = new TypeChanged(type_data.TargetType.Resolve(), is_unpatch ? type_data.TargetType.Resolve() : type_data.PatchType);
             for (var i = 0; i < type_data.Methods.Count; i++) {
                 var method_data = type_data.Methods[i];
-                change.MemberDifferences.Add(MemberDifference.MethodChanged(is_unpatch ? method_data.Target : method_data.Patch, method_data.TargetPath));
+                change.MemberDifferences.Add(new MemberChanged(is_unpatch ? method_data.TargetMember : method_data.PatchMember, method_data.TargetPath));
             }
             return change;
         }

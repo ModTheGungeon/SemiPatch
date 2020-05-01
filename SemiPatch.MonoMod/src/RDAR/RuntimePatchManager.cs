@@ -90,7 +90,7 @@ namespace SemiPatch.MonoMod {
             );
 
             if (update_running_module) {
-                var running_module_target_method = target_path.FindIn(_RunningModule);
+                var running_module_target_method = target_path.FindIn<MethodDefinition>(_RunningModule);
                 running_module_target_method.Body = patch_method.Body;
             }
 
@@ -153,16 +153,16 @@ namespace SemiPatch.MonoMod {
             _Detours.Add(hook);
         }
 
-        private void _ProcessMethodDifference(Relinker relinker, MemberDifference<MethodDefinition, MethodPath> diff, bool update_running_module = false) {
-            if (diff is MemberAdded<MethodDefinition, MethodPath>) {
+        private void _ProcessMethodDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+            if (diff is MemberAdded) {
                 throw new UnsupportedRDAROperationException(diff);
-            } else if (diff is MemberRemoved<MethodDefinition, MethodPath>) {
+            } else if (diff is MemberRemoved) {
                 throw new UnsupportedRDAROperationException(diff);
-            } else if (diff is MemberChanged<MethodDefinition, MethodPath> change_diff) {
+            } else if (diff is MemberChanged change_diff) {
                 _ReplaceMethod(
                     relinker,
-                    change_diff.Member,
-                    change_diff.TargetPath,
+                    change_diff.Member as MethodDefinition,
+                    change_diff.TargetPath as MethodPath,
                     _RunningAssembly,
                     _RunningModule,
                     update_running_module
@@ -172,21 +172,21 @@ namespace SemiPatch.MonoMod {
             }
         }
 
-        private void _ProcessFieldDifference(Relinker relinker, MemberDifference<FieldDefinition, FieldPath> diff, bool update_running_module = false) {
+        private void _ProcessFieldDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
             throw new UnsupportedRDAROperationException(diff);
         }
 
-        private void _ProcessPropertyDifference(Relinker relinker, MemberDifference<PropertyDefinition, PropertyPath> diff, bool update_running_module = false) {
+        private void _ProcessPropertyDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
             throw new UnsupportedRDAROperationException(diff);
         }
 
         private void _ProcessMemberDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
-            if (diff.MemberType == MemberType.Method) {
-                _ProcessMethodDifference(relinker, (MemberDifference<MethodDefinition, MethodPath>)diff, update_running_module);
-            } else if (diff.MemberType == MemberType.Field) {
-                _ProcessFieldDifference(relinker, (MemberDifference<FieldDefinition, FieldPath>)diff, update_running_module);
-            } else if (diff.MemberType == MemberType.Property) {
-                _ProcessPropertyDifference(relinker, (MemberDifference<PropertyDefinition, PropertyPath>)diff, update_running_module);
+            if (diff.Type == MemberType.Method) {
+                _ProcessMethodDifference(relinker, diff, update_running_module);
+            } else if (diff.Type == MemberType.Field) {
+                _ProcessFieldDifference(relinker, diff, update_running_module);
+            } else if (diff.Type == MemberType.Property) {
+                _ProcessPropertyDifference(relinker, diff, update_running_module);
             } else {
                 throw new UnsupportedRDAROperationException(diff);
             }
@@ -214,8 +214,8 @@ namespace SemiPatch.MonoMod {
         private bool _CanPatchTypeAtRuntime(TypeChanged type_changed) {
             for (var i = 0; i < type_changed.MemberDifferences.Count; i++) {
                 var member = type_changed.MemberDifferences[i];
-                if (member.MemberType == MemberType.Method) {
-                    if (!(member is MemberChanged<MethodDefinition, MethodPath>)) {
+                if (member.Type == MemberType.Method) {
+                    if (!(member is MemberChanged)) {
                         return false;
                     }
                 } else return false;

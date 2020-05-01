@@ -262,7 +262,7 @@ namespace SemiPatch {
                         throw new Exception($"Attribute mismatch in patch method '{patch_path}' targetting method '{target_path}' - patch attributes are '{method.Attributes}', but target attributes are '{target.Attributes}'. The mismatch is with the following attribute(s): '{((MethodAttributes)((uint)target_attrs ^ (uint)patch_attrs)).ToString().Replace("ReuseSlot, ", "")}'.");
                     }
 
-                    method_data.Target = target;
+                    method_data.TargetMember = target;
                 }
             }
         }
@@ -301,7 +301,7 @@ namespace SemiPatch {
                     if (target_field == null) {
                         throw new Exception($"Failed to locate field'{target_path}' proxied in patch field '{patch_path}'. Use the Insert attribute if you want to add the field.");
                     }
-                    field_data.Target = target_field;
+                    field_data.TargetMember = target_field;
                 } else if (field_attrs.Insert) {
                     Logger.Debug($"Field is marked for insertion");
                     if (target_field != null) {

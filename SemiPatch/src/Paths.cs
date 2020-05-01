@@ -10,8 +10,8 @@ namespace SemiPatch {
         public TypePathSearchException(TypePath path) : base($"Failed to find type path '{path}'") { }
     }
 
-    public class MemberPathSearchException<T> : Exception {
-        public MemberPathSearchException(MemberPath<T> path) : base($"Failed to find member path '{path}'") { }
+    public class MemberPathSearchException : Exception {
+        public MemberPathSearchException(MemberPath path) : base($"Failed to find member path '{path}'") { }
     }
 
     public struct Signature {
@@ -66,7 +66,7 @@ namespace SemiPatch {
         protected IList<string> _TypeNames;
         public Signature Signature;
 
-        public abstract string MemberTypeName { get; }
+        public abstract MemberType Type { get; }
 
         public IList<string> TypeNames {
             get {
@@ -119,107 +119,15 @@ namespace SemiPatch {
             }
         }
 
-        protected MemberPath(TypeDefinition decl_type) {
-            _InitTypePath(decl_type);
-            Namespace = decl_type.Namespace;
-        }
-
-        protected MemberPath() { }
-
-        public override string ToString() {
-            return $"[{DeclaringType}] {Signature}";
-        }
-
-        public bool Equals(MemberPath member) {
-            if (Namespace != member.Namespace) return false;
-            if (Signature != member.Signature) return false;
-            if (_TypeName != member._TypeName) return false;
-            if ((_TypeNames == null && member._TypeNames != null) || (_TypeNames != null && member._TypeNames == null)) return false;
-            if (_TypeNames != null) {
-                for (var i = 0; i < _TypeNames.Count; i++) {
-                    if (_TypeNames[i] != member._TypeNames[i]) return false;
-                }
-            }
-            return true;
-        }
-
-        public override bool Equals(object obj) {
-            if (obj == null) return false;
-            if (!(obj is MemberPath)) return false;
-            return Equals((MemberPath)obj);
-        }
-
-        public override int GetHashCode() {
-            return MemberTypeName.GetHashCode() ^ ToString().GetHashCode();
-        }
-
-        public void Serialize(BinaryWriter writer) {
-            writer.Write(Namespace);
-            if (_TypeName != null) {
-                writer.Write(1);
-                writer.Write(_TypeName);
-            } else {
-                writer.Write(_TypeNames.Count);
-                for (var i = 0; i < _TypeNames.Count; i++) {
-                    writer.Write(_TypeNames[i]);
-                }
-            }
-            writer.Write(Signature.ToString());
-            writer.Write(Signature.Name.ToString());
-        }
-
-        protected void InitializeFrom(BinaryReader reader) {
-            Namespace = reader.ReadString();
-            var type_name_count = reader.ReadInt32();
-            if (type_name_count == 1) {
-                _TypeName = reader.ReadString();
-            } else {
-                _TypeNames = new string[type_name_count];
-                for (var i = 0; i < type_name_count; i++) {
-                    _TypeNames[i] = reader.ReadString();
-                }
-            }
-            Signature = new Signature(reader.ReadString(), reader.ReadString());
-        }
-
-        protected void InitTypePathFrom(TypePath path) {
-            Namespace = path.Namespace;
-            if (path._TypeName == null && path._TypeNames == null) {
-                _TypeName = path.Signature.Name;
-            } else if (path._TypeName != null) {
-                _TypeNames = new List<string>();
-                _TypeNames.Add(path._TypeName);
-                _TypeNames.Add(path.Signature.Name);
-            } else {
-                _TypeNames = new List<string>();
-                for (var i = 0; i < path._TypeNames.Count; i++) _TypeNames.Add(path._TypeNames[i]);
-                _TypeNames.Add(path.Signature.Name);
-            }
-            Signature = Signature;
-        }
-
-        public static bool operator ==(MemberPath a, MemberPath b) {
-            if (a is null && b is null) return true;
-            if (a is null || b is null) return false;
-            return a.Equals(b);
-        }
-
-        public static bool operator !=(MemberPath a, MemberPath b) {
-            if (a is null && b is null) return false;
-            if (a is null || b is null) return true;
-            return !a.Equals(b);
-        }
-    }
-
-    public abstract class MemberPath<T> : MemberPath {
-        protected MemberPath(TypeDefinition decl_type) : base(decl_type) {}
-        protected MemberPath() { }
-
-        public abstract T FindIn(ModuleDefinition mod);
+        public abstract IMemberDefinition FindIn(ModuleDefinition mod);
         public abstract System.Reflection.MemberInfo FindIn(System.Reflection.Assembly asm);
 
         protected Exception PathSearchException() {
-            return new MemberPathSearchException<T>(this);
+            return new MemberPathSearchException(this);
+        }
+
+        public T FindIn<T>(ModuleDefinition mod) where T : class, IMemberDefinition {
+            return FindIn(mod) as T;
         }
 
         protected TypeDefinition FindDeclaringType(ModuleDefinition mod) {
@@ -302,9 +210,100 @@ namespace SemiPatch {
                 return found_type;
             }
         }
+
+            protected MemberPath(TypeDefinition decl_type) {
+            _InitTypePath(decl_type);
+            Namespace = decl_type.Namespace;
+        }
+
+        protected MemberPath() { }
+
+        public override string ToString() {
+            return $"[{DeclaringType}] {Signature}";
+        }
+
+        public bool Equals(MemberPath member) {
+            if (Namespace != member.Namespace) return false;
+            if (Signature != member.Signature) return false;
+            if (_TypeName != member._TypeName) return false;
+            if ((_TypeNames == null && member._TypeNames != null) || (_TypeNames != null && member._TypeNames == null)) return false;
+            if (_TypeNames != null) {
+                for (var i = 0; i < _TypeNames.Count; i++) {
+                    if (_TypeNames[i] != member._TypeNames[i]) return false;
+                }
+            }
+            return true;
+        }
+
+        public override bool Equals(object obj) {
+            if (obj == null) return false;
+            if (!(obj is MemberPath)) return false;
+            return Equals((MemberPath)obj);
+        }
+
+        public override int GetHashCode() {
+            return Type.GetHashCode() ^ ToString().GetHashCode();
+        }
+
+        public void Serialize(BinaryWriter writer) {
+            writer.Write(Namespace);
+            if (_TypeName != null) {
+                writer.Write(1);
+                writer.Write(_TypeName);
+            } else {
+                writer.Write(_TypeNames.Count);
+                for (var i = 0; i < _TypeNames.Count; i++) {
+                    writer.Write(_TypeNames[i]);
+                }
+            }
+            writer.Write(Signature.ToString());
+            writer.Write(Signature.Name.ToString());
+        }
+
+        protected void InitializeFrom(BinaryReader reader) {
+            Namespace = reader.ReadString();
+            var type_name_count = reader.ReadInt32();
+            if (type_name_count == 1) {
+                _TypeName = reader.ReadString();
+            } else {
+                _TypeNames = new string[type_name_count];
+                for (var i = 0; i < type_name_count; i++) {
+                    _TypeNames[i] = reader.ReadString();
+                }
+            }
+            Signature = new Signature(reader.ReadString(), reader.ReadString());
+        }
+
+        protected void InitTypePathFrom(TypePath path) {
+            Namespace = path.Namespace;
+            if (path._TypeName == null && path._TypeNames == null) {
+                _TypeName = path.Signature.Name;
+            } else if (path._TypeName != null) {
+                _TypeNames = new List<string>();
+                _TypeNames.Add(path._TypeName);
+                _TypeNames.Add(path.Signature.Name);
+            } else {
+                _TypeNames = new List<string>();
+                for (var i = 0; i < path._TypeNames.Count; i++) _TypeNames.Add(path._TypeNames[i]);
+                _TypeNames.Add(path.Signature.Name);
+            }
+            Signature = Signature;
+        }
+
+        public static bool operator ==(MemberPath a, MemberPath b) {
+            if (a is null && b is null) return true;
+            if (a is null || b is null) return false;
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(MemberPath a, MemberPath b) {
+            if (a is null && b is null) return false;
+            if (a is null || b is null) return true;
+            return !a.Equals(b);
+        }
     }
 
-    public class MethodPath : MemberPath<MethodDefinition> {
+    public class MethodPath : MemberPath {
         public MethodPath(MethodDefinition method, bool skip_first_arg = false, string forced_name = null) : base(method.DeclaringType) {
             Signature = new Signature(method, skip_first_arg, forced_name);
 
@@ -316,7 +315,7 @@ namespace SemiPatch {
 
         private MethodPath() { }
 
-        public override string MemberTypeName => "Method";
+        public override MemberType Type => MemberType.Method;
 
         public override MemberPath Snapshot() {
             var p = new MethodPath();
@@ -352,7 +351,7 @@ namespace SemiPatch {
             throw PathSearchException();
         }
 
-        public override MethodDefinition FindIn(ModuleDefinition mod) {
+        public override IMemberDefinition FindIn(ModuleDefinition mod) {
             return _FindInType(FindDeclaringType(mod));
         }
 
@@ -387,7 +386,7 @@ namespace SemiPatch {
         }
     }
 
-    public class FieldPath : MemberPath<FieldDefinition> {
+    public class FieldPath : MemberPath {
         public FieldPath(FieldDefinition field, string forced_name = null) : base(field.DeclaringType) {
             Signature = new Signature(field, forced_name: forced_name);
         }
@@ -398,7 +397,7 @@ namespace SemiPatch {
 
         private FieldPath() { }
 
-        public override string MemberTypeName => "Field";
+        public override MemberType Type=> MemberType.Field;
 
         public override MemberPath Snapshot() {
             var p = new FieldPath();
@@ -406,7 +405,7 @@ namespace SemiPatch {
             return p;
         }
 
-        public override FieldDefinition FindIn(ModuleDefinition mod) {
+        public override IMemberDefinition FindIn(ModuleDefinition mod) {
             var type = FindDeclaringType(mod);
             for (var i = 0; i < type.Fields.Count; i++) {
                 if (new Signature(type.Fields[i]) == Signature) return type.Fields[i];
@@ -436,7 +435,7 @@ namespace SemiPatch {
         }
     }
 
-    public class PropertyPath : MemberPath<PropertyDefinition> {
+    public class PropertyPath : MemberPath {
         public PropertyPath(PropertyDefinition prop, string forced_name = null) : base(prop.DeclaringType) {
             Signature = new Signature(prop, forced_name: forced_name);
         }
@@ -447,7 +446,7 @@ namespace SemiPatch {
 
         private PropertyPath() { }
 
-        public override string MemberTypeName => "Property";
+        public override MemberType Type => MemberType.Property;
 
         public override MemberPath Snapshot() {
             var p = new PropertyPath();
@@ -455,7 +454,7 @@ namespace SemiPatch {
             return p;
         }
 
-        public override PropertyDefinition FindIn(ModuleDefinition mod) {
+        public override IMemberDefinition FindIn(ModuleDefinition mod) {
             var type = FindDeclaringType(mod);
             for (var i = 0; i < type.Properties.Count; i++) {
                 if (new Signature(type.Properties[i]) == Signature) return type.Properties[i];

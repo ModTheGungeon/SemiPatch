@@ -6,7 +6,7 @@ using Mono.Cecil;
 namespace SemiPatch {
     /// <summary>
     /// Object containing data about a single field patch.
-    /// See <see cref="PatchMemberData{,}"/> for elements available on all type member
+    /// See <see cref="PatchMemberData"/> for elements available on all type member
     /// patches.
     /// It is worth noting that while properties are recognized as a kind of member
     /// within .NET/Mono, they make use of method members for the getter and setter
@@ -14,7 +14,9 @@ namespace SemiPatch {
     /// in essentially all cases this object will come alongside the respective
     /// patch data objects for the members it depends on.
     /// </summary>
-    public class PatchPropertyData : PatchMemberData<PropertyDefinition, PropertyPath> {
+    public class PatchPropertyData : PatchMemberData {
+        protected PatchPropertyData() { }
+
         public PatchPropertyData(
             PropertyDefinition target, PropertyDefinition patch,
             PropertyPath target_path, PropertyPath patch_path,
@@ -68,19 +70,21 @@ namespace SemiPatch {
             );
         }
 
+        public PropertyDefinition Target => (PropertyDefinition)TargetMember;
+        public PropertyDefinition Patch => (PropertyDefinition)PatchMember;
+
         public override string MemberTypeName => "Property";
 
         public static PatchPropertyData Deserialize(TypeDefinition target_type, TypeDefinition patch_type, BinaryReader reader) {
-            return Deserialize<PatchPropertyData, PropertyDefinition, PropertyPath>(
+            var member = new PatchPropertyData();
+            member.DeserializeMemberBase(
                 "property",
-                target_type,
-                patch_type,
                 reader,
-                Create,
                 (r) => r.ReadPropertyPath(),
                 target_type.Properties,
                 patch_type.Properties
             );
+            return member;
         }
     }
 }

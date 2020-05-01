@@ -13,12 +13,12 @@ namespace SemiPatch {
     /// attributes, method bodies etc.
     /// </summary>
     public class Relinker {
-        public struct MemberEntry<T> where T : class, IMemberDefinition {
+        public struct MemberEntry {
             public Exception RejectException;
-            public T TargetMember;
+            public IMemberDefinition TargetMember;
 
-            public static MemberEntry<T> Rejected(Exception except) {
-                return new MemberEntry<T> { RejectException = except };
+            public static MemberEntry Rejected(Exception except) {
+                return new MemberEntry { RejectException = except };
             }
 
             //public static MemberEntry<T> FromPatchTypeData(PatchTypeData type) {
@@ -30,11 +30,10 @@ namespace SemiPatch {
             //    };
             //}
 
-            public static MemberEntry<T> FromPatchData<U>(ModuleDefinition module, PatchTypeData type_data, PatchMemberData<T, U> member_data)
-            where U : MemberPath<T> {
+            public static MemberEntry FromPatchData(ModuleDefinition module, PatchTypeData type_data, PatchMemberData member_data) {
                 var member = member_data.TargetPath.FindIn(module);
 
-                return new MemberEntry<T> {
+                return new MemberEntry {
                     RejectException = null,
                     TargetMember = member
                 };
@@ -49,7 +48,7 @@ namespace SemiPatch {
                     return $"<REJECT>";
                 }
 
-                return TargetMember.ToPathInterface().ToString();
+                return TargetMember.ToPathGeneric().ToString();
             }
         }
 
@@ -128,9 +127,7 @@ namespace SemiPatch {
         public static Logger Logger = new Logger(nameof(Relinker));
 
         public Dictionary<TypePath, TypeEntry> TypeEntries = new Dictionary<TypePath, TypeEntry>();
-        public Dictionary<MethodPath, MemberEntry<MethodDefinition>> MethodEntries = new Dictionary<MethodPath, MemberEntry<MethodDefinition>>();
-        public Dictionary<FieldPath, MemberEntry<FieldDefinition>> FieldEntries = new Dictionary<FieldPath, MemberEntry<FieldDefinition>>();
-        public Dictionary<PropertyPath, MemberEntry<PropertyDefinition>> PropertyEntries = new Dictionary<PropertyPath, MemberEntry<PropertyDefinition>>();
+        public Dictionary<MemberPath, MemberEntry> MemberEntries = new Dictionary<MemberPath, MemberEntry>();
 
         public List<KeyValuePair<IMemberDefinition, string>> ScheduledRenames = new List<KeyValuePair<IMemberDefinition, string>>();
 
@@ -155,29 +152,29 @@ namespace SemiPatch {
                 _LoadPropertyRelinkMapFrom(data, data.Properties[i], module);
             }
 
-            MapType(data.PatchType.ToPath(), TypeEntry.FromPatchData(module, data));
+            Map(data.PatchType.ToPath(), TypeEntry.FromPatchData(module, data));
         }
 
         private void _LoadMethodRelinkMapFrom(PatchTypeData type_data, PatchMethodData data, ModuleDefinition module) {
             MethodDefinition member = data.Target;
 
             if (data.FalseDefaultConstructor) {
-                MapMethod(data.PatchPath, MemberEntry<MethodDefinition>.Rejected(new FalseDefaultConstructorException(type_data.PatchType.ToPath(), type_data.TargetType.ToPath())));
+                Map(data.PatchPath, MemberEntry.Rejected(new FalseDefaultConstructorException(type_data.PatchType.ToPath(), type_data.TargetType.ToPath())));
                 return;
             }
 
             if (data.IsInsert && !LaxOnInserts) {
                 try {
-                    member = data.TargetPath.FindIn(module);
-                } catch (MemberPathSearchException<MethodDefinition> e) {
+                    member = data.TargetPath.FindIn<MethodDefinition>(module);
+                } catch (MemberPathSearchException e) {
                     throw new TargetFieldRelinkerException(data.PatchPath, data.TargetPath);
                 }
             }
 
             if (data.ReceivesOriginal) {
-                MapMethod(data.PatchPath, MemberEntry<MethodDefinition>.Rejected(new ReceiveOriginalInvokeException(data.PatchPath)));
+                Map(data.PatchPath, MemberEntry.Rejected(new ReceiveOriginalInvokeException(data.PatchPath as MethodPath)));
             } else {
-                MapMethod(data.PatchPath, MemberEntry<MethodDefinition>.FromPatchData<MethodPath>(module, type_data, data));
+                Map(data.PatchPath, MemberEntry.FromPatchData(module, type_data, data));
             }
         }
 
@@ -186,13 +183,13 @@ namespace SemiPatch {
 
             if (data.IsInsert && !LaxOnInserts) {
                 try {
-                    member = data.TargetPath.FindIn(module);
-                } catch (MemberPathSearchException<FieldDefinition> e) {
+                    member = data.TargetPath.FindIn<FieldDefinition>(module);
+                } catch (MemberPathSearchException e) {
                     throw new TargetFieldRelinkerException(data.PatchPath, data.TargetPath);
                 }
             }
 
-            MapField(data.PatchPath, MemberEntry<FieldDefinition>.FromPatchData<FieldPath>(module, type_data, data));
+            Map(data.PatchPath, MemberEntry.FromPatchData(module, type_data, data));
         }
 
         private void _LoadPropertyRelinkMapFrom(PatchTypeData type_data, PatchPropertyData data, ModuleDefinition module) {
@@ -200,13 +197,13 @@ namespace SemiPatch {
 
             if (data.IsInsert && !LaxOnInserts) {
                 try {
-                    member = data.TargetPath.FindIn(module);
-                } catch (MemberPathSearchException<PropertyDefinition> e) {
+                    member = data.TargetPath.FindIn<PropertyDefinition>(module);
+                } catch (MemberPathSearchException e) {
                     throw new TargetFieldRelinkerException(data.PatchPath, data.TargetPath);
                 }
             }
 
-            MapProperty(data.PatchPath, MemberEntry<PropertyDefinition>.FromPatchData<PropertyPath>(module, type_data, data));
+            Map(data.PatchPath, MemberEntry.FromPatchData(module, type_data, data));
         }
 
         public void LoadRelinkMapFrom(PatchData data, ModuleDefinition current_module) {
@@ -215,28 +212,18 @@ namespace SemiPatch {
             }
         }
 
-        public void MapType(TypePath path, TypeEntry entry) {
+        public void Map(TypePath path, TypeEntry entry) {
             Logger.Debug($"Mapped type '{path}' to: {entry}");
             TypeEntries[path] = entry;
         }
 
-        public void MapMethod(MethodPath path, MemberEntry<MethodDefinition> entry) {
-            Logger.Debug($"Mapped method '{path}' to: {entry}");
-            MethodEntries[path] = entry;
-        }
-
-        public void MapField(FieldPath path, MemberEntry<FieldDefinition> entry) {
-            Logger.Debug($"Mapped field '{path}' to: {entry}");
-            FieldEntries[path] = entry;
-        }
-
-        public void MapProperty(PropertyPath path, MemberEntry<PropertyDefinition> entry) {
-            Logger.Debug($"Mapped property '{path}' to: {entry}");
-            PropertyEntries[path] = entry;
+        public void Map(MemberPath path, MemberEntry entry) {
+            Logger.Debug($"Mapped '{path.Type}' member '{path}' to: {entry}");
+            MemberEntries[path] = entry;
         }
 
         public void ScheduleDefinitionRename<T>(T member, string name) where T : class, IMemberDefinition {
-            var path = member.ToPath<T, MemberPath<T>>();
+            var path = member.ToPathGeneric();
             Logger.Debug($"Scheduled definition rename '{path}' to: {name}");
             ScheduledRenames.Add(new KeyValuePair<IMemberDefinition, string>(member, name));
         }
@@ -341,14 +328,14 @@ namespace SemiPatch {
             }
 
             var path = method.Resolve().ToPath();
-            MemberEntry<MethodDefinition> entry;
-            if (MethodEntries.TryGetValue(path, out entry)) {
+            MemberEntry entry;
+            if (MemberEntries.TryGetValue(path, out entry) && (entry.TargetMember is MethodDefinition entry_target)) {
                 entry.CheckIfValid();
 
                 var old_method = method;
                 method = new MethodReference(
                     entry.TargetMember.Name,
-                    state.Module.ImportReference(entry.TargetMember.ReturnType),
+                    state.Module.ImportReference(entry_target.ReturnType),
                     state.Module.ImportReference(entry.TargetMember.DeclaringType)
                 );
                 for (var i = 0; i < old_method.GenericParameters.Count; i++) {
@@ -375,7 +362,7 @@ namespace SemiPatch {
 
                 method = state.Module.ImportReference(method);
 
-                Logger.Debug($"Relinked method reference '{path}' to '{entry.TargetMember.ToPath()}'");
+                Logger.Debug($"Relinked method reference '{path}' to '{entry.TargetMember.ToPathGeneric()}'");
             }
 
             method.ReturnType = Relink(state, method.ReturnType);
@@ -393,16 +380,16 @@ namespace SemiPatch {
             if (field == null) return field;
 
             var path = field.Resolve().ToPath();
-            MemberEntry<FieldDefinition> entry;
-            if (FieldEntries.TryGetValue(path, out entry)) {
+            MemberEntry entry;
+            if (MemberEntries.TryGetValue(path, out entry) && (entry.TargetMember is FieldDefinition entry_target)) {
                 entry.CheckIfValid();
 
                 var old_field = field;
 
-                field = new FieldReference(entry.TargetMember.Name, entry.TargetMember.FieldType, entry.TargetMember.DeclaringType);
+                field = new FieldReference(entry.TargetMember.Name, entry_target.FieldType, entry.TargetMember.DeclaringType);
                 field = state.Module.ImportReference(field);
 
-                Logger.Debug($"Relinked field reference '{path}' to '{entry.TargetMember.ToPath()}'");
+                Logger.Debug($"Relinked field reference '{path}' to '{entry.TargetMember.ToPathGeneric()}'");
             }
 
             field.FieldType = Relink(state, field.FieldType);
@@ -413,7 +400,7 @@ namespace SemiPatch {
             if (prop == null) return prop;
 
             //var path = prop.Resolve().ToPath();
-            //MemberEntry<PropertyDefinition> entry;
+            //MemberEntry entry;
             //if (PropertyEntries.TryGetValue(path, out entry)) {
             //    entry.CheckIfValid();
 
@@ -547,7 +534,7 @@ namespace SemiPatch {
             for (var i = 0; i < ScheduledRenames.Count; i++) {
                 var kv = ScheduledRenames[i];
                 kv.Key.Name = kv.Value;
-                Logger.Debug($"Renamed '{kv.Key.ToPathInterface()}' to '{kv.Value}'");
+                Logger.Debug($"Renamed '{kv.Key.ToPathGeneric()}' to '{kv.Value}'");
             }
         }
     }
