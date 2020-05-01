@@ -6,7 +6,7 @@ using SemiPatch;
 using Mono.Cecil;
 using System.Collections.Generic;
 
-namespace SemiPatch.MonoMod {
+namespace SemiPatch {
     public class CorruptedReloadableModuleException : SemiPatchException {
         public CorruptedReloadableModuleException(string section)
             : base($"Attempted to load corrupted reloadable module. Error while reading section: '{section}'.") { }

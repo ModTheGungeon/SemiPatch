@@ -4,7 +4,7 @@ using Mono.Cecil;
 using Mono.Cecil.Rocks;
 using Mono.Collections.Generic;
 
-namespace SemiPatch.MonoMod {
+namespace SemiPatch {
     public class ExplicitOrigFactory {
         public static ModuleDefinition SemiPatchMonoModModule = ModuleDefinition.ReadModule(System.Reflection.Assembly.GetExecutingAssembly().Location);
 

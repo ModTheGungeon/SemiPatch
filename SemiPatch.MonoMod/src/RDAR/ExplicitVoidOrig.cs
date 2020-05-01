@@ -1,5 +1,5 @@
 ﻿using System;
-namespace SemiPatch.MonoMod {
+namespace SemiPatch {
     /// <summary> Represents a delegate to the original version of a non-void method (explicit instance version). </summary>
     public delegate void ExplicitVoidOrig<S>(S self);
     /// <summary> Represents a delegate to the original version of a non-void method with 1 parameter (explicit instance version). </summary>

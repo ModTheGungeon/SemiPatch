@@ -9,7 +9,7 @@ using MonoMod.Utils;
 using BindingFlags = System.Reflection.BindingFlags;
 using static SemiPatch.AssemblyDiff;
 
-namespace SemiPatch.MonoMod {
+namespace SemiPatch {
     public class RuntimePatchManager {
         public static TypeDefinition RuntimeTypeHandleType = SemiPatch.MscorlibModule.GetType("System.RuntimeTypeHandle");
         public static TypeDefinition TypeType = SemiPatch.MscorlibModule.GetType("System.Type");
@@ -115,8 +115,8 @@ namespace SemiPatch.MonoMod {
             for (var k = 0; k < attrs.Length; k++) {
                 var attr = attrs[k];
 
-                if (typeof(RDAR.Support.HasOriginalInAttribute).IsAssignableFrom(attr.GetType())) {
-                    var orig_attr = (RDAR.Support.HasOriginalInAttribute)attr;
+                if (typeof(RDARSupport.HasOriginalInAttribute).IsAssignableFrom(attr.GetType())) {
+                    var orig_attr = (RDARSupport.HasOriginalInAttribute)attr;
                     var orig_sig = new Signature(target_method, forced_name: orig_attr.OrigName);
                     var methods = target_method.DeclaringType.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using Mono.Cecil;
 
-namespace SemiPatch.RDAR.Support {
+namespace SemiPatch.RDARSupport {
     public class NameAliasedFromAttribute : Attribute {
         public NameAliasedFromAttribute(string name) { }
     }
@@ -19,8 +19,8 @@ namespace SemiPatch.RDAR.Support {
 
         static RDARSupport() {
             SemiPatchMonoModModule = ModuleDefinition.ReadModule(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            RDARSupportNameAliasedFromAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDAR.Support.NameAliasedFromAttribute");
-            RDARSupportHasOriginalInAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDAR.Support.HasOriginalInAttribute");
+            RDARSupportNameAliasedFromAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDARSupport.NameAliasedFromAttribute");
+            RDARSupportHasOriginalInAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDARSupport.HasOriginalInAttribute");
         }
     }
 }

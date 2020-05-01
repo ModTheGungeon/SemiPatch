@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using ModTheGungeon;
 using Mono.Cecil;
 
-namespace SemiPatch.MonoMod {
+namespace SemiPatch {
     public class SingleTargetClient {
         public enum Result {
             Success,

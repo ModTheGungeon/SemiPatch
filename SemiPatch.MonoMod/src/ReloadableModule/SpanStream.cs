@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace SemiPatch.MonoMod {
+namespace SemiPatch {
     public class SpanStream : Stream, IDisposable {
         public Stream BaseStream;
         public long BaseStreamOffset;

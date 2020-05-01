@@ -1,5 +1,5 @@
 ﻿using System;
-namespace SemiPatch.MonoMod {
+namespace SemiPatch {
     public class UnsupportedRDAROperationException : SemiPatchException {
         public UnsupportedRDAROperationException(AssemblyDiff.MemberDifference diff)
         : base($"RuntimeDetour-Assisted Reloading does not support applying this diff: {diff}") { }

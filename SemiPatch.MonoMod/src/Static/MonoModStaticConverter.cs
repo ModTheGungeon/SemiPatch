@@ -9,7 +9,7 @@ using Mono.Collections.Generic;
 using MonoMod;
 using MonoMod.InlineRT;
 
-namespace SemiPatch.MonoMod {
+namespace SemiPatch {
     public class MonoModStaticConverter {
         public static ModuleDefinition MscorlibModule;
         public static TypeReference StringType;
@@ -30,8 +30,8 @@ namespace SemiPatch.MonoMod {
             MonoModConstructorAttributeConstructor = MonoModModule.GetType("MonoMod.MonoModConstructor").Methods[0];
             MonoModIgnoreAttributeConstructor = MonoModModule.GetType("MonoMod.MonoModIgnore").Methods[0];
             MonoModOriginalNameAttributeConstructor = MonoModModule.GetType("MonoMod.MonoModOriginalName").Methods[0];
-            RDARSupportNameAliasedFromAttributeConstructor = RDAR.Support.RDARSupport.RDARSupportNameAliasedFromAttribute.Methods[0];
-            RDARSupportHasOriginalInAttributeConstructor = RDAR.Support.RDARSupport.RDARSupportHasOriginalInAttribute.Methods[0];
+            RDARSupportNameAliasedFromAttributeConstructor = RDARSupport.RDARSupport.RDARSupportNameAliasedFromAttribute.Methods[0];
+            RDARSupportHasOriginalInAttributeConstructor = RDARSupport.RDARSupport.RDARSupportHasOriginalInAttribute.Methods[0];
         }
 
         public PatchData PatchData;

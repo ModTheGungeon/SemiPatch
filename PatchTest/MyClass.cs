@@ -6,7 +6,6 @@ using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using SemiPatch;
 using SemiPatch.MonoMod;
-using SemiPatch.RDAR;
 
 using BindingFlags = System.Reflection.BindingFlags;
 
