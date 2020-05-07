@@ -8,12 +8,15 @@ using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
 using MonoMod;
 using MonoMod.InlineRT;
+using MonoMod.Utils;
 
 namespace SemiPatch {
     /// <summary>
+    /// OBSOLETE: use <see cref="SemiPatch.StaticPatcher"/>
     /// Type capable of converting SemiPatch-compliant patch assemblies to 
     /// ones that will be accepted and used by the MonoMod static patcher.
     /// </summary>
+    [Obsolete("Use SemiPatch.StaticPatcher")]
     public class MonoModStaticConverter {
         public static ModuleDefinition MscorlibModule;
         public static TypeReference StringType;
@@ -42,6 +45,8 @@ namespace SemiPatch {
         public ModuleDefinition TargetModule;
         public Logger Logger;
         public IDictionary<MethodPath, string> OrigNameMap;
+        public IDictionary<MethodPath, MethodDefinition> OrigSourceMap;
+        public IDictionary<Instruction, Instruction> OrigInstructionMap;
         public Relinker Relinker;
 
         public List<KeyValuePair<MethodDefinition, string>> PostRelinkMethodRenames;
@@ -52,18 +57,23 @@ namespace SemiPatch {
             TargetModule = data.TargetModule;
             Logger = new Logger($"MonoModStaticConverter({TargetModule.Name})");
             OrigNameMap = new Dictionary<MethodPath, string>();
+            OrigSourceMap = new Dictionary<MethodPath, MethodDefinition>();
+            OrigInstructionMap = new Dictionary<Instruction, Instruction>();
             Relinker = new Relinker();
         }
 
         public string MapOrigForMethod(PatchMethodData method) {
-            var path = method.PatchPath as MethodPath;
-            if (OrigNameMap.TryGetValue(path, out string name)) return $"orig_{name}";
+            return MapOrigForMethod((MethodPath)method.TargetPath, method.Target.Name);
+        }
+
+        public string MapOrigForMethod(MethodPath target_path, string target_name) {
+            if (OrigNameMap.TryGetValue(target_path, out string name)) return $"orig_{name}";
 
             var s = new StringBuilder();
+            s.Append("orig_");
             s.Append("$SEMIPATCH$ORIG$$");
-            s.Append(method.Target.Name);
-            var new_name = OrigNameMap[path] = s.ToString();
-            return $"orig_{new_name}";
+            s.Append(target_name);
+            return OrigNameMap[target_path] = s.ToString();
         }
 
         public static string BuildMonoModSignature(TypeReference type) {
@@ -81,6 +91,23 @@ namespace SemiPatch {
             var attr = new CustomAttribute(ctor_def);
             for (var i = 0; i < args.Length; i++) attr.ConstructorArguments.Add(args[i]);
             obj.CustomAttributes.Add(attr);
+        }
+
+        private MethodDefinition _CreateOrig(string name, TypeDefinition decl_type, MethodDefinition base_method, bool skip_first_arg = false, MethodAttributes extra_attrs = (MethodAttributes)0) {
+            var orig_def = new MethodDefinition(name, base_method.Attributes | extra_attrs, base_method.ReturnType);
+            for (var i = 0; i < base_method.GenericParameters.Count; i++) {
+                var patch_param = base_method.GenericParameters[i];
+                var orig_param = new GenericParameter(patch_param.Name, orig_def);
+                orig_def.GenericParameters.Add(orig_param);
+            }
+            for (var i = skip_first_arg ? 1 : 0; i < base_method.Parameters.Count; i++) {
+                orig_def.Parameters.Add(base_method.Parameters[i]);
+            }
+            //var il = orig_def.Body.GetILProcessor();
+            //il.Append(Instruction.Create(OpCodes.Ret));
+            decl_type.Methods.Add(orig_def);
+            orig_def.DeclaringType = decl_type;
+            return orig_def;
         }
 
         public void ApplyForMethod(PatchTypeData type, PatchMethodData method, List<PatchMethodData> methods_to_remove) {
@@ -119,19 +146,8 @@ namespace SemiPatch {
                 var orig_name = MapOrigForMethod(method);
                 Logger.Debug($"Creating orig method: '{orig_name}'");
 
-                var orig_def = new MethodDefinition(orig_name, method.Patch.Attributes | MethodAttributes.PInvokeImpl, method.Patch.ReturnType);
-                for (var i = 0; i < method.Patch.GenericParameters.Count; i++) {
-                    var patch_param = method.Patch.GenericParameters[i];
-                    var orig_param = new GenericParameter(patch_param.Name, orig_def);
-                    orig_def.GenericParameters.Add(orig_param);
-                }
-                for (var i = 1; i < method.Patch.Parameters.Count; i++) {
-                    orig_def.Parameters.Add(method.Patch.Parameters[i]);
-                }
-                //var il = orig_def.Body.GetILProcessor();
-                //il.Append(Instruction.Create(OpCodes.Ret));
-                method.Patch.DeclaringType.Methods.Add(orig_def);
-                orig_def.DeclaringType = method.Patch.DeclaringType;
+                var orig_def = _CreateOrig(orig_name, method.Patch.DeclaringType, method.Patch, true, MethodAttributes.PInvokeImpl);
+                OrigSourceMap[orig_def.ToPath()] = method.Patch;
 
                 AddAttribute(
                     method.Patch.Module,
@@ -308,6 +324,91 @@ namespace SemiPatch {
             }
         }
 
+        private void _MapInstructions(IList<Instruction> from, IList<Instruction> to) {
+            if (from.Count != to.Count) throw new Exception("Size of both instruction lists must be the same");
+            for (var i = 0; i < from.Count; i++) {
+                OrigInstructionMap[from[i]] = to[i];
+            }
+        }
+
+        private Instruction _GetMappedInstruction(Instruction from) {
+            if (!OrigInstructionMap.TryGetValue(from, out Instruction result)) {
+                throw new Exception($"Orig instruction '{from}' was not mapped!");
+            }
+            return result;
+        }
+
+        private MethodBody _CopyBody(ModuleDefinition module, MethodBody body, MethodDefinition new_owner) {
+            var new_body = body.Clone(new_owner);
+            for (var i = 0; i < body.Variables.Count; i++) {
+                new_body.Variables[i].VariableType = module.ImportReference(body.Variables[i].VariableType);
+            }
+
+            for (var i = 0; i < body.Instructions.Count; i++) {
+                var new_instr = new_body.Instructions[i];
+                var old_instr = body.Instructions[i];
+
+                if (old_instr.Operand is IMetadataTokenProvider mref) new_instr.Operand = module.ImportReference(mref);
+            }
+
+            return new_body;
+        }
+
+        public void ApplyInjection(PatchTypeData type, PatchInjectData inject) {
+            Logger.Debug($"Applying injection: handler '{inject.HandlerPath}' before instruction '{inject.InjectionPoint}' (index {inject.BodyIndex}) in '{inject.TargetPath}'");
+
+            MethodDefinition injection_target;
+
+            var target_path = inject.TargetPath;
+            if (OrigNameMap.TryGetValue(target_path, out string orig_name)) {
+                var orig_path = inject.TargetPath
+                    .WithSignature(new Signature(inject.Target, forced_name: orig_name))
+                    .WithDeclaringType(inject.Handler.DeclaringType);
+                injection_target = orig_path.FindIn<MethodDefinition>(type.PatchType.Module);
+                if (((uint)injection_target.Attributes & (uint)MethodAttributes.PInvokeImpl) == (uint)MethodAttributes.PInvokeImpl) {
+                    injection_target.Attributes = inject.Target.Attributes;
+                    injection_target.Body = _CopyBody(
+                        injection_target.Module,
+                        inject.Target.Body,
+                        injection_target
+                    );
+
+
+                    var source = OrigSourceMap[orig_path];
+                    var attr_idx = -1;
+                    for (var i = 0; i < source.CustomAttributes.Count; i++) {
+                        var attr = source.CustomAttributes[i];
+
+                        if (attr.Constructor.IsSame(MonoModOriginalNameAttributeConstructor)) {
+                            attr_idx = i;
+                            break;
+                        }
+                    }
+
+                    if (attr_idx != -1) source.CustomAttributes.RemoveAt(attr_idx);
+
+
+                    _MapInstructions(inject.Target.Body.Instructions, injection_target.Body.Instructions);
+                }
+            } else {
+                var new_orig_name = MapOrigForMethod(target_path, inject.Target.Name);
+                injection_target = _CreateOrig(new_orig_name, type.PatchType, inject.Target);
+                injection_target.Body = _CopyBody(
+                    injection_target.Module,
+                    inject.Target.Body,
+                    injection_target
+                );
+                _MapInstructions(inject.Target.Body.Instructions, injection_target.Body.Instructions);
+            }
+
+            //Injector.InsertInjectCall(
+            //    injection_target,
+            //    inject.Handler,
+            //    _GetMappedInstruction(inject.InjectionPoint),
+            //    inject.Position
+            //);
+        }
+
         public void ApplyForType(PatchTypeData type) {
             Logger.Info($"Applying for patch type: {new System.Reflection.AssemblyName(type.PatchModuleName).Name} {type.PatchType.BuildSignature()} targetting {type.TargetType.BuildSignature()}");
 
@@ -350,6 +451,12 @@ namespace SemiPatch {
             for (var i = 0; i < props_to_remove.Count; i++) {
                 var p = props_to_remove[i];
                 p.Patch.DeclaringType.Resolve().Properties.Remove(p.Patch.Resolve());
+            }
+
+            for (var i = 0; i < type.Injections.Count; i++) {
+                var injection = type.Injections[i];
+
+                ApplyInjection(type, injection);
             }
         }
 

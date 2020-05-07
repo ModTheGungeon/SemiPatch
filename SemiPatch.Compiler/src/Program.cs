@@ -194,6 +194,15 @@ namespace SemiPatch.MonoMod.Compiler {
                 using (var stderr = new StreamWriter(Console.OpenStandardError())) {
                     stderr.WriteLine(e.Message);
                     stderr.WriteLine(e.StackTrace);
+
+                    e = e.InnerException;
+                    while (e != null) {
+                        stderr.WriteLine();
+                        stderr.WriteLine("Inner exception:");
+                        stderr.WriteLine(e.Message);
+                        stderr.WriteLine(e.StackTrace);
+                        e = e.InnerException;
+                    }
                 }
                 return 1;
             }

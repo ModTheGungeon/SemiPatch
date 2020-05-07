@@ -20,6 +20,7 @@ namespace SemiPatch {
             Success
         }
 
+        public StaticPatcher Patcher;
         public Logger Logger;
         public MonoModder Modder;
 
@@ -27,33 +28,38 @@ namespace SemiPatch {
             TargetModule = target_module;
             Logger = new Logger($"{nameof(StaticClient)}({TargetModule.Name})");
             Modder = new MonoModder { Module = target_module };
+            Patcher = new StaticPatcher(target_module);
         }
 
         public PreloadResult Preload(ReloadableModule module) {
-            var mmsg = module.MMSGModule;
-            if (mmsg == null) return PreloadResult.NoMMSGModule;
+            //var mmsg = module.MMSGModule;
+            //if (mmsg == null) return PreloadResult.NoMMSGModule;
 
-            Modder.Mods.Add(mmsg);
+            //Modder.Mods.Add(mmsg);
+            Patcher.LoadPatch(module.PatchData, module.PatchModule);
             return PreloadResult.Success;
         }
 
         public CommitResult Commit() {
-            Modder.MapDependencies();
-            Modder.AutoPatch();
+            Patcher.Patch();
+            //Modder.MapDependencies();
+            //Modder.AutoPatch();
 
             return CommitResult.Success;
         }
 
         public void WriteResult(Stream stream) {
-            Modder.Write(stream);
+            TargetModule.Write(stream);
+            //Modder.Write(stream);
         }
 
         public void WriteResult(string path) {
-            Modder.Write(null, path);
+            TargetModule.Write(path);
+            //Modder.Write(null, path);
         }
 
         public override void Dispose() {
-            Modder.Dispose();
+            //Modder.Dispose();
         }
     }
 }

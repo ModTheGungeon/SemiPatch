@@ -70,10 +70,8 @@ namespace SemiPatch {
         public static TypeReference Orig_n29 = SemiPatch.SemiPatchModule.GetType("SemiPatch.Orig`30");
         public static TypeReference Orig_n30 = SemiPatch.SemiPatchModule.GetType("SemiPatch.Orig`31");
 
-        public static TypeReference OrigGenericTypeForMethod(MethodReference method, bool skip_first_arg = false) {
-            var param_count = method.Parameters.Count;
-            if (skip_first_arg) param_count -= 1;
-            if (method.ReturnType.IsSame(SemiPatch.VoidType)) {
+        public static TypeReference GetBaseOrigType(int param_count, bool is_void) {
+            if (is_void) {
                 // VoidOrig
                 if (param_count == 0) {
                     return VoidOrig_n0;
@@ -210,6 +208,51 @@ namespace SemiPatch {
             }
         }
 
+        public static TypeReference OrigGenericTypeForMethod(MethodReference method, bool skip_first_arg = false) {
+            var param_count = method.Parameters.Count;
+            if (skip_first_arg) param_count -= 1;
+            return GetBaseOrigType(param_count, method.ReturnType.IsSame(SemiPatch.VoidType));
+        }
+
+        public static GenericInstanceType GetInstancedOrigType(ModuleDefinition module, int param_count, bool is_void, TypeReference return_type, params TypeReference[] param_types) {
+            var type = GetBaseOrigType(param_count, is_void);
+            var inst = new GenericInstanceType(module.ImportReference(type));
+            for (var i = 0; i < param_types.Length; i++) {
+                inst.GenericArguments.Add(param_types[i]);
+            }
+
+            if (!is_void) {
+                inst.GenericArguments.Add(return_type);
+            }
+            return inst;
+        }
+
+        public static MethodReference GetInvokeMethod(TypeReference type) {
+            if (!TypeIsGenericOrig(type) && !TypeIsGenericVoidOrig(type)) throw new ArgumentException("Argument must be an Orig or VoidOrig TypeReference", nameof(type));
+            var resolved = type.Resolve();
+            for (var i = 0; i < resolved.Methods.Count; i++) {
+                var method = resolved.Methods[i];
+
+                if (method.Name == "Invoke") {
+                    var generic_method = new MethodReference(method.Name, method.ReturnType, type);
+                    for (var j = 0; j < method.Parameters.Count; j++) {
+                        var param = method.Parameters[j];
+                        generic_method.Parameters.Add(new ParameterDefinition(
+                            param.Name,
+                            param.Attributes,
+                            param.ParameterType
+                        ));
+                    }
+                    generic_method.HasThis = method.HasThis;
+                    generic_method.ExplicitThis = method.ExplicitThis;
+
+                    return generic_method;
+                }
+            }
+
+            throw new Exception("unreachable");
+        }
+
         public static TypeReference OrigTypeForMethod(ModuleDefinition module, MethodReference method, bool skip_first_arg = false) {
             var type = OrigGenericTypeForMethod(method, skip_first_arg);
             var inst = new GenericInstanceType(module.ImportReference(type));
@@ -224,11 +267,11 @@ namespace SemiPatch {
         }
 
         public static bool TypeIsGenericOrig(TypeReference type) {
-            return type.IsSame(Orig_n0) || type.IsSame(Orig_n1) || type.IsSame(Orig_n2) || type.IsSame(Orig_n3) || type.IsSame(Orig_n4) || type.IsSame(Orig_n5) || type.IsSame(Orig_n6) || type.IsSame(Orig_n7) || type.IsSame(Orig_n8) || type.IsSame(Orig_n9) || type.IsSame(Orig_n10) || type.IsSame(Orig_n11) || type.IsSame(Orig_n12) || type.IsSame(Orig_n13) || type.IsSame(Orig_n14) || type.IsSame(Orig_n15) || type.IsSame(Orig_n16) || type.IsSame(Orig_n17) || type.IsSame(Orig_n18) || type.IsSame(Orig_n19) || type.IsSame(Orig_n20) || type.IsSame(Orig_n21) || type.IsSame(Orig_n22) || type.IsSame(Orig_n23) || type.IsSame(Orig_n24) || type.IsSame(Orig_n25) || type.IsSame(Orig_n26) || type.IsSame(Orig_n27) || type.IsSame(Orig_n28) || type.IsSame(Orig_n29) || type.IsSame(Orig_n30);
+            return type.IsSame(Orig_n0, exclude_generic_args: true) || type.IsSame(Orig_n1, exclude_generic_args: true) || type.IsSame(Orig_n2, exclude_generic_args: true) || type.IsSame(Orig_n3, exclude_generic_args: true) || type.IsSame(Orig_n4, exclude_generic_args: true) || type.IsSame(Orig_n5, exclude_generic_args: true) || type.IsSame(Orig_n6, exclude_generic_args: true) || type.IsSame(Orig_n7, exclude_generic_args: true) || type.IsSame(Orig_n8, exclude_generic_args: true) || type.IsSame(Orig_n9, exclude_generic_args: true) || type.IsSame(Orig_n10, exclude_generic_args: true) || type.IsSame(Orig_n11, exclude_generic_args: true) || type.IsSame(Orig_n12, exclude_generic_args: true) || type.IsSame(Orig_n13, exclude_generic_args: true) || type.IsSame(Orig_n14, exclude_generic_args: true) || type.IsSame(Orig_n15, exclude_generic_args: true) || type.IsSame(Orig_n16, exclude_generic_args: true) || type.IsSame(Orig_n17, exclude_generic_args: true) || type.IsSame(Orig_n18, exclude_generic_args: true) || type.IsSame(Orig_n19, exclude_generic_args: true) || type.IsSame(Orig_n20, exclude_generic_args: true) || type.IsSame(Orig_n21, exclude_generic_args: true) || type.IsSame(Orig_n22, exclude_generic_args: true) || type.IsSame(Orig_n23, exclude_generic_args: true) || type.IsSame(Orig_n24, exclude_generic_args: true) || type.IsSame(Orig_n25, exclude_generic_args: true) || type.IsSame(Orig_n26, exclude_generic_args: true) || type.IsSame(Orig_n27, exclude_generic_args: true) || type.IsSame(Orig_n28, exclude_generic_args: true) || type.IsSame(Orig_n29, exclude_generic_args: true) || type.IsSame(Orig_n30, exclude_generic_args: true); 
         }
 
         public static bool TypeIsGenericVoidOrig(TypeReference type) {
-            return type.IsSame(VoidOrig_n0) || type.IsSame(VoidOrig_n1) || type.IsSame(VoidOrig_n2) || type.IsSame(VoidOrig_n3) || type.IsSame(VoidOrig_n4) || type.IsSame(VoidOrig_n5) || type.IsSame(VoidOrig_n6) || type.IsSame(VoidOrig_n7) || type.IsSame(VoidOrig_n8) || type.IsSame(VoidOrig_n9) || type.IsSame(VoidOrig_n10) || type.IsSame(VoidOrig_n11) || type.IsSame(VoidOrig_n12) || type.IsSame(VoidOrig_n13) || type.IsSame(VoidOrig_n14) || type.IsSame(VoidOrig_n15) || type.IsSame(VoidOrig_n16) || type.IsSame(VoidOrig_n17) || type.IsSame(VoidOrig_n18) || type.IsSame(VoidOrig_n19) || type.IsSame(VoidOrig_n20) || type.IsSame(VoidOrig_n21) || type.IsSame(VoidOrig_n22) || type.IsSame(VoidOrig_n23) || type.IsSame(VoidOrig_n24) || type.IsSame(VoidOrig_n25) || type.IsSame(VoidOrig_n26) || type.IsSame(VoidOrig_n27) || type.IsSame(VoidOrig_n28) || type.IsSame(VoidOrig_n29) || type.IsSame(VoidOrig_n30);
+            return type.IsSame(VoidOrig_n0, exclude_generic_args: true) || type.IsSame(VoidOrig_n1, exclude_generic_args: true) || type.IsSame(VoidOrig_n2, exclude_generic_args: true) || type.IsSame(VoidOrig_n3, exclude_generic_args: true) || type.IsSame(VoidOrig_n4, exclude_generic_args: true) || type.IsSame(VoidOrig_n5, exclude_generic_args: true) || type.IsSame(VoidOrig_n6, exclude_generic_args: true) || type.IsSame(VoidOrig_n7, exclude_generic_args: true) || type.IsSame(VoidOrig_n8, exclude_generic_args: true) || type.IsSame(VoidOrig_n9, exclude_generic_args: true) || type.IsSame(VoidOrig_n10, exclude_generic_args: true) || type.IsSame(VoidOrig_n11, exclude_generic_args: true) || type.IsSame(VoidOrig_n12, exclude_generic_args: true) || type.IsSame(VoidOrig_n13, exclude_generic_args: true) || type.IsSame(VoidOrig_n14, exclude_generic_args: true) || type.IsSame(VoidOrig_n15, exclude_generic_args: true) || type.IsSame(VoidOrig_n16, exclude_generic_args: true) || type.IsSame(VoidOrig_n17, exclude_generic_args: true) || type.IsSame(VoidOrig_n18, exclude_generic_args: true) || type.IsSame(VoidOrig_n19, exclude_generic_args: true) || type.IsSame(VoidOrig_n20, exclude_generic_args: true) || type.IsSame(VoidOrig_n21, exclude_generic_args: true) || type.IsSame(VoidOrig_n22, exclude_generic_args: true) || type.IsSame(VoidOrig_n23, exclude_generic_args: true) || type.IsSame(VoidOrig_n24, exclude_generic_args: true) || type.IsSame(VoidOrig_n25, exclude_generic_args: true) || type.IsSame(VoidOrig_n26, exclude_generic_args: true) || type.IsSame(VoidOrig_n27, exclude_generic_args: true) || type.IsSame(VoidOrig_n28, exclude_generic_args: true) || type.IsSame(VoidOrig_n29, exclude_generic_args: true) || type.IsSame(VoidOrig_n30, exclude_generic_args: true);
         }
 
         public static int GetParameterCount(TypeReference type) {
@@ -315,9 +358,9 @@ namespace SemiPatch {
             for (var i = 0; i < n; i++) {
                 var arg = inst.GenericArguments[i];
                 s.Append(arg.BuildSignature());
-                s.Append(" ");
-                s.Append("arg");
-                s.Append(i);
+                //s.Append(" ");
+                //s.Append("arg");
+                //s.Append(i);
                 if (i < n - 1) s.Append(", ");
             }
             //var param_count = param_count;
@@ -340,6 +383,76 @@ namespace SemiPatch {
 
             s.Append(")");
             return new Signature(s.ToString(), orig.Name);
+        }
+
+        public static Type GetReflectionType(bool is_void, int param_count) {
+            if (is_void) {
+                if (param_count == 0) return typeof(VoidOrig);
+                else if (param_count == 1) return typeof(VoidOrig<>);
+                else if (param_count == 2) return typeof(VoidOrig<,>);
+                else if (param_count == 3) return typeof(VoidOrig<,,>);
+                else if (param_count == 4) return typeof(VoidOrig<,,,>);
+                else if (param_count == 5) return typeof(VoidOrig<,,,,>);
+                else if (param_count == 6) return typeof(VoidOrig<,,,,,>);
+                else if (param_count == 7) return typeof(VoidOrig<,,,,,,>);
+                else if (param_count == 8) return typeof(VoidOrig<,,,,,,,>);
+                else if (param_count == 9) return typeof(VoidOrig<,,,,,,,,>);
+                else if (param_count == 10) return typeof(VoidOrig<,,,,,,,,,>);
+                else if (param_count == 11) return typeof(VoidOrig<,,,,,,,,,,>);
+                else if (param_count == 12) return typeof(VoidOrig<,,,,,,,,,,,>);
+                else if (param_count == 13) return typeof(VoidOrig<,,,,,,,,,,,,>);
+                else if (param_count == 14) return typeof(VoidOrig<,,,,,,,,,,,,,>);
+                else if (param_count == 15) return typeof(VoidOrig<,,,,,,,,,,,,,,>);
+                else if (param_count == 16) return typeof(VoidOrig<,,,,,,,,,,,,,,,>);
+                else if (param_count == 17) return typeof(VoidOrig<,,,,,,,,,,,,,,,,>);
+                else if (param_count == 18) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 19) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 20) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 21) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 22) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 23) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 24) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 25) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 26) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 27) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 28) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 29) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 30) return typeof(VoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+            } else {
+                if (param_count == 0) return typeof(Orig<>);
+                else if (param_count == 1) return typeof(Orig<,>);
+                else if (param_count == 2) return typeof(Orig<,,>);
+                else if (param_count == 3) return typeof(Orig<,,,>);
+                else if (param_count == 4) return typeof(Orig<,,,,>);
+                else if (param_count == 5) return typeof(Orig<,,,,,>);
+                else if (param_count == 6) return typeof(Orig<,,,,,,>);
+                else if (param_count == 7) return typeof(Orig<,,,,,,,>);
+                else if (param_count == 8) return typeof(Orig<,,,,,,,,>);
+                else if (param_count == 9) return typeof(Orig<,,,,,,,,,>);
+                else if (param_count == 10) return typeof(Orig<,,,,,,,,,,>);
+                else if (param_count == 11) return typeof(Orig<,,,,,,,,,,,>);
+                else if (param_count == 12) return typeof(Orig<,,,,,,,,,,,,>);
+                else if (param_count == 13) return typeof(Orig<,,,,,,,,,,,,,>);
+                else if (param_count == 14) return typeof(Orig<,,,,,,,,,,,,,,>);
+                else if (param_count == 15) return typeof(Orig<,,,,,,,,,,,,,,,>);
+                else if (param_count == 16) return typeof(Orig<,,,,,,,,,,,,,,,,>);
+                else if (param_count == 17) return typeof(Orig<,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 18) return typeof(Orig<,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 19) return typeof(Orig<,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 20) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 21) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 22) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 23) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 24) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 25) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 26) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 27) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 28) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 29) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 30) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+            }
+
+            throw new InvalidOperationException($"SemiPatch cannot create delegates for methods with over 30 arguments ({param_count} > 30).");
         }
     }
 }

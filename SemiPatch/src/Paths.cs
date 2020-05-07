@@ -21,12 +21,13 @@ namespace SemiPatch {
         // cecil
         public Signature(MethodReference method, bool skip_first_arg = false, string forced_name = null) : this(method.BuildSignature(skip_first_arg, forced_name), method.Name) { }
         public Signature(TypeReference type) : this(type.BuildSignature(), type.Name) { }
-        public Signature(FieldReference field, string forced_name = null) : this(field.BuildSignature(forced_name: forced_name), field.Name) { }
-        public Signature(PropertyReference prop, string forced_name = null) : this(prop.BuildSignature(forced_name: forced_name), prop.Name) { }
+        public Signature(FieldReference field, string forced_name = null) : this(field.BuildSignature(forced_name: forced_name), forced_name ?? field.Name) { }
+        public Signature(PropertyReference prop, string forced_name = null) : this(prop.BuildSignature(forced_name: forced_name), forced_name ?? prop.Name) { }
 
         // reflection
         public Signature(Type type) : this(type.BuildSignature(), type.Name) { }
-        public Signature(System.Reflection.MethodBase method, bool skip_first_arg = false, string forced_name = null) : this(method.BuildSignature(skip_first_arg, forced_name), method.Name) { }
+        public Signature(System.Reflection.MethodBase method, bool skip_first_arg = false, string forced_name = null) : this(method.BuildSignature(skip_first_arg, forced_name), forced_name ?? method.Name) { }
+        public Signature(System.Reflection.FieldInfo field, string forced_name = null) : this(field.BuildSignature(forced_name: forced_name), forced_name ?? field.Name) { }
 
 
         public override string ToString() {
@@ -39,6 +40,9 @@ namespace SemiPatch {
 
         public override bool Equals(object obj) {
             if (!(obj is Signature) || (obj is null)) return false;
+            if (obj is string) {
+                return _Value == (string)obj;
+            }
             return ((Signature)obj)._Value == _Value;
         }
 
@@ -48,6 +52,14 @@ namespace SemiPatch {
 
         public static bool operator !=(Signature a, Signature b) {
             return a._Value != b._Value;
+        }
+
+        public static bool operator ==(Signature a, string b) {
+            return a._Value == b;
+        }
+
+        public static bool operator !=(Signature a, string b) {
+            return a._Value != b;
         }
 
         public static Signature FromInterface(IMemberDefinition member, string forced_name = null) {
@@ -121,6 +133,20 @@ namespace SemiPatch {
             }
         }
 
+        private static void _InitTypePathRecursive(IList<string> list, Type type) {
+            if (type == null) return;
+            _InitTypePathRecursive(list, type.DeclaringType);
+            list.Add(type.Name);
+        }
+
+        private void _InitTypePath(Type type) {
+            if (type.DeclaringType == null) _TypeName = type.Name;
+            else {
+                _TypeNames = new List<string>();
+                _InitTypePathRecursive(_TypeNames, type);
+            }
+        }
+
         public abstract IMemberDefinition FindIn(ModuleDefinition mod);
         public abstract System.Reflection.MemberInfo FindIn(System.Reflection.Assembly asm);
 
@@ -175,7 +201,6 @@ namespace SemiPatch {
             if (_TypeName != null) {
                 for (var i = 0; i < asm_types.Length; i++) {
                     var type = asm_types[i];
-                    Console.WriteLine($"XTYPE {type}");
                     if (type.Name == _TypeName && type.Namespace == Namespace) return type;
                 }
                 throw PathSearchException();
@@ -184,7 +209,6 @@ namespace SemiPatch {
                 Type found_type = null;
                 for (var i = 0; i < asm_types.Length; i++) {
                     var type = asm_types[i];
-                    Console.WriteLine($"YTYPE {type}");
                     if (type.Name == _TypeNames[idx] && type.Namespace == Namespace) {
                         found_type = type;
                         break;
@@ -197,7 +221,6 @@ namespace SemiPatch {
                     Type new_found_type = null;
                     for (var i = 0; i < nested_types.Length; i++) {
                         var type = nested_types[i];
-                        Console.WriteLine($"ZTYPE {type}");
                         if (type.Name == _TypeNames[idx] && type.Namespace == Namespace) {
                             new_found_type = type;
                             break;
@@ -213,7 +236,12 @@ namespace SemiPatch {
             }
         }
 
-            protected MemberPath(TypeDefinition decl_type) {
+        protected MemberPath(TypeDefinition decl_type) {
+            _InitTypePath(decl_type);
+            Namespace = decl_type.Namespace;
+        }
+
+        protected MemberPath(Type decl_type) {
             _InitTypePath(decl_type);
             Namespace = decl_type.Namespace;
         }
@@ -315,6 +343,11 @@ namespace SemiPatch {
 
         }
 
+        public MethodPath(System.Reflection.MethodBase method, bool skip_first_arg = false, string forced_name = null) : base(method.DeclaringType) {
+            Signature = new Signature(method, skip_first_arg, forced_name);
+
+        }
+
         internal MethodPath(Signature sig, TypeDefinition decl_type) : base(decl_type) {
             Signature = sig;
         }
@@ -343,7 +376,6 @@ namespace SemiPatch {
             for (var i = 0; i < methods.Length; i++) {
                 var method = methods[i];
                 var sig = new Signature(method);
-                Console.WriteLine(sig);
                 if (sig == Signature) return method;
             }
             // ??? why is this a separate thing
@@ -351,7 +383,6 @@ namespace SemiPatch {
             for (var i = 0; i < constructors.Length; i++) {
                 var ctor = constructors[i];
                 var sig = new Signature(ctor);
-                Console.WriteLine(sig);
                 if (sig == Signature) return ctor;
             }
             throw PathSearchException();
@@ -401,6 +432,10 @@ namespace SemiPatch {
             Signature = new Signature(field, forced_name: forced_name);
         }
 
+        public FieldPath(System.Reflection.FieldInfo field, string forced_name = null) : base(field.DeclaringType) {
+            Signature = new Signature(field, forced_name: forced_name);
+        }
+
         internal FieldPath(Signature sig, TypeDefinition decl_type) : base(decl_type) {
             Signature = sig;
         }
@@ -424,7 +459,12 @@ namespace SemiPatch {
         }
 
         public override System.Reflection.MemberInfo FindIn(System.Reflection.Assembly asm) {
-            throw new NotImplementedException();
+            var type = FindDeclaringType(asm);
+            var fields = type.GetFields();
+            for (var i = 0; i < fields.Length; i++) {
+                if (new Signature(fields[i]) == Signature) return fields[i];
+            }
+            throw PathSearchException();
         }
 
         public FieldPath WithDeclaringType(TypeDefinition decl_type) {
@@ -526,12 +566,12 @@ namespace SemiPatch {
                     s.Append(".");
                 }
                 if (_TypeName != null) s.Append(_TypeName);
-                else {
+                else if (_TypeNames != null && _TypeNames.Count > 0) {
                     for (var i = 0; i < _TypeNames.Count; i++) {
                         s.Append(_TypeNames[i]);
                         if (i < _TypeNames.Count - 1) s.Append(".");
                     }
-                }
+                } else return null;
                 return s.ToString();
             }
         }
@@ -552,7 +592,29 @@ namespace SemiPatch {
             }
         }
 
+        private static void _InitTypePathRecursive(IList<string> list, Type type) {
+            if (type == null) return;
+            _InitTypePathRecursive(list, type.DeclaringType);
+            list.Add(type.Name);
+        }
+
+        private void _InitTypePath(Type type) {
+            if (type == null) return;
+
+            if (type.DeclaringType == null) _TypeName = type.Name;
+            else {
+                _TypeNames = new List<string>();
+                _InitTypePathRecursive(_TypeNames, type);
+            }
+        }
+
         public TypePath(TypeDefinition type) {
+            _InitTypePath(type.DeclaringType);
+            Namespace = type.Namespace;
+            Signature = new Signature(type);
+        }
+
+        public TypePath(Type type) {
             _InitTypePath(type.DeclaringType);
             Namespace = type.Namespace;
             Signature = new Signature(type);
@@ -726,6 +788,15 @@ namespace SemiPatch {
                 }
             }
             throw PathSearchException();
+        }
+
+        public TypeDefinition FindInIncludingDependencies(ModuleDefinition mod) {
+            var full_name = DeclaringType;
+            if (full_name == null) full_name = Signature.Name;
+            else full_name += $".{Signature.Name}";
+            var type = SemiPatch.FindType(mod, full_name);
+            if (type == null) throw PathSearchException();
+            return type;
         }
 
         public Type FindIn(System.Reflection.Assembly asm) {

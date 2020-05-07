@@ -68,18 +68,21 @@ namespace SemiPatch {
             }
         }
 
-        private List<IDetour> _Detours = new List<IDetour>();
+        private Dictionary<MemberPath, IDetour> _MethodPatchMap = new Dictionary<MemberPath, IDetour>();
+        private Dictionary<MemberPath, IDetour> _CallStubToOrigMap = new Dictionary<MemberPath, IDetour>();
         private ModuleDefinition _RunningModule;
         private System.Reflection.Assembly _RunningAssembly;
+        private RuntimeInjectionManager _InjectionManager;
+
 
         public RuntimePatchManager(System.Reflection.Assembly asm, ModuleDefinition running_module) {
             _RunningAssembly = asm;
             _RunningModule = running_module;
+            _InjectionManager = new RuntimeInjectionManager(asm, running_module);
         }
 
         private void _ReplaceMethod(Relinker relinker, MethodDefinition patch_method, MethodPath target_path, System.Reflection.Assembly target_asm, ModuleDefinition target_module, bool update_running_module = false) {
             var target_method = (System.Reflection.MethodBase)target_path.FindIn(target_asm);
-            Console.WriteLine($"TARGET METHOD: {target_method}");
 
             var has_orig = (patch_method.Parameters.Count >= 1
                 && (
@@ -113,9 +116,7 @@ namespace SemiPatch {
             var dmd = new DynamicMethodDefinition(patch_method.Name, (target_method as System.Reflection.MethodInfo)?.ReturnType ?? typeof(void), dmd_types);
             var il = dmd.GetILProcessor();
             dmd.Definition.Body = method.Body.Clone(dmd.Definition);
-            Console.WriteLine(dmd.Definition);
             var dmd_method = dmd.Generate();
-            Console.WriteLine(dmd_method);
 
             var attrs = target_method.GetCustomAttributes(true);
             for (var k = 0; k < attrs.Length; k++) {
@@ -141,25 +142,35 @@ namespace SemiPatch {
                         throw new Exception($"Target method {new Signature(target_method)} has a static-patch artifact of a member orig method, but one could not be found with the signature '{orig_sig}'");
                     }
 
-                    Console.WriteLine($"target: {target_method}");
-                    Console.WriteLine($"orig: {orig_method}");
+                    if (!_CallStubToOrigMap.ContainsKey(target_path)) {
+                        Logger.Debug($"Inserted call stub in '{target_path}' to '{orig_sig}'.");
+                        var stub = CreateCallStub(target_method, orig_method);
+                        var orig_stub_detour = new Hook(target_method, stub);
 
-                    var stub = _CreateOrigStub(target_method, orig_method);
-                    var orig_stub_detour = new NativeDetour(target_method, stub);
+                        _CallStubToOrigMap[target_path] = orig_stub_detour;
 
-                    Console.WriteLine($"stubbed {target_method}: {stub} {stub.Attributes}");
-                    _Detours.Add(orig_stub_detour);
-
-                    target_method = orig_method;
+                        target_method = orig_method;
+                    } else {
+                        Logger.Debug($"Call stub in '{target_path}' to '{orig_sig}' already exists, not hooking.");
+                    }
                     break;
                 }
             }
 
             var hook = new Hook(target_method, dmd_method);
-            _Detours.Add(hook);
+            _MethodPatchMap[patch_method.ToPath()] = hook;
         }
 
         private void _ProcessMethodDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+            Logger.Debug($"Processing method difference for target '{diff.TargetPath}'");
+
+            var patch_path = ((MethodDefinition)diff.Member).ToPath();
+            if (_MethodPatchMap.TryGetValue(patch_path, out IDetour old_detour)) {
+                Logger.Debug($"Disposing of existing patch hook for '{patch_path}' targetting '{diff.TargetPath}'.");
+                old_detour.Dispose();
+                _MethodPatchMap.Remove(patch_path);
+            }
+
             if (diff is MemberAdded) {
                 throw new UnsupportedRDAROperationException(diff);
             } else if (diff is MemberRemoved) {
@@ -179,10 +190,14 @@ namespace SemiPatch {
         }
 
         private void _ProcessFieldDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+            Logger.Debug($"Processing field difference for target '{diff.TargetPath}'");
+
             throw new UnsupportedRDAROperationException(diff);
         }
 
         private void _ProcessPropertyDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+            Logger.Debug($"Processing property difference for target '{diff.TargetPath}'");
+
             throw new UnsupportedRDAROperationException(diff);
         }
 
@@ -199,6 +214,8 @@ namespace SemiPatch {
         }
 
         private void _ProcessTypeDifference(Relinker relinker, TypeDifference diff, bool update_running_module = false) {
+            Logger.Debug($"Processing type difference {diff.ToString()}");
+
             if (diff is TypeAdded) {
                 throw new UnsupportedRDAROperationException(diff);
             }
@@ -208,6 +225,15 @@ namespace SemiPatch {
             }
 
             var change = (TypeChanged)diff;
+
+            // injections should be processed before methods can
+            // to retain proper ordering of receiveoriginal patches +
+            // injections (i.e. orig will be hooked by the injection stub
+            // first and then it will be hooked by the patch hook)
+            for (var i = 0; i < change.InjectionDifferences.Count; i++) {
+                _InjectionManager.ProcessInjectionDifference(relinker, change.InjectionDifferences[i], update_running_module);
+            }
+
             for (var i = 0; i < change.MemberDifferences.Count; i++) {
                 _ProcessMemberDifference(relinker, change.MemberDifferences[i], update_running_module);
             }
@@ -252,23 +278,33 @@ namespace SemiPatch {
         }
 
         public void ProcessDifference(Relinker relinker, AssemblyDiff diff, bool update_running_module = false) {
+            Logger.Debug($"Processing assembly difference");
             for (var i = 0; i < diff.TypeDifferences.Count; i++) {
                 _ProcessTypeDifference(relinker, diff.TypeDifferences[i], update_running_module);
             }
         }
 
-        public void ResetDetours() {
-            for (var i = 0; i < _Detours.Count; i++) {
-                _Detours[i].Dispose();
-            }
+        public void FinalizeProcessing() {
+            _InjectionManager.GenerateInjectionTargets();
+        }
 
-            _Detours.Clear();
+        public void ResetPatches() {
+            foreach (var kv in _CallStubToOrigMap) {
+                // new stubs will be created when needed
+                kv.Value.Dispose();
+            }
+            _CallStubToOrigMap.Clear();
+            _InjectionManager.RevertInjectionTargets();
         }
 
         public void Dispose() {
-            for (var i = 0; i < _Detours.Count; i++) {
-                _Detours[i].Dispose();
+            foreach (var kv in _MethodPatchMap) {
+                kv.Value.Dispose();
             }
+            foreach (var kv in _CallStubToOrigMap) {
+                kv.Value.Dispose();
+            }
+            _InjectionManager.Dispose();
         }
 
         private static void _RewriteOrigToExplicitOrig(MethodDefinition method, TypeReference explicit_orig_type, ParameterDefinition orig_param) {
@@ -512,17 +548,17 @@ namespace SemiPatch {
             return method;
         }
 
-        private static System.Reflection.MethodInfo _CreateOrigStub(System.Reflection.MethodBase patched, System.Reflection.MethodBase orig) {
-            var patched_params = patched.GetParameters();
+        public static System.Reflection.MethodInfo CreateCallStub(System.Reflection.MethodBase source, System.Reflection.MethodBase target) {
+            var patched_params = source.GetParameters();
             var stub_param_length = patched_params.Length;
-            if (!patched.IsStatic) stub_param_length += 1;
+            if (!source.IsStatic) stub_param_length += 1;
 
             var param_types = new Type[stub_param_length];
-            if (!patched.IsStatic) param_types[0] = patched.DeclaringType;
+            if (!source.IsStatic) param_types[0] = source.DeclaringType;
             for (var i = 0; i < patched_params.Length; i++) {
-                param_types[patched.IsStatic ? i : i + 1] = patched_params[i].ParameterType;
+                param_types[source.IsStatic ? i : i + 1] = patched_params[i].ParameterType;
             }
-            var dmd = new DynamicMethodDefinition(patched.Name, (patched as System.Reflection.MethodInfo)?.ReturnType ?? typeof(void), param_types);
+            var dmd = new DynamicMethodDefinition(source.Name, (source as System.Reflection.MethodInfo)?.ReturnType ?? typeof(void), param_types);
 
             var body = dmd.Definition.Body;
             var il = body.GetILProcessor();
@@ -535,19 +571,16 @@ namespace SemiPatch {
                 il.Append(il.Create(OpCodes.Ldarg, dmd.Definition.Parameters[i]));
             }
 
-            if (orig.IsVirtual) {
-                il.Append(il.Create(OpCodes.Callvirt, orig));
-            } else il.Append(il.Create(OpCodes.Call, orig));
+            if (target.IsVirtual) {
+                il.Append(il.Create(OpCodes.Callvirt, target));
+            } else il.Append(il.Create(OpCodes.Call, target));
 
             il.Append(il.Create(OpCodes.Ret));
 
             body.OptimizeMacros();
 
-            for (var i = 0; i < body.Instructions.Count; i++) {
-                Console.WriteLine(body.Instructions[i]);
-            }
-
-            return dmd.Generate();
+            var gen = dmd.Generate();
+            return gen;
         }
     }
 }

@@ -39,8 +39,19 @@ namespace TargetTest {
     }
 
     public class SmallClass {
+        public string GetName(int a) {
+            return $"name{a}";
+        }
+
         public void Hello(string name) {
-            Console.WriteLine($"Hello {name}!");
+            var my_local = name + "!";
+            Console.WriteLine($"Hello {my_local}");
+            Console.WriteLine($"Hello again, {my_local}");
+            Console.WriteLine($"GetName(42) result {GetName(42)}");
+        }
+
+        public string GetName() {
+            return "world";
         }
     }
 
@@ -50,7 +61,7 @@ namespace TargetTest {
         public static bool ExecuteCommand(string cmd) {
             if (cmd == "hello") {
                 var c = new SmallClass();
-                c.Hello("world");
+                c.Hello(c.GetName());
                 return true;
             }
             if (cmd == "quit") {

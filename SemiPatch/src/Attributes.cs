@@ -1,4 +1,6 @@
 ﻿using System;
+using Mono.Cecil;
+
 namespace SemiPatch {
     /// <summary>
     /// Marks a class as a patch class. This causes the SemiPatch analyzer to become
@@ -206,5 +208,119 @@ namespace SemiPatch {
     public class SetterAttribute : Attribute {
         /// <param name="prop">Name of the property to patch the setter of.</param>
         public SetterAttribute(string prop) { }
+    }
+
+
+    /// <summary>
+    /// TODO: INJECT ATTRIBUTE
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method)]
+    public class InjectAttribute : Attribute {
+        public struct ArgumentHandler {
+            private bool _PathHandled;
+            private bool _IndexHandled;
+            private InjectAttribute _InjectData;
+
+            public ArgumentHandler(InjectAttribute inject_data) {
+                _InjectData = inject_data;
+
+                _PathHandled = false;
+                _IndexHandled = false;
+            }
+
+            public bool AllHandled => _PathHandled && _IndexHandled;
+
+            public string Path {
+                get {
+                    _PathHandled = true;
+                    if (_InjectData.Path == null) throw new MissingInjectParameterException(
+                        _InjectData.Query,
+                        "path"
+                    );
+                    return _InjectData.Path;
+                }
+            }
+
+            public void PathArgUnused() {
+                if (_InjectData.Path != null) throw new InvalidInjectParameterException(
+                    _InjectData.Query,
+                    "path"
+                );
+                _PathHandled = true;
+            }
+
+            public int Index {
+                get { _IndexHandled = true; return _InjectData.Index; }
+            }
+
+            public void IndexArgUnused() {
+                if (_InjectData.Index != 0) throw new InvalidInjectParameterException(
+                    _InjectData.Query,
+                    "index"
+                );
+                _IndexHandled = true;
+            }
+
+            public void Check() {
+                if (!AllHandled) throw new UnhandledInjectParameterException(_InjectData.Query);
+            }
+        }
+
+        public string Inside;
+        public InjectQuery Query;
+        public InjectPosition Position;
+        public string Path;
+        public int Index;
+
+        public static InjectAttribute MakeFromCecil(Mono.Collections.Generic.Collection<CustomAttributeArgument> args) {
+            return new InjectAttribute(
+                (string)(args[0].Value), // inside
+                (InjectQuery)(args[1].Value), // at
+                (InjectPosition)(args[2].Value), // where
+                (string)(args[3].Value), // path
+                (int)(args[4].Value) // index
+            );
+        }
+
+        public InjectAttribute(
+            string inside,
+            InjectQuery at,
+
+            InjectPosition where = InjectPosition.Default,
+            string path = null,
+            int index = 0
+        ) {
+            Inside = inside;
+            Query = at;
+            Position = where;
+            Path = path;
+            Index = index;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+    public class CaptureLocalAttribute : Attribute {
+        public int Index;
+        public TypeReference Type;
+        public string Name;
+
+        public static CaptureLocalAttribute MakeFromCecil(Mono.Collections.Generic.Collection<CustomAttributeArgument> args) {
+            return new CaptureLocalAttribute(
+                (int)(args[0].Value), // index
+                (TypeReference)(args[1].Value), // type
+                (string)(args[2].Value) // name
+            );
+        }
+
+        public CaptureLocalAttribute(int index, Type type, string name) { }
+        internal CaptureLocalAttribute(int index, TypeReference type, string name) {
+            Index = index;
+            Type = type;
+            Name = name;
+        }
+
+        public override int GetHashCode() {
+            return (Index * 54583) ^ (Name.GetHashCode()) ^ (Type.BuildPrefixedSignature().GetHashCode());
+        }
     }
 }

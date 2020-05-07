@@ -69,6 +69,17 @@
     <Compile Include="src\AsmDiff\DiffSources\SemiPatchAbsoluteDiffSource.cs" />
     <Compile Include="src\AsmDiff\DiffSources\SemiPatchDiffSource.cs" />
     <Compile Include="src\AsmDiff\IDiffSource.cs" />
+    <Compile Include="src\ILInject\InjectQuery.cs" />
+    <Compile Include="src\ILInject\InjectPosition.cs" />
+    <Compile Include="src\ILInject\Injector.cs" />
+    <Compile Include="src\ILInject\InjectionState.cs" />
+    <Compile Include="src\Analyzer\PatchInjectData.cs" />
+    <Compile Include="src\Analyzer\InjectionAnalysis.cs" />
+    <Compile Include="src\ILInject\InjectionHandlerProxy.cs" />
+    <Compile Include="src\Orig\ExplicitOrig.cs" />
+    <Compile Include="src\Orig\ExplicitOrigFactory.cs" />
+    <Compile Include="src\Orig\ExplicitVoidOrig.cs" />
+    <Compile Include="src\ILInject\InjectionSignature.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\" />
@@ -78,15 +89,16 @@
     <Folder Include="src\Utils\" />
     <Folder Include="src\Relinker\" />
     <Folder Include="src\AsmDiff\DiffSources\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
+    <Folder Include="src\ILInject\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\libs\Logger\Logger.csproj">
       <Project>{1C734127-AC83-4ECB-ABCA-32B98DFE49C7}</Project>
       <Name>Logger</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

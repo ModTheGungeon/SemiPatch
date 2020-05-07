@@ -277,7 +277,7 @@ namespace SemiPatch {
                 Logger.Debug($"Relinked type reference '{path}' to '{entry.TargetType.ToPath()}'");
             }
 
-            return type;
+            return state.Module.ImportReference(type);
         }
 
         public void Relink(State state, MethodDefinition method) {
@@ -359,7 +359,9 @@ namespace SemiPatch {
                 for (var i = 0; i < old_method.Parameters.Count; i++) {
                     var param = old_method.Parameters[i];
                     var new_param = new ParameterDefinition(param.Name, param.Attributes, Relink(state, param.ParameterType));
-                    new_param.Constant = param.Constant;
+                    if (param.HasConstant) {
+                        new_param.Constant = param.Constant;
+                    }
                     for (var j = 0; j < param.CustomAttributes.Count; j++) {
                         var attr = param.CustomAttributes[j];
                         new_param.CustomAttributes.Add(attr);
@@ -380,7 +382,7 @@ namespace SemiPatch {
             }
             for (var i = 0; i < method.Parameters.Count; i++) Relink(state, method.Parameters[i]);
 
-            return method;
+            return state.Module.ImportReference(method);
         }
 
         public FieldReference Relink(State state, FieldReference field) {
@@ -400,7 +402,7 @@ namespace SemiPatch {
             }
 
             field.FieldType = Relink(state, field.FieldType);
-            return field;
+            return state.Module.ImportReference(field);
         }
 
         public PropertyReference Relink(State state, PropertyReference prop) {
@@ -468,21 +470,27 @@ namespace SemiPatch {
         public void Relink(State state, FieldDefinition field) {
             if (field == null) return;
             field.FieldType = Relink(state, field.FieldType);
-            field.Constant = RelinkUntypedObject(state, field.Constant);
+            if (field.HasConstant) {
+                field.Constant = RelinkUntypedObject(state, field.Constant);
+            }
             for (var i = 0; i < field.CustomAttributes.Count; i++) Relink(state, field.CustomAttributes[i]);
         }
 
         public void Relink(State state, ParameterDefinition param) {
             if (param == null) return;
             param.ParameterType = Relink(state, param.ParameterType);
-            param.Constant = RelinkUntypedObject(state, param.Constant);
+            if (param.HasConstant) {
+                param.Constant = RelinkUntypedObject(state, param.Constant);
+            }
             for (var i = 0; i < param.CustomAttributes.Count; i++) Relink(state, param.CustomAttributes[i]);
         }
 
         public void Relink(State state, PropertyDefinition prop) {
             if (prop == null) return;
             prop.PropertyType = Relink(state, prop.PropertyType);
-            prop.Constant = RelinkUntypedObject(state, prop.Constant);
+            if (prop.HasConstant) {
+                prop.Constant = RelinkUntypedObject(state, prop.Constant);
+            }
             for (var i = 0; i < prop.CustomAttributes.Count; i++) Relink(state, prop.CustomAttributes[i]);
             // GetMethod will be relinked as part of TypeDefinition relinking
             // SetMethod will be relinked as part of TypeDefinition relinking

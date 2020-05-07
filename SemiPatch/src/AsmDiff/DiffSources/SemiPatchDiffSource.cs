@@ -43,9 +43,6 @@ namespace SemiPatch {
 
             for (var i = 0; i < new_members.Count; i++) {
                 var member = new_members[i];
-                if (member is PatchMethodData) {
-                    if (((PatchMethodData)(object)member).FalseDefaultConstructor) continue;
-                }
 
                 new_member_map[member.TargetPath] = member;
 
@@ -55,6 +52,10 @@ namespace SemiPatch {
                         diffs.Add(new MemberChanged(member.PatchMember, member.TargetPath));
                     }
                 } else {
+                    if (member is PatchMethodData) {
+                        if (((PatchMethodData)(object)member).FalseDefaultConstructor) continue;
+                    }
+
                     if (member.IsInsert) {
                         Logger.Debug($"{member_type_name} added (insert patch added: {member.TargetPath} patched (added) in {member.PatchPath}");
                         diffs.Add(new MemberAdded(member.PatchMember, member.TargetPath));
@@ -103,8 +104,61 @@ namespace SemiPatch {
                 old_type.Properties,
                 new_type.Properties
             );
-            if (change.MemberDifferences.Count == 0 && change.NestedTypeDifferences.Count == 0) return null;
+            DoubleSearchInjections(
+                change.InjectionDifferences,
+                old_type.Injections,
+                new_type.Injections
+            );
+            if (change.MemberDifferences.Count == 0 && change.NestedTypeDifferences.Count == 0 && change.InjectionDifferences.Count == 0) return null;
             return change;
+        }
+
+        public void DoubleSearchInjections(IList<InjectionDifference> diffs, IList<PatchInjectData> old_injects, IList<PatchInjectData> new_injects) {
+            var old_inject_map = new Dictionary<string, PatchInjectData>();
+            var new_inject_map = new Dictionary<string, PatchInjectData>();
+
+            for (var i = 0; i < old_injects.Count; i++) {
+                var inject = old_injects[i];
+                old_inject_map[inject.BuildInjectionSignature()] = inject;
+            }
+
+            for (var i = 0; i < new_injects.Count; i++) {
+                var inject = new_injects[i];
+                var sig = inject.BuildInjectionSignature();
+                new_inject_map[sig] = inject;
+
+                if (old_inject_map.TryGetValue(sig, out PatchInjectData old_inject)) {
+                    if (old_inject != inject) {
+                        Logger.Debug($"Injection changed: {sig}");
+                        diffs.Add(new InjectionChanged(
+                            inject.Target, inject.TargetPath,
+                            inject.Handler, inject.HandlerPath,
+                            inject.InjectionPoint, inject.LocalCaptures, inject.Position
+                        ));
+                    }
+                } else {
+                    Logger.Debug($"Injection added: {sig}");
+                    diffs.Add(new InjectionAdded(
+                            inject.Target, inject.TargetPath,
+                            inject.Handler, inject.HandlerPath,
+                            inject.InjectionPoint, inject.LocalCaptures, inject.Position
+                    ));
+                }
+            }
+
+            for (var i = 0; i < old_injects.Count; i++) {
+                var inject = old_injects[i];
+                var sig = inject.BuildInjectionSignature();
+
+                if (!new_inject_map.ContainsKey(sig)) {
+                    Logger.Debug($"Injection removed: {sig}");
+                    diffs.Add(new InjectionRemoved(
+                            inject.Target, inject.TargetPath,
+                            inject.HandlerPath,
+                            inject.InjectionPoint, inject.LocalCaptures, inject.Position
+                    ));
+                }
+            }
         }
 
         public TypeChanged GetFullPatchTypeChange(PatchTypeData type_data, bool is_unpatch = false) {

@@ -40,23 +40,20 @@
     <Reference Include="Mono.Cecil.Rocks">
       <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Rocks.dll</HintPath>
     </Reference>
+    <Reference Include="MonoMod.Utils">
+      <HintPath>..\packages\MonoMod.Utils.20.5.2.5\lib\net35\MonoMod.Utils.dll</HintPath>
+    </Reference>
     <Reference Include="MonoMod">
-      <HintPath>..\packages\MonoMod.20.3.5.1\lib\net35\MonoMod.exe</HintPath>
+      <HintPath>..\packages\MonoMod.20.5.2.5\lib\net35\MonoMod.exe</HintPath>
     </Reference>
     <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>..\packages\MonoMod.RuntimeDetour.20.3.5.1\lib\net35\MonoMod.RuntimeDetour.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.Utils">
-      <HintPath>..\packages\MonoMod.Utils.20.3.5.1\lib\net35\MonoMod.Utils.dll</HintPath>
+      <HintPath>..\packages\MonoMod.RuntimeDetour.20.5.2.5\lib\net35\MonoMod.RuntimeDetour.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\RDAR\Support.cs" />
     <Compile Include="src\Static\MonoModStaticConverter.cs" />
-    <Compile Include="src\RDAR\ExplicitOrig.cs" />
-    <Compile Include="src\RDAR\ExplicitVoidOrig.cs" />
-    <Compile Include="src\RDAR\ExplicitOrigFactory.cs" />
     <Compile Include="src\RDAR\RuntimePatchManager.cs" />
     <Compile Include="src\Exceptions.cs" />
     <Compile Include="src\ReloadableModule\ReloadableModule.cs" />
@@ -64,6 +61,9 @@
     <Compile Include="src\PatchClient\Client.cs" />
     <Compile Include="src\PatchClient\RuntimeClient.cs" />
     <Compile Include="src\PatchClient\StaticClient.cs" />
+    <Compile Include="src\Extensions.cs" />
+    <Compile Include="src\Static\StaticPatcher.cs" />
+    <Compile Include="src\RDAR\RuntimeInjectionManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SemiPatch\SemiPatch.csproj">

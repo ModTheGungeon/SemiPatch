@@ -30,18 +30,16 @@ namespace SemiPatch {
             Logger = new Logger($"{nameof(RuntimeClient)}({TargetModule.Name})");
         }
 
-        public void Reset() {
+        public void BeginProcessing() {
             Logger.Debug("Reset");
             Relinker.Clear();
-        }
-
-        public void Preload(ReloadableModule module) {
-            Logger.Debug($"Preloaded: {module}");
-            Relinker.LoadRelinkMapFrom(module.PatchData, RunningModule);
+            PatchManager.ResetPatches();
         }
 
         public Result Process(ReloadableModule old_module, ReloadableModule new_module) {
             Logger.Debug($"Processing: {old_module} -> {new_module}");
+
+            Relinker.LoadRelinkMapFrom(new_module.PatchData, RunningModule);
 
             var diff = ReloadableModule.Compare(old_module, new_module);
             if (!diff.HasChanges) return Result.NoChanges;
@@ -49,6 +47,10 @@ namespace SemiPatch {
 
             PatchManager.ProcessDifference(Relinker, diff, update_running_module: false);
             return Result.Success;
+        }
+
+        public void FinishProcessing() {
+            PatchManager.FinalizeProcessing();
         }
 
         public override void Dispose() {

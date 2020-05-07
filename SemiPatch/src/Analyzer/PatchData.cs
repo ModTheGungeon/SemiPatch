@@ -14,7 +14,7 @@ namespace SemiPatch {
         /// A magic number that is used to ensure that loading outdated
         /// binary metadata files errors early on.
         /// </summary>
-        public const int CURRENT_VERSION = 4;
+        public const int CURRENT_VERSION = 10;
 
         /// <summary>
         /// The format version of this PatchData object.

@@ -11,7 +11,7 @@ using BindingFlags = System.Reflection.BindingFlags;
 namespace PatchTest.Patches {
     public static class NewClass {
         public static void PrintText() {
-            Console.WriteLine($"a lot has");
+            Console.WriteLine($"a lot dafdasdfadfaas");
         }
     }
 
@@ -26,17 +26,81 @@ namespace PatchTest.Patches {
 
     [Patch(typeof(TargetTest.SmallClass))]
     public class PatchSmallClass {
-        [ReceiveOriginal]
-        public void Hello(VoidOrig<string> orig, string name) {
-            NewClass.PrintText();
-            Console.WriteLine($"changed");
-            Console.WriteLine($"at");
-            Console.WriteLine($"runtime!");
-            orig("test");
-            Console.WriteLine($"orig = {orig}");
-            Console.WriteLine($"name = {name}");
-            orig(name);
+        [Inject(
+            inside: "void Hello(string)",
+            at: InjectQuery.MethodCall,
+            where: InjectPosition.After,
+            path: "[System.Console] void WriteLine(string)",
+            index: 1
+        )]
+        [CaptureLocal(
+            index: 0,
+            type: typeof(string),
+            name: "test_local"
+        )]
+        public void HelloInject1(InjectionState state, string name) {
+            var test_loc = state.GetLocal<string>("test_local");
+            state.SetLocal("test_local", "injection!");
+            Console.WriteLine($"injection changed at runtime! (name = {name}, test_local = {test_loc})");
         }
+
+        //[Inject(
+        //    inside: "void Hello(string)",
+        //    at: InjectQuery.MethodCall,
+        //    where: InjectPosition.After,
+        //    path: "[System.Console] void WriteLine(string)",
+        //    index: 1
+        //)]
+        //[CaptureLocal(
+        //    index: 0,
+        //    type: typeof(string),
+        //    name: "test_local"
+        //)]
+        //public void HelloInject2(InjectionState state, string name) {
+        //    var test_loc = state.GetLocal<string>("test_local");
+        //    state.SetLocal("test_local", "injection!");
+        //    Console.WriteLine($"After second call (name = {name}, test_local = {test_loc})");
+        //}
+
+        [Inject(
+            inside: "string GetName(int)",
+            at: InjectQuery.Tail,
+            where: InjectPosition.Before
+        )]
+        [CaptureLocal(
+            index: 0,
+            type: typeof(string),
+            name: "format_result"
+        )]
+        public void GetNameInject(InjectionState<string> state, int num) {
+            Console.WriteLine($"GetName num: {num}");
+            Console.WriteLine($"Format result: {state.GetLocal<string>("format_result")}");
+            state.ReturnValue = "changed_name";
+        }
+
+
+        //[ReceiveOriginal]
+        //public void Hello(VoidOrig<string> orig, string name) {
+        //    Console.WriteLine($"changed");
+        //    orig(name);
+        //}
+
+        //public void GetNameInject(InjectionState<string> state, string name) {
+        //    Console.WriteLine($"getnameinject: {name}");
+        //    state.ReturnValue = "x";
+        //}
+
+        //[ReceiveOriginal]
+        //public void Hello(VoidOrig<string> orig, string name) {
+        //    NewClass.PrintText();
+        //    Console.WriteLine($"changed");
+        //    Console.WriteLine($"at");
+        //    Console.WriteLine($"runtime!");
+        //    orig("test");
+        //    Console.WriteLine($"orig = {orig}");
+        //    Console.WriteLine($"name = {name}");
+        //    orig(name);
+        //}
     }
 
     [Patch(type: typeof(TargetTest.MyClass))]
@@ -74,15 +138,16 @@ namespace PatchTest.Patches {
             if (result) return true;
 
             if (cmd == "testpatch") {
-                Console.WriteLine($"Really changed at runtime!!!");
+                Console.WriteLine($"Really chaasdfasdfnged at runtime!!!");
                 return true;
             }
 
             if (cmd == "reload") {
                 var rm = Client.Load("PatchTest.spr");
-                Client.Reset();
-                Client.Preload(rm);
+                Client.BeginProcessing();
                 Client.Process(CurrentModule, rm);
+                Client.FinishProcessing();
+
                 CurrentModule = rm;
 
                 return true;

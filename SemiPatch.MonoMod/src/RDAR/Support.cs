@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Mono.Cecil;
 
 namespace SemiPatch.RDARSupport {
@@ -25,15 +26,54 @@ namespace SemiPatch.RDARSupport {
         public HasOriginalInAttribute(string name) { OrigName = name; }
     }
 
+    public class HasPreinjectInAttribute : Attribute {
+        public string PreinjectName;
+
+        public HasPreinjectInAttribute(string name) { PreinjectName = name; }
+    }
+
+    public class StaticallyInjectedAttribute : Attribute { }
+
+    internal struct SupportAttributeData {
+        public string OrigName;
+        public string PreinjectName;
+        public bool IsStaticallyInjected;
+
+        public SupportAttributeData(IList<CustomAttribute> attrs) {
+            OrigName = null;
+            PreinjectName = null;
+            IsStaticallyInjected = false;
+
+            for (var i = 0; i < attrs.Count; i++) {
+                var attr = attrs[i];
+
+                if (attr.AttributeType.IsSame(RDARSupport.RDARSupportHasPreinjectInAttribute)) {
+                    PreinjectName = (string)attr.ConstructorArguments[0].Value;
+                    break;
+                } else if (attr.AttributeType.IsSame(RDARSupport.RDARSupportHasOriginalInAttribute)) {
+                    OrigName = (string)attr.ConstructorArguments[0].Value;
+                    break;
+                } else if (attr.AttributeType.IsSame(RDARSupport.RDARSupportStaticallyInjectedAttribute)) {
+                    IsStaticallyInjected = true;
+                    break;
+                }
+            }
+        }
+    }
+
     internal static class RDARSupport {
         public static ModuleDefinition SemiPatchMonoModModule;
         public static TypeDefinition RDARSupportNameAliasedFromAttribute;
         public static TypeDefinition RDARSupportHasOriginalInAttribute;
+        public static TypeDefinition RDARSupportHasPreinjectInAttribute;
+        public static TypeDefinition RDARSupportStaticallyInjectedAttribute;
 
         static RDARSupport() {
             SemiPatchMonoModModule = ModuleDefinition.ReadModule(System.Reflection.Assembly.GetExecutingAssembly().Location);
             RDARSupportNameAliasedFromAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDARSupport.NameAliasedFromAttribute");
             RDARSupportHasOriginalInAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDARSupport.HasOriginalInAttribute");
+            RDARSupportHasPreinjectInAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDARSupport.HasPreinjectInAttribute");
+            RDARSupportStaticallyInjectedAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDARSupport.StaticallyInjectedAttribute");
         }
     }
 }

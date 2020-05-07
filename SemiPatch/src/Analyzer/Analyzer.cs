@@ -14,6 +14,11 @@ namespace SemiPatch {
     /// </summary>
     public class Analyzer {
         public static Logger Logger = new Logger("Analyzer");
+        private static Dictionary<InjectQuery, IInjectionAnalysisHandler> _InjectQueryHandlers = new Dictionary<InjectQuery, IInjectionAnalysisHandler>{
+            [InjectQuery.Head] = new HeadInjectionAnalysisHandler(),
+            [InjectQuery.Tail] = new TailInjectionAnalysisHandler(),
+            [InjectQuery.MethodCall] = new MethodCallInjectionAnalysisHandler()
+        };
 
         public ModuleDefinition TargetModule;
         public IList<ModuleDefinition> PatchModules;
@@ -25,6 +30,7 @@ namespace SemiPatch {
         public HashSet<FieldDefinition> IgnoredFields;
 
         public PatchData PatchData;
+        public Relinker ValidationRelinker;
 
         private Dictionary<TypePath, MethodReference> _ParameterlessCtorCache;
 
@@ -35,6 +41,28 @@ namespace SemiPatch {
             PropertyMap = new Dictionary<PropertyPath, PropertyDefinition>();
             IgnoredMethods = new HashSet<MethodDefinition>();
             IgnoredFields = new HashSet<FieldDefinition>();
+            ValidationRelinker = new Relinker();
+
+            ValidationRelinker.Map(
+                SemiPatch.InjectionStateOverrideReturnField.ToPath(),
+                Relinker.MemberEntry.Rejected(new InjectionStateIllegalAccessException(
+                    SemiPatch.InjectionStateOverrideReturnField.ToPath()
+                ))
+            );
+
+            ValidationRelinker.Map(
+                SemiPatch.VoidInjectionStateOverrideReturnField.ToPath(),
+                Relinker.MemberEntry.Rejected(new InjectionStateIllegalAccessException(
+                    SemiPatch.VoidInjectionStateOverrideReturnField.ToPath()
+                ))
+            );
+
+            ValidationRelinker.Map(
+                SemiPatch.InjectionStateReturnValueField.ToPath(),
+                Relinker.MemberEntry.Rejected(new InjectionStateIllegalAccessException(
+                    SemiPatch.InjectionStateReturnValueField.ToPath()
+                ))
+            );
 
             _ParameterlessCtorCache = new Dictionary<TypePath, MethodReference>();
 
@@ -96,6 +124,102 @@ namespace SemiPatch {
             return null;
         }
 
+        private IInjectionAnalysisHandler _GetInjectionAnalysisHandler(MethodPath handler_path, InjectQuery query) {
+            if (_InjectQueryHandlers.TryGetValue(query, out IInjectionAnalysisHandler handler)) return handler;
+            throw new InvalidInjectQueryException(handler_path, query);
+        }
+
+        private void _HandleInject(PatchTypeData type_data, MethodDefinition handler, SpecialAttributeData attrs) {
+            Logger.Debug($"Processing injection handler: {handler.BuildSignature()}");
+
+            var handler_path = handler.ToPath();
+            var inject_data = attrs.InjectData;
+
+            MethodDefinition target = null;
+            for (var i = 0; i < type_data.TargetType.Methods.Count; i++) {
+                var candidate_method = type_data.TargetType.Methods[i];
+                var candidate_sig = new Signature(candidate_method);
+
+                if (candidate_sig == inject_data.Inside) {
+                    target = candidate_method;
+                    break;
+                }
+            }
+
+            if (target == null) {
+                throw new Exception($"Failed to locate method '{inject_data.Inside}', target of injection handler '{handler_path}', within the type '{type_data.TargetType.FullName}'.");
+            }
+
+            if (target.RVA == 0 || !target.HasBody || target.Body.Instructions.Count == 0) {
+                throw new EmptyInjectTargetMethodException(target.ToPath());
+            }
+
+            var target_path = target.ToPath();
+            var expected_callback_type = Injector.GetInjectionStateType(handler.Module, target.ReturnType);
+
+            var is_valid_handler = true;
+            if (target.Parameters.Count + 1 != handler.Parameters.Count) is_valid_handler = false;
+            if (is_valid_handler && !handler.Parameters[0].ParameterType.IsSame(expected_callback_type, exclude_generic_args: true)) {
+                is_valid_handler = false;
+            }
+            if (is_valid_handler) {
+                for (var i = 0; i < target.Parameters.Count; i++) {
+                    if (!handler.Parameters[i + 1].ParameterType.IsSame(target.Parameters[i].ParameterType)) {
+                        is_valid_handler = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!is_valid_handler) {
+                throw new InvalidInjectHandlerException(
+                    handler_path, target_path,
+                    new Signature(
+                        target.BuildSignature(
+                            forced_name: "<handler name>",
+                            forced_return_type: "void",
+                            forced_first_arg: $"{expected_callback_type.BuildSignature()}"
+                        ),
+                        "<handler name>"
+                    )
+                );
+            }
+
+            var analysis_handler = _GetInjectionAnalysisHandler(handler_path, inject_data.Query);
+
+            var position = inject_data.Position == InjectPosition.Default ? analysis_handler.DefaultPosition : inject_data.Position;
+
+            var patch_inject_data = analysis_handler.GetPatchData(
+                position,
+                type_data.TargetType.Module,
+                type_data.PatchType.Module,
+                target, handler,
+                new InjectAttribute.ArgumentHandler(inject_data)
+            ).Unwrap();
+            patch_inject_data.LocalCaptures = attrs.LocalCaptures;
+
+            type_data.Injections.Add(patch_inject_data);
+
+
+            //var handler_insert_target_path = new MethodPath(
+            //    new Signature(handler, forced_name: attrs.AliasedName),
+            //    type_data.TargetType
+            //);
+            //var handler_insert_target = TryGetTargetMethod(handler_insert_target_path);
+            //if (handler_insert_target != null) {
+            //    throw new InjectHandlerNameTakenException(handler_path, handler_insert_target_path);
+            //}
+
+            //var handler_insert_data = new PatchMethodData(
+            //    handler,
+            //    handler_insert_target_path, handler_path,
+            //    aliased_name: attrs.AliasedName,
+            //    injection_handler: true
+            //);
+
+            //type_data.Methods.Add(handler_insert_data);
+        }
+
         public void ScanMethods(PatchTypeData type_data, Mono.Collections.Generic.Collection<MethodDefinition> methods) {
             foreach (var method in methods) {
                 if (IgnoredMethods.Contains(method)) {
@@ -103,11 +227,16 @@ namespace SemiPatch {
                     continue;
                 }
 
-                var is_void = method.ReturnType.IsSame(SemiPatch.VoidType);
-
                 Logger.Debug($"Scanning method: {method.BuildSignature()}");
+
                 var method_attrs = new SpecialAttributeData(method.CustomAttributes);
 
+                if (method_attrs.InjectData != null) {
+                    _HandleInject(type_data, method, method_attrs);
+                    continue;
+                }
+
+                var is_void = method.ReturnType.IsSame(SemiPatch.VoidType);
                 var patch_path = method.ToPath();
                 var name = method_attrs.AliasedName ?? method.Name;
                 var target_path = method.ToPath(method_attrs.ReceiveOriginal, forced_name: name).WithDeclaringType(type_data.TargetType.Resolve());
@@ -236,6 +365,13 @@ namespace SemiPatch {
                     if (target_path.Signature != orig_sig) {
                         throw new Exception($"Orig mismatch detected in method '{patch_path}'. Method is tagged as ReceiveOriginal and contains an Orig parameter '{orig_type.BuildSignature()}'. The method's signature points to '{target_path}', but the signature generated from the first argument of the method is '{orig_sig}'. Check if your patch method's signature matches the original method. If it is the Orig/VoidOrig parameter that's wrong, use this signature: '{maybe_new_orig_sig}'.");
                     }
+
+                    ValidationRelinker.Map(
+                        patch_path,
+                        Relinker.MemberEntry.Rejected(new ReceiveOriginalInvokeException(
+                            patch_path
+                        ))
+                    );
                 } else {
                     if (method.Parameters.Count > 0 && (OrigFactory.TypeIsGenericOrig(method.Parameters[0].ParameterType) || OrigFactory.TypeIsGenericVoidOrig(method.Parameters[0].ParameterType))) {
                         throw new Exception($"First parameter of method '{patch_path}' is an Orig or VoidOrig delegate, but the method is not marked with the ReceiveOriginal attribute. Please add the attribute if you wish to call the original method within the patch or get rid of the argument if you don't.");
@@ -438,11 +574,18 @@ namespace SemiPatch {
             }
         }
 
+        private void _Validate(ModuleDefinition module) {
+            ValidationRelinker.Relink(module);
+        }
+
         public PatchData Analyze() {
             PatchData = new PatchData(TargetModule, PatchModules);
             foreach (var mod in PatchModules) {
                 Logger.Info($"Scanning module: {mod.Name}");
                 ScanTypes(mod.Types);
+            }
+            foreach (var mod in PatchModules) {
+                _Validate(mod);
             }
             return PatchData;
         }

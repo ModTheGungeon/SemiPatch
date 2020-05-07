@@ -1,6 +1,7 @@
 ﻿using System;
 using Mono.Collections.Generic;
 using Mono.Cecil;
+using System.Collections.Generic;
 
 namespace SemiPatch {
     internal struct SpecialAttributeData {
@@ -14,6 +15,8 @@ namespace SemiPatch {
         public string PropertyGetter;
         public string PropertySetter;
         public bool IsPropertyMethod => PropertyGetter != null || PropertySetter != null;
+        public InjectAttribute InjectData;
+        public IList<CaptureLocalAttribute> LocalCaptures;
 
         public SpecialAttributeData(Collection<CustomAttribute> attrs) {
             PatchType = null;
@@ -25,6 +28,8 @@ namespace SemiPatch {
             TreatConstructorLikeMethod = false;
             PropertyGetter = null;
             PropertySetter = null;
+            InjectData = null;
+            LocalCaptures = null;
 
             foreach (var attr in attrs) {
                 if (attr.AttributeType.IsSame(SemiPatch.PatchAttribute)) {
@@ -45,6 +50,11 @@ namespace SemiPatch {
                     PropertyGetter = attr.ConstructorArguments[0].Value as string;
                 } else if (attr.AttributeType.IsSame(SemiPatch.SetterAttribute)) {
                     PropertySetter = attr.ConstructorArguments[0].Value as string;
+                } else if (attr.AttributeType.IsSame(SemiPatch.InjectAttribute)) {
+                    InjectData = InjectAttribute.MakeFromCecil(attr.ConstructorArguments);
+                } else if (attr.AttributeType.IsSame(SemiPatch.CaptureLocalAttribute)) {
+                    if (LocalCaptures == null) LocalCaptures = new List<CaptureLocalAttribute>();
+                    LocalCaptures.Add(CaptureLocalAttribute.MakeFromCecil(attr.ConstructorArguments));
                 }
             }
         }

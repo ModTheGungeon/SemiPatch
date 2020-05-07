@@ -29,7 +29,9 @@ namespace SemiPatch {
             explicitly_ignored: explicitly_ignored,
             aliased_name: aliased_name,
             proxy: proxy
-        ) { FalseDefaultConstructor = rejected_default_ctor; }
+        ) {
+            FalseDefaultConstructor = rejected_default_ctor;
+        }
 
         public PatchMethodData (
             MethodDefinition patch,

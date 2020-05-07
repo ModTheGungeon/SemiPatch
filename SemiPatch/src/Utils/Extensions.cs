@@ -10,12 +10,21 @@ namespace SemiPatch {
     /// TODO: document all these?
     /// </summary>
     public static class Extensions {
-        public static bool IsSame(this TypeReference a, TypeReference b) {
-            a = a.Resolve() ?? a;
-            b = b.Resolve() ?? b;
-
+        public static bool IsSame(this TypeReference a, TypeReference b, bool exclude_generic_args = false) {
             if (ReferenceEquals(a, b)) return true;
             if (a == b) return true;
+
+            if (!exclude_generic_args) {
+                if (a is GenericInstanceType a_generic && b is GenericInstanceType b_generic) {
+                    if (a_generic.GenericArguments.Count != b_generic.GenericArguments.Count) return false;
+                    for (var i = 0; i < a_generic.GenericArguments.Count; i++) {
+                        if (!IsSame(a_generic.GenericArguments[i], b_generic.GenericArguments[i])) return false;
+                    }
+                } else if (a is GenericInstanceType || b is GenericInstanceType) return false;
+            }
+
+            a = a.Resolve() ?? a;
+            b = b.Resolve() ?? b;
 
             if (a.Name != b.Name) return false;
             if (a.Namespace != b.Namespace) return false;
@@ -29,7 +38,7 @@ namespace SemiPatch {
                 if (ad.Fields.Count != bd.Fields.Count) return false;
                 if (ad.Properties.Count != bd.Properties.Count) return false;
                 if (ad.CustomAttributes.Count != bd.CustomAttributes.Count) return false;
-            }
+            } else if (a is TypeDefinition || b is TypeDefinition) return false;
 
             return a.Scope.IsSame(b.Scope);
         }
@@ -48,11 +57,53 @@ namespace SemiPatch {
             return a_name == b_name;
         }
 
-        public static string BuildSignature(this MethodReference method, bool skip_first_arg = false, string forced_name = null, string forced_first_arg = null) {
+        public static bool IsSame(this MethodReference a, MethodReference b, bool exclude_generic_args = false) {
+            if (ReferenceEquals(a, b)) return true;
+            if (a == b) return true;
+
+            if (!exclude_generic_args) {
+                if (a is GenericInstanceMethod a_generic && b is GenericInstanceMethod b_generic) {
+                    if (a_generic.GenericArguments.Count != b_generic.GenericArguments.Count) return false;
+                    for (var i = 0; i < a_generic.GenericArguments.Count; i++) {
+                        if (!IsSame(a_generic.GenericArguments[i], b_generic.GenericArguments[i])) return false;
+                    }
+                } else if (a is GenericInstanceMethod || b is GenericInstanceMethod) return false;
+            }
+
+            a = a.Resolve() ?? a;
+            b = b.Resolve() ?? b;
+
+            if (a.Name != b.Name) return false;
+            if (a.Parameters.Count != b.Parameters.Count) return false;
+            if (!a.DeclaringType.IsSame(b.DeclaringType)) return false;
+            if (!a.ReturnType.IsSame(b.ReturnType)) return false;
+            for (var i = 0; i < a.Parameters.Count; i++) {
+                if (!a.Parameters[i].IsSame(b.Parameters[i])) return false;
+            }
+
+            return true;
+        }
+
+        public static bool IsSame(this ParameterReference a, ParameterReference b) {
+            if (ReferenceEquals(a, b)) return true;
+            if (a == b) return true;
+
+            a = a.Resolve() ?? a;
+            b = b.Resolve() ?? b;
+
+            if (a.Name != b.Name) return false;
+            if (a.Index != b.Index) return false;
+            if (!a.ParameterType.IsSame(b.ParameterType)) return false;
+
+            return true;
+        }
+
+        public static string BuildSignature(this MethodReference method, bool skip_first_arg = false, string forced_name = null, string forced_first_arg = null, string forced_return_type = null) {
             var s = new StringBuilder();
             var name = forced_name ?? method.Name;
             if (method.Name != ".ctor") {
-                s.Append(method.ReturnType.BuildSignature());
+                if (forced_return_type != null) s.Append(forced_return_type);
+                else s.Append(method.ReturnType.BuildSignature());
                 s.Append(" ");
             } else {
                 name = "<ctor>";
@@ -83,9 +134,9 @@ namespace SemiPatch {
                     continue;
                 }
                 s.Append(param.ParameterType.BuildSignature());
-                s.Append(" ");
-                s.Append("arg");
-                s.Append(i - (skip_first_arg ? 1 : 0));
+                //s.Append(" ");
+                //s.Append("arg");
+                //s.Append(i - (skip_first_arg ? 1 : 0));
                 if (i < param_count - 1) s.Append(", ");
                 i += 1;
             }
@@ -136,9 +187,6 @@ namespace SemiPatch {
                     continue;
                 }
                 s.Append(param.ParameterType.BuildSignature());
-                s.Append(" ");
-                s.Append("arg");
-                s.Append(i - (skip_first_arg ? 1 : 0));
                 if (i < param_count - 1) s.Append(", ");
                 i += 1;
             }
@@ -275,6 +323,14 @@ namespace SemiPatch {
         }
 
         public static string BuildSignature(this FieldReference field, string forced_name = null) {
+            var s = new StringBuilder();
+            s.Append(field.FieldType.BuildSignature());
+            s.Append(" ");
+            s.Append(forced_name ?? field.Name);
+            return s.ToString();
+        }
+
+        public static string BuildSignature(this System.Reflection.FieldInfo field, string forced_name = null) {
             var s = new StringBuilder();
             s.Append(field.FieldType.BuildSignature());
             s.Append(" ");
@@ -420,6 +476,10 @@ namespace SemiPatch {
             return new MethodPath(self, skip_first_arg: skip_first_arg, forced_name: forced_name);
         }
 
+        public static MethodPath ToPath(this System.Reflection.MethodBase self, bool skip_first_arg = false, string forced_name = null) {
+            return new MethodPath(self, skip_first_arg: skip_first_arg, forced_name: forced_name);
+        }
+
         public static PropertyPath ToPropertyPathFromGetter(this MethodDefinition self, string prop_name) {
             var sig = self.BuildPropertySignatureFromGetter(prop_name);
             return new PropertyPath(new Signature(sig, prop_name), self.DeclaringType);
@@ -431,6 +491,10 @@ namespace SemiPatch {
         }
 
         public static FieldPath ToPath(this FieldDefinition self, string forced_name = null) {
+            return new FieldPath(self, forced_name: forced_name);
+        }
+
+        public static FieldPath ToPath(this System.Reflection.FieldInfo self, string forced_name = null) {
             return new FieldPath(self, forced_name: forced_name);
         }
 
@@ -532,6 +596,10 @@ namespace SemiPatch {
         }
 
         public static TypePath ToPath(this TypeDefinition type) {
+            return new TypePath(type);
+        }
+
+        public static TypePath ToPath(this Type type) {
             return new TypePath(type);
         }
 

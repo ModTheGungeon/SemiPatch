@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace SemiPatch {
     public partial struct AssemblyDiff {
@@ -10,6 +12,19 @@ namespace SemiPatch {
         public abstract class TypeDifference {
             public abstract bool ExistsInOld { get; }
             public abstract bool ExistsInNew { get; }
+
+            public TypeDefinition OldType = null;
+            public TypeDefinition NewType = null;
+
+            public override string ToString() {
+                if (OldType != null && NewType != null) {
+                    return $"{OldType.BuildSignature()} -> {NewType.BuildSignature()}";
+                } else if (OldType != null) {
+                    return $"{OldType.BuildSignature()} -> (none)";
+                } else {
+                    return $"(none) -> {NewType.BuildSignature()}";
+                }
+            }
         }
 
         /// <summary>
@@ -17,10 +32,9 @@ namespace SemiPatch {
         /// and/or the metadata are different.
         /// </summary>
         public class TypeChanged : TypeDifference {
-            public TypeDefinition OldType;
-            public TypeDefinition NewType;
             public IList<TypeDifference> NestedTypeDifferences;
             public IList<MemberDifference> MemberDifferences;
+            public IList<InjectionDifference> InjectionDifferences;
 
             public override bool ExistsInOld => true;
             public override bool ExistsInNew => true;
@@ -30,6 +44,7 @@ namespace SemiPatch {
                 NewType = new_type;
                 MemberDifferences = new List<MemberDifference>();
                 NestedTypeDifferences = new List<TypeDifference>();
+                InjectionDifferences = new List<InjectionDifference>();
             }
         }
 
@@ -37,13 +52,11 @@ namespace SemiPatch {
         /// Represents an added type.
         /// </summary>
         public class TypeAdded : TypeDifference {
-            public TypeDefinition Type;
-
             public override bool ExistsInOld => false;
             public override bool ExistsInNew => true;
 
             internal TypeAdded(TypeDefinition type) {
-                Type = type;
+                NewType = type;
             }
         }
 
@@ -51,13 +64,11 @@ namespace SemiPatch {
         /// Represents a removed type.
         /// </summary>
         public class TypeRemoved : TypeDifference {
-            public TypeDefinition Type;
-
             public override bool ExistsInOld => true;
             public override bool ExistsInNew => false;
 
             internal TypeRemoved(TypeDefinition type) {
-                Type = type;
+                OldType = type;
             }
         }
 
@@ -111,6 +122,100 @@ namespace SemiPatch {
 
             public MemberRemoved(MemberPath path)
             : base(null, path) { }
+        }
+
+        public abstract class InjectionDifference {
+            public abstract bool ExistsInOld { get; }
+            public abstract bool ExistsInNew { get; }
+
+            public MethodDefinition Target;
+            public MethodPath TargetPath;
+            public MethodDefinition Handler;
+            public MethodPath HandlerPath;
+            public Instruction InjectionPoint;
+            public IList<CaptureLocalAttribute> LocalCaptures;
+            public InjectPosition Position;
+
+            public InjectionSignature Signature;
+
+            protected InjectionDifference(
+                MethodDefinition target,
+                MethodPath target_path,
+                MethodDefinition handler,
+                MethodPath handler_path,
+                Instruction injection_point,
+                IList<CaptureLocalAttribute> local_captures,
+                InjectPosition position
+            ) {
+                Target = target;
+                TargetPath = target_path;
+                Handler = handler;
+                HandlerPath = handler_path;
+                InjectionPoint = injection_point;
+                LocalCaptures = local_captures;
+                Position = position;
+
+                Signature = new InjectionSignature(this);
+            }
+        }
+
+        public class InjectionChanged : InjectionDifference {
+            public override bool ExistsInOld => true;
+            public override bool ExistsInNew => true;
+
+            public InjectionChanged(
+                MethodDefinition target,
+                MethodPath target_path,
+                MethodDefinition handler,
+                MethodPath handler_path,
+                Instruction injection_point,
+                IList<CaptureLocalAttribute> local_captures,
+                InjectPosition position
+            )
+            : base(
+                target, target_path,
+                handler, handler_path,
+                injection_point, local_captures, position
+            ) {}
+        }
+
+        public class InjectionAdded : InjectionDifference {
+            public override bool ExistsInOld => false;
+            public override bool ExistsInNew => true;
+
+            public InjectionAdded(
+                MethodDefinition target,
+                MethodPath target_path,
+                MethodDefinition handler,
+                MethodPath handler_path,
+                Instruction injection_point,
+                IList<CaptureLocalAttribute> local_captures,
+                InjectPosition position
+            )
+            : base(
+                target, target_path,
+                handler, handler_path,
+                injection_point, local_captures, position
+            ) { }
+        }
+
+        public class InjectionRemoved : InjectionDifference {
+            public override bool ExistsInOld => true;
+            public override bool ExistsInNew => false;
+
+            public InjectionRemoved(
+                MethodDefinition target,
+                MethodPath target_path,
+                MethodPath handler_path,
+                Instruction injection_point,
+                IList<CaptureLocalAttribute> local_captures,
+                InjectPosition position
+            )
+            : base(
+                target, target_path,
+                null, handler_path,
+                injection_point, local_captures, position
+            ) { }
         }
     }
 }

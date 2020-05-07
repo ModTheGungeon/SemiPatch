@@ -46,6 +46,11 @@ namespace SemiPatch {
         /// </summary>
         public IList<PatchPropertyData> Properties;
 
+        /// <summary>
+        /// List of objects representing method injections.
+        /// </summary>
+        public IList<PatchInjectData> Injections;
+
         public PatchTypeData(TypeDefinition target, TypeDefinition patch) {
             TargetType = target;
             PatchType = patch;
@@ -53,6 +58,7 @@ namespace SemiPatch {
             Methods = new List<PatchMethodData>();
             Fields = new List<PatchFieldData>();
             Properties = new List<PatchPropertyData>();
+            Injections = new List<PatchInjectData>();
         }
 
         public string ToString(string indent) {
@@ -82,6 +88,13 @@ namespace SemiPatch {
                 s.Append(Properties[i].ToString(indent + "\t"));
                 if (i < Properties.Count - 1) s.Append("\n\n");
             }
+            s.Append("\n").Append(indent);
+            s.Append("Injections:");
+            s.Append("\n");
+            for (var i = 0; i < Injections.Count; i++) {
+                s.Append(Injections[i].ToString(indent + "\t"));
+                if (i < Injections.Count - 1) s.Append("\n\n");
+            }
             return s.ToString();
         }
 
@@ -97,6 +110,8 @@ namespace SemiPatch {
             foreach (var field in Fields) field.Serialize(writer);
             writer.Write(Properties.Count);
             foreach (var prop in Properties) prop.Serialize(writer);
+            writer.Write(Injections.Count);
+            foreach (var inject in Injections) inject.Serialize(writer);
         }
 
         public static PatchTypeData Deserialize(ModuleDefinition target_module, IDictionary<string, ModuleDefinition> patch_module_map, BinaryReader reader) {
@@ -152,6 +167,14 @@ namespace SemiPatch {
                 data.Properties.Add(prop);
             }
 
+            var inject_count = reader.ReadInt32();
+
+            for (var i = 0; i < inject_count; i++) {
+                var inject = PatchInjectData.Deserialize(target_type, patch_type, reader);
+                data.Injections.Add(inject);
+            }
+
+
             return data;
         }
 
@@ -170,6 +193,10 @@ namespace SemiPatch {
             x ^= Properties.Count;
             for (var i = 0; i < Properties.Count; i++) {
                 x ^= Properties[i].GetHashCode();
+            }
+            x ^= Injections.Count;
+            for (var i = 0; i < Properties.Count; i++) {
+                x ^= Injections[i].GetHashCode();
             }
             return x;
         }

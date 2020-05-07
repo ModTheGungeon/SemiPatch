@@ -36,6 +36,22 @@ namespace SemiPatch {
             }
         }
 
+        public InjectionDifference GetInjectionDifference(PatchInjectData inject) {
+            if (Mode == AbsoluteDiffSourceMode.AllAdded) {
+                return new InjectionAdded(
+                    inject.Target, inject.TargetPath,
+                    inject.Handler, inject.HandlerPath,
+                    inject.InjectionPoint, inject.LocalCaptures, inject.Position
+                );
+            } else {
+                return new InjectionRemoved(
+                    inject.Target, inject.TargetPath,
+                    inject.HandlerPath,
+                    inject.InjectionPoint, inject.LocalCaptures, inject.Position
+                );
+            }
+        }
+
         public void ProduceDifference(IList<TypeDifference> diffs) {
             for (var i = 0; i < PatchData.Types.Count; i++) {
                 var type = PatchData.Types[i];
@@ -57,6 +73,12 @@ namespace SemiPatch {
                 for (var j = 0; j < type.Properties.Count; j++) {
                     type_change.MemberDifferences.Add(
                         GetMemberDifference(MemberType.Property, type.Properties[i])
+                    );
+                }
+
+                for (var j = 0; j < type.Injections.Count; j++) {
+                    type_change.InjectionDifferences.Add(
+                        GetInjectionDifference(type.Injections[i])
                     );
                 }
             }
