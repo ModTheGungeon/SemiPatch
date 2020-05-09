@@ -233,7 +233,7 @@ namespace SemiPatch {
                     break;
                 }
             }
-            if (patch == null) throw new Exception($"Deserialization error: Failed to find patch {member_type_name} with signature '{patch_path}'");
+            if (patch == null) throw new PatchDataDeserializationException($"Failed to find patch {member_type_name} with signature '{patch_path}'");
 
             PatchMember = patch;
             TargetPath = target_path;

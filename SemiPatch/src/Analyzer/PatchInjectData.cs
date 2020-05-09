@@ -100,10 +100,10 @@ namespace SemiPatch {
                 var type_full_name = reader.ReadString();
                 var index = reader.ReadInt32();
 
-                var type = SemiPatch.FindType(patch_type.Module, type_full_name);
-                if (type == null) type = SemiPatch.FindType(target_type.Module, type_full_name);
+                var type = GlobalModuleLoader.FindType(patch_type.Module, type_full_name);
+                if (type == null) type = GlobalModuleLoader.FindType(target_type.Module, type_full_name);
                 if (type == null) {
-                    if (type == null) throw new Exception($"Deserialization error: Failed to find type '{type_full_name}' for local capture '{name}' of injection handler '{handler_path}'");
+                    if (type == null) throw new PatchDataDeserializationException($"Failed to find type '{type_full_name}' for local capture '{name}' of injection handler '{handler_path}'");
                 }
 
                 captures.Add(new CaptureLocalAttribute(index, type, name));
@@ -122,7 +122,7 @@ namespace SemiPatch {
                 }
             }
 
-            if (target == null) throw new Exception($"Deserialization error: Failed to find injection target method with signature '{target_path}'");
+            if (target == null) throw new PatchDataDeserializationException($"Failed to find injection target method with signature '{target_path}'");
 
             for (var i = 0; i < patch_type.Methods.Count; i++) {
                 var method = patch_type.Methods[i];
@@ -133,7 +133,7 @@ namespace SemiPatch {
                 }
             }
 
-            if (handler == null) throw new Exception($"Deserialization error: Failed to find injection target handler with signature '{handler_path}'");
+            if (handler == null) throw new PatchDataDeserializationException($"Failed to find injection target handler with signature '{handler_path}'");
 
             var inject = new PatchInjectData(target, handler, body_index, captures, handler_aliased_name);
             return inject;

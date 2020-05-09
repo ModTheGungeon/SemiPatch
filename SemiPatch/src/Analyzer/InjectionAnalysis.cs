@@ -113,7 +113,7 @@ namespace SemiPatch {
             Logger.Debug($"Full name of declaring type: '{prefix}'");
             Logger.Debug($"Method signature: '{method_sig}'");
 
-            var decl_type = SemiPatch.FindType(target_module, prefix);
+            var decl_type = GlobalModuleLoader.FindType(target_module, prefix);
             Logger.Debug($"Found type: '{decl_type}'");
             if (decl_type == null) throw new MissingCallInjectTargetException(handler.ToPath(), call);
 

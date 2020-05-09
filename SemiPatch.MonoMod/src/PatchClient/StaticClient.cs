@@ -6,7 +6,7 @@ using MonoMod;
 
 namespace SemiPatch {
     /// <summary>
-    /// Static SemiPatch client, capable of loading SPR modules and statically
+    /// public static SemiPatch client, capable of loading SPR modules and statically
     /// patching assemblies. For runtime patching and runtime reloading, see
     /// <see cref="StaticClient"/>;
     /// </summary>

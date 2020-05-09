@@ -53,11 +53,12 @@ namespace SemiPatch {
 
         private static int _NextCacheIndex = 0;
         private static TypeDefinition _DynamicMethodCallHandlerProxyType = SemiPatch.SemiPatchModule.GetType("SemiPatch.DynamicMethodCallHandlerProxy");
-        private static FieldReference _CacheField;
-        private static MethodReference _MethodBaseInvokeMethod;
+        private static FieldReference _CacheField =
+            _DynamicMethodCallHandlerProxyType.GetFieldDef("System.Reflection.MethodBase[] _Cache");
+        private static MethodReference _MethodBaseInvokeMethod =
+            SemiPatch.MscorlibModule.GetType("System.Reflection.MethodBase")
+            .GetMethodDef("System.Object Invoke(System.Object, System.Object[])");
         private static TypeReference _ObjectType = SemiPatch.MscorlibModule.GetType("System.Object");
-
-        private static MethodReference _WriteLine;
 
         private int _CacheIndex;
         private int _ParamCount;
@@ -65,36 +66,6 @@ namespace SemiPatch {
         public System.Reflection.MethodBase Method;
 
         public bool SkipFirstParameter => _PushThis;
-
-        static DynamicMethodCallHandlerProxy() {
-            for (var i = 0; i < _DynamicMethodCallHandlerProxyType.Fields.Count; i++) {
-                var field = _DynamicMethodCallHandlerProxyType.Fields[i];
-                if (field.Name == "_Cache") {
-                    _CacheField = field;
-                    break;
-                }
-            }
-
-            var console = SemiPatch.MscorlibModule.GetType("System.Console");
-            for (var i = 0; i < console.Methods.Count; i++) {
-                var method = console.Methods[i];
-                if (method.Name == "WriteLine" && method.Parameters.Count == 1 && method.Parameters[0].ParameterType.Name == "Object") {
-                    _WriteLine = method;
-                }
-            }
-
-            var method_base_methods = SemiPatch.MscorlibModule.GetType("System.Reflection.MethodBase").Methods;
-            for (var i = 0; i < method_base_methods.Count; i++) {
-                var method = method_base_methods[i];
-
-                if (method.Parameters.Count == 2 && method.Name == "Invoke") {
-                    _MethodBaseInvokeMethod = method;
-                    break;
-                }
-            }
-
-
-        }
 
         public DynamicMethodCallHandlerProxy(System.Reflection.MethodBase reflection_method, bool push_this) {
             _CacheIndex = _Allocate(reflection_method);
@@ -107,7 +78,7 @@ namespace SemiPatch {
             _Cache[_CacheIndex] = null;
         }
 
-        private static int _Allocate(System.Reflection.MethodBase method) {
+        private int _Allocate(System.Reflection.MethodBase method) {
             var index = _NextCacheIndex;
 
             if (index >= _CacheSize) {

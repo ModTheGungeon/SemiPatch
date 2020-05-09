@@ -30,16 +30,11 @@ namespace SemiPatch.MonoMod.Compiler {
             patch_module.Write(patch_module_ms);
             patch_module_ms.Position = 0;
 
-
-            var conv = new MonoModStaticConverter(patch_data);
-            conv.Apply();
-            var mmsg_module = patch_data.PatchModules[0];
-
             var spr = new ReloadableModule(
                 patch_data.TargetModule,
                 null,
                 patch_asm_stream: patch_module_ms,
-                mmsg_module: mmsg_module,
+                mmsg_module: null,
                 rdbs_module: null,
                 patch_data: patch_data
             );

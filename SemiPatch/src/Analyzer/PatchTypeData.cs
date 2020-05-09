@@ -120,7 +120,7 @@ namespace SemiPatch {
             var patch_module_name = reader.ReadString();
             ModuleDefinition patch_module;
             if (!patch_module_map.TryGetValue(patch_module_name, out patch_module)) {
-                throw new Exception($"Deserialization error: Failed to acquire patch module '{patch_module_name}' while deserializing type '{patch_type_name}'");
+                throw new PatchDataDeserializationException($"Failed to acquire patch module '{patch_module_name}' while deserializing type '{patch_type_name}'");
             }
 
             TypeDefinition target_type = null;
@@ -133,7 +133,7 @@ namespace SemiPatch {
                 }
             }
 
-            if (target_type == null) throw new Exception($"Deserialization error: Failed to find type '{target_type_name}' in target module '{target_module.Name}'");
+            if (target_type == null) throw new PatchDataDeserializationException($"Failed to find type '{target_type_name}' in target module '{target_module.Name}'");
 
             foreach (var type in patch_module.Types) {
                 if (type.FullName == patch_type_name) {
@@ -142,7 +142,7 @@ namespace SemiPatch {
                 }
             }
 
-            if (patch_type == null) throw new Exception($"Deserialization error: Failed to find type '{patch_type_name}' in patch module '{patch_module.Name}'");
+            if (patch_type == null) throw new PatchDataDeserializationException($"Failed to find type '{patch_type_name}' in patch module '{patch_module.Name}'");
 
             var data = new PatchTypeData(target_type, patch_type);
 

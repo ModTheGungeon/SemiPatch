@@ -14,7 +14,7 @@ namespace SemiPatch {
     /// </summary>
     public class Analyzer {
         public static Logger Logger = new Logger("Analyzer");
-        private static Dictionary<InjectQuery, IInjectionAnalysisHandler> _InjectQueryHandlers = new Dictionary<InjectQuery, IInjectionAnalysisHandler>{
+        private Dictionary<InjectQuery, IInjectionAnalysisHandler> _InjectQueryHandlers = new Dictionary<InjectQuery, IInjectionAnalysisHandler>{
             [InjectQuery.Head] = new HeadInjectionAnalysisHandler(),
             [InjectQuery.Tail] = new TailInjectionAnalysisHandler(),
             [InjectQuery.MethodCall] = new MethodCallInjectionAnalysisHandler()
@@ -147,7 +147,8 @@ namespace SemiPatch {
             }
 
             if (target == null) {
-                throw new Exception($"Failed to locate method '{inject_data.Inside}', target of injection handler '{handler_path}', within the type '{type_data.TargetType.FullName}'.");
+                var error_target_path = new MethodPath(new Signature(inject_data.Inside, null), type_data.TargetType);
+                throw new TargetMethodSearchFailureException(error_target_path, $"target of injection handler '{handler_path}', within the type '{type_data.TargetType.FullName}'");
             }
 
             if (target.RVA == 0 || !target.HasBody || target.Body.Instructions.Count == 0) {
@@ -244,7 +245,7 @@ namespace SemiPatch {
 
                 if (method.IsConstructor) {
                     if (!method_attrs.TreatConstructorLikeMethod) {
-                        if (method.Parameters.Count != 0) throw new Exception($"Only a single untagged, empty and parameterless constructor can exist in a patch class. If you wish to patch, insert or otherwise alter '{patch_path}', tag it with the TreatLikeMethod attribute.");
+                        if (method.Parameters.Count != 0) throw new UntaggedConstructorException(patch_path);
                         if (method.Body.Instructions.Count == 0) {
                             Logger.Debug($"Skipping default constructor with 0 instructions (some weirdness is afoot?)");
                             continue;
@@ -253,17 +254,17 @@ namespace SemiPatch {
                         var instr = method.Body.Instructions[0];
                         instr = instr.FirstAfterNops();
                         if (instr == null || instr.OpCode != OpCodes.Ldarg_0) {
-                            throw new Exception($"If untagged, the default parameterless constructor ('{patch_path}') must remain empty (or not defined at all within the class). If you wish to alter or proxy the default constructor, tag it with the TreatLikeMethod attribute.");
+                            throw new UntaggedConstructorException(patch_path);
                         }
                         var base_type_ctor_path = TryGetParameterlessCtor(type_data.PatchType.BaseType).Resolve().ToPath();
                         instr = instr.Next?.FirstAfterNops();
                         if (instr == null || (instr.OpCode != OpCodes.Call || ((MethodReference)instr.Operand).Resolve().ToPath() != base_type_ctor_path)) {
-                            throw new Exception($"If untagged, the default parameterless constructor ('{patch_path}') must remain empty (or not defined at all within the class). If you wish to alter or proxy the default constructor, tag it with the TreatLikeMethod attribute.");
+                            throw new UntaggedConstructorException(patch_path);
                         }
 
                         instr = instr.Next?.FirstAfterNops();
                         if (instr == null || instr.OpCode != OpCodes.Ret) {
-                            throw new Exception($"If untagged, the default parameterless constructor ('{patch_path}') must remain empty (or not defined at all within the class). If you wish to alter or proxy the default constructor, tag it with the TreatLikeMethod attribute.");
+                            throw new UntaggedConstructorException(patch_path);
                         }
 
                         Logger.Debug($"Adding empty default constructor as Proxy: '{patch_path}' -> '{target_path}'");
@@ -296,13 +297,13 @@ namespace SemiPatch {
                 }
 
                 if (method_attrs.ReceiveOriginal && method.Parameters.Count == 0) {
-                    throw new Exception($"Method '{patch_path}' is marked as ReceiveOriginal, but it has no arguments.");
+                    throw new InvalidReceiveOriginalPatchException($"Method '{patch_path}' is marked as ReceiveOriginal, but it has no arguments.", patch_path);
                 }
                 
 
                 if (method_attrs.IsPropertyMethod) {
                     if (method_attrs.PropertyGetter != null && method_attrs.PropertySetter != null) {
-                        throw new Exception($"Method '{patch_path}' may not be marked as both Getter and Setter at the same time.");
+                        throw new InvalidAttributeCombinationException($"Method '{patch_path}' may not be marked as both Getter and Setter at the same time.");
                     }
 
                     PropertyPath target_prop_path = null;
@@ -323,25 +324,25 @@ namespace SemiPatch {
 
                     if (method_attrs.Insert) {
                         if (target_prop != null && ((target_prop.GetMethod != null && method_attrs.PropertyGetter != null) || (target_prop.SetMethod != null && method_attrs.PropertySetter != null))) {
-                            throw new Exception($"Found matching property '{target_prop_path}', but Getter/Setter patch method '{patch_path}' was marked Insert - drop the attribute if you want to modify the getter/setter of this property.");
+                            throw new InsertTargetExistsException($"Found matching property '{target_prop_path}', but Getter/Setter patch method '{patch_path}' was marked Insert - drop the attribute if you want to modify the getter/setter of this property.", patch_path, target_prop_path);
                         }
                     } else {
                         if (target_prop == null) {
-                            throw new Exception($"Failed to locate property '{target_prop_path}' patched in Getter/Setter patch method '{patch_path}' - use the Insert attribute on a real property if you want to add one, or change the Getter/Setter attribute argument if you want to use a different attribute.");
+                            throw new PatchTargetNotFoundException($"Failed to locate property '{target_prop_path}' patched in Getter/Setter patch method '{patch_path}' - use the Insert attribute on a real property if you want to add one, or change the Getter/Setter attribute argument if you want to use a different attribute.", patch_path, target_prop_path);
 
                         }
                         if (target_prop != null && ((target_prop.GetMethod == null && method_attrs.PropertyGetter != null) || (target_prop.SetMethod == null && method_attrs.PropertySetter != null))) {
-                            throw new Exception($"Found matching property '{target_prop_path}', but the getter/setter targetted by the patch method '{patch_path}' doesn't exist - use the Insert attribute on the Getter/Setter method to add it.");
+                            throw new PatchTargetNotFoundException($"Found matching property '{target_prop_path}', but the getter/setter targetted by the patch method '{patch_path}' doesn't exist - use the Insert attribute on the Getter/Setter method to add it.", patch_path, target_prop_path);
                         }
                     }
                 }
 
                 if (method_attrs.Proxy) {
                     if (method_attrs.ReceiveOriginal) {
-                        throw new Exception($"Proxy method '{patch_path}' may not be marked as ReceiveOriginal");
+                        throw new InvalidAttributeCombinationException($"Proxy method '{patch_path}' may not be marked as ReceiveOriginal");
                     }
                     if (target == null) {
-                        throw new Exception($"Failed to locate method '{target_path}' proxied in '{patch_path}' - use the Insert attribute instead of Proxy if it should be added, or the TargetName attribute if you want to use a different name.");
+                        throw new PatchTargetNotFoundException($"Failed to locate method '{target_path}' proxied in '{patch_path}' - use the Insert attribute instead of Proxy if it should be added, or the TargetName attribute if you want to use a different name.", patch_path, target_path);
                     }
                     Logger.Debug($"Ignored (Proxy)!");
                     method_data.Proxy = true;
@@ -349,21 +350,21 @@ namespace SemiPatch {
                 }
 
                 if (method_attrs.ReceiveOriginal) {
-                    if (method.Parameters.Count == 0) throw new Exception($"Method '{patch_path}' is marked as ReceiveOriginal, but it has no arguments");
+                    if (method.Parameters.Count == 0) throw new InvalidReceiveOriginalPatchException($"Method '{patch_path}' is marked as ReceiveOriginal, but it has no arguments", patch_path);
                     var orig_type = method.Parameters[0].ParameterType;
                     if (OrigFactory.TypeIsGenericOrig(orig_type)) {
-                        if (is_void) throw new Exception($"First parameter of method '{patch_path}' (marked ReceiveOriginal) is of type Orig, but the method does not return anything.");
+                        if (is_void) throw new InvalidReceiveOriginalPatchException($"First parameter of method '{patch_path}' (marked ReceiveOriginal) is of type Orig, but the method does not return anything.", patch_path);
                     } else if (OrigFactory.TypeIsGenericVoidOrig(orig_type)) {
-                        if (!is_void) throw new Exception($"First parameter of method '{patch_path}' (marked ReceiveOriginal) is of type VoidOrig, but the method returns a non-void value.");
+                        if (!is_void) throw new InvalidReceiveOriginalPatchException($"First parameter of method '{patch_path}' (marked ReceiveOriginal) is of type VoidOrig, but the method returns a non-void value.", patch_path);
                     } else {
-                        throw new Exception($"First parameter of method '{patch_path}' (tagged with ReceiveOriginal) must be a Orig or VoidOrig delegate.");
+                        throw new InvalidReceiveOriginalPatchException($"First parameter of method '{patch_path}' (tagged with ReceiveOriginal) must be a Orig or VoidOrig delegate.", patch_path);
                     }
 
                     var orig_sig = OrigFactory.GetMethodSignatureFromOrig(orig_type, method_attrs.AliasedName ?? method.Name, method.GenericParameters);
-                    var maybe_new_orig_sig = new Signature(OrigFactory.OrigTypeForMethod(method.Module, method, skip_first_arg: true));
-
                     if (target_path.Signature != orig_sig) {
-                        throw new Exception($"Orig mismatch detected in method '{patch_path}'. Method is tagged as ReceiveOriginal and contains an Orig parameter '{orig_type.BuildSignature()}'. The method's signature points to '{target_path}', but the signature generated from the first argument of the method is '{orig_sig}'. Check if your patch method's signature matches the original method. If it is the Orig/VoidOrig parameter that's wrong, use this signature: '{maybe_new_orig_sig}'.");
+                        var maybe_new_orig_sig = new Signature(OrigFactory.OrigTypeForMethod(method.Module, method, skip_first_arg: true));
+
+                        throw new InvalidReceiveOriginalPatchException($"Orig mismatch detected in method '{patch_path}'. Method is tagged as ReceiveOriginal and contains an Orig parameter '{orig_type.BuildSignature()}'. The method's signature points to '{target_path}', but the signature generated from the first argument of the method is '{orig_sig}'. Check if your patch method's signature matches the original method. If it is the Orig/VoidOrig parameter that's wrong, use this signature: '{maybe_new_orig_sig}'.", patch_path);
                     }
 
                     ValidationRelinker.Map(
@@ -374,7 +375,7 @@ namespace SemiPatch {
                     );
                 } else {
                     if (method.Parameters.Count > 0 && (OrigFactory.TypeIsGenericOrig(method.Parameters[0].ParameterType) || OrigFactory.TypeIsGenericVoidOrig(method.Parameters[0].ParameterType))) {
-                        throw new Exception($"First parameter of method '{patch_path}' is an Orig or VoidOrig delegate, but the method is not marked with the ReceiveOriginal attribute. Please add the attribute if you wish to call the original method within the patch or get rid of the argument if you don't.");
+                        throw new InvalidReceiveOriginalPatchException($"First parameter of method '{patch_path}' is an Orig or VoidOrig delegate, but the method is not marked with the ReceiveOriginal attribute. Please add the attribute if you wish to call the original method within the patch or get rid of the argument if you don't.", patch_path);
                     }
                 }
 
@@ -385,12 +386,12 @@ namespace SemiPatch {
                 if (method_attrs.Insert) {
                     Logger.Debug($"Method is marked for insertion");
                     if (target != null) {
-                        throw new Exception($"Found matching method '{target_path}', but patch in '{patch_path}' was marked Insert - drop the attribute if you want to modify the method.");
+                        throw new InsertTargetExistsException($"Found matching method '{target_path}', but patch in '{patch_path}' was marked Insert - drop the attribute if you want to modify the method.", patch_path, target_path);
                     }
                 } else {
                     Logger.Debug($"Searching in target type");
                     if (target == null) {
-                        throw new Exception($"Failed to locate method '{target_path}' patched in '{patch_path}' - use the Insert attribute if it should be added, or the TargetName attribute if you want to use a different name.");
+                        throw new PatchTargetNotFoundException($"Failed to locate method '{target_path}' patched in '{patch_path}' - use the Insert attribute if it should be added, or the TargetName attribute if you want to use a different name.", patch_path, target_path);
                     }
 
                     var target_attrs = target.Attributes;
@@ -401,7 +402,7 @@ namespace SemiPatch {
                     }
 
                     if (target_attrs != patch_attrs) {
-                        throw new Exception($"Attribute mismatch in patch method '{patch_path}' targetting method '{target_path}' - patch attributes are '{method.Attributes}', but target attributes are '{target.Attributes}'. The mismatch is with the following attribute(s): '{((MethodAttributes)((uint)target_attrs ^ (uint)patch_attrs)).ToString().Replace("ReuseSlot, ", "")}'.");
+                        throw new PatchTargetAttributeMismatchException($"Attribute mismatch in patch method '{patch_path}' targetting method '{target_path}' - patch attributes are '{method.Attributes}', but target attributes are '{target.Attributes}'. The mismatch is with the following attribute(s): '{((MethodAttributes)((uint)target_attrs ^ (uint)patch_attrs)).ToString().Replace("ReuseSlot, ", "")}'.", patch_path, target_path);
                     }
 
                     method_data.TargetMember = target;
@@ -441,16 +442,16 @@ namespace SemiPatch {
                 if (field_attrs.Proxy) {
                     Logger.Debug($"Field is marked for proxying");
                     if (target_field == null) {
-                        throw new Exception($"Failed to locate field'{target_path}' proxied in patch field '{patch_path}'. Use the Insert attribute if you want to add the field.");
+                        throw new PatchTargetNotFoundException($"Failed to locate field'{target_path}' proxied in patch field '{patch_path}'. Use the Insert attribute if you want to add the field.", patch_path, target_path);
                     }
                     field_data.TargetMember = target_field;
                 } else if (field_attrs.Insert) {
                     Logger.Debug($"Field is marked for insertion");
                     if (target_field != null) {
-                        throw new Exception($"Found matching field '{target_path}', but patch field '{patch_path}' was marked Insert - use the Proxy attribute instead if you want to access fields on the class.");
+                        throw new InsertTargetExistsException($"Found matching field '{target_path}', but patch field '{patch_path}' was marked Insert - use the Proxy attribute instead if you want to access fields on the class.", patch_path, target_path);
                     }
                 } else {
-                    throw new Exception($"Field '{patch_path}' must be marked as either Ignore, Insert, or Proxy. Fields without attributes are not allowed.");
+                    throw new InvalidAttributeCombinationException($"Field '{patch_path}' must be marked as either Ignore, Insert, or Proxy. Fields without attributes are not allowed.");
                 }
             }
         }
@@ -465,7 +466,7 @@ namespace SemiPatch {
 
                 var prop_attrs = new SpecialAttributeData(prop.CustomAttributes);
                 if (!prop_attrs.Insert && !prop_attrs.Proxy && !prop_attrs.Ignore) {
-                    throw new Exception($"Failed patching property '{patch_path}'. Properties may not be used in a patch class unless they are marked with Insert, Proxy or Ignore. For patching properties, use the Getter and Setter attributes.");
+                    throw new InvalidAttributeCombinationException($"Failed patching property '{patch_path}'. Properties may not be used in a patch class unless they are marked with Insert, Proxy or Ignore. For patching properties, use the Getter and Setter attributes.");
                 }
 
                 var target_path = prop_attrs.AliasedName == null ? patch_path : prop.ToPath(forced_name: prop_attrs.AliasedName);
@@ -532,19 +533,19 @@ namespace SemiPatch {
 
                 if (prop_attrs.Insert) {
                     if (target_prop != null) {
-                        throw new Exception($"Property '{patch_path}' was marked with Insert, but the target class also contains this property - '{target_path}'. If you want to patch properties, use the Getter and Setter attributes.");
+                        throw new InsertTargetExistsException($"Property '{patch_path}' was marked with Insert, but the target class also contains this property - '{target_path}'. If you want to patch properties, use the Getter and Setter attributes.", patch_path, target_path);
                     }
                 } else if (prop_attrs.Proxy) {
                     if (target_prop == null) {
-                        throw new Exception($"Property '{patch_path}' was marked with Proxy, but the target class does not contain the property '{target_path}'. If you want to add properties, use the Insert attribute.");
+                        throw new PatchTargetNotFoundException($"Property '{patch_path}' was marked with Proxy, but the target class does not contain the property '{target_path}'. If you want to add properties, use the Insert attribute.", patch_path, target_path);
                     }
 
                     if (prop.GetMethod != null && target_prop.GetMethod == null) {
-                        throw new Exception($"Property '{patch_path}' was marked with Proxy and the target property '{target_path}' exists, but it does not have a getter. If you want to add the getter, use the Getter and Insert attributes on a method.");
+                        throw new PatchTargetNotFoundException($"Property '{patch_path}' was marked with Proxy and the target property '{target_path}' exists, but it does not have a getter. If you want to add the getter, use the Getter and Insert attributes on a method.", patch_path, target_path);
                     }
 
                     if (prop.SetMethod != null && target_prop.SetMethod == null) {
-                        throw new Exception($"Property '{patch_path}' was marked with Proxy and the target property '{target_path}' exists, but it does not have a setter. If you want to add the setter, use the Setter and Insert attributes on a method.");
+                        throw new PatchTargetNotFoundException($"Property '{patch_path}' was marked with Proxy and the target property '{target_path}' exists, but it does not have a setter. If you want to add the setter, use the Setter and Insert attributes on a method.", patch_path, target_path);
                     }
                 }
             }
@@ -561,7 +562,7 @@ namespace SemiPatch {
                 Logger.Debug($"Patch attribute detected on type: {type.Name}");
 
                 if (!attrs.PatchType.Scope.IsSame(TargetModule)) {
-                    throw new Exception($"Patch target must be a type within the target module ('{TargetModule.FileName}')");
+                    throw new InvalidTargetTypeScopeException($"Patch target must be a type within the target module ('{TargetModule.FileName}')", attrs.PatchType.ToPath());
                 }
 
                 var type_data = new PatchTypeData(attrs.PatchType, type);

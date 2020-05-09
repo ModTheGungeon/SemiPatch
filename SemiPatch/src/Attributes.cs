@@ -118,8 +118,8 @@ namespace SemiPatch {
     /// <see cref="Orig{}"/> must be used, and the return type is always the last
     /// generic parameter.
     /// 
-    /// If static patching is used to inject this method, the method may be heavily
-    /// rewritten. In the case of the MonoMod static patch generator, patch methods
+    /// If public static patching is used to inject this method, the method may be heavily
+    /// rewritten. In the case of the MonoMod public static patch generator, patch methods
     /// tagged with this attribute lose their special first argument. Any invocations
     /// of the <c>orig</c> delegate become direct invocations of the old method,
     /// while more uncommon usage of the delegate (such as passing it to other methods)
@@ -128,7 +128,7 @@ namespace SemiPatch {
     /// initialized with the target method. A reference to this local variable
     /// then replaces any such reference to the <c>orig</c> argument.
     /// 
-    /// This means that with the MonoMod static patcher, directly calling the
+    /// This means that with the MonoMod public static patcher, directly calling the
     /// orig delegate within a patch method tagged with <c>ReceiveOriginal</c>
     /// will always be optimized down to a simple and direct method call. At the
     /// same time, the behavior of the code will stay the same no matter what.

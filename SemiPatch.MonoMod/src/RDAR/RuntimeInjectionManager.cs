@@ -54,7 +54,7 @@ namespace SemiPatch {
 
             var target_method = target_path.FindIn<MethodDefinition>(target_module);
 
-            dmd.Definition.Body = target_method.Body.CloneBodyAndReimport(_RunningModule, dmd.Definition);
+            dmd.Definition.Body = target_method.Body.Clone(dmd.Definition, _RunningModule);
 
             for (var i = 0; i < dmd.Definition.Body.Instructions.Count; i++) {
                 _InjectInstructionMap[target_method.Body.Instructions[i]] = dmd.Definition.Body.Instructions[i];
@@ -97,9 +97,9 @@ namespace SemiPatch {
             handler_dmd.Definition.HasThis = false;
             handler_dmd.Definition.ExplicitThis = true;
 
-            handler_dmd.Definition.Body = handler_method.Body.CloneBodyAndReimport(
-                _RunningModule,
-                handler_dmd.Definition
+            handler_dmd.Definition.Body = handler_method.Body.Clone(
+                handler_dmd.Definition,
+                _RunningModule
             );
 
             return handler_dmd;
@@ -172,7 +172,7 @@ namespace SemiPatch {
 
             // if the method has an orig, that means we want to
             // redirect the orig to the rtinject method instead of
-            // the target - meaning that like at static time,
+            // the target - meaning that like at public static time,
             // first the patch will be ran and if orig is ran within
             // the target patch then the method with injection
             // handlers is ran (tl;dr patching, including with
@@ -186,7 +186,7 @@ namespace SemiPatch {
             Logger.Debug($"Creating thunk in '{thunk_path}' for injection handler dynamic method '{inject}'");
 
             var thunk = thunk_path.FindIn(_RunningAssembly) as System.Reflection.MethodBase;
-            var stub = RuntimePatchManager.CreateCallStub(thunk, inject);
+            var stub = RDARPrimitive.CreateThunk(thunk, inject);
             _Detours.Add(new Hook(thunk, stub));
         }
 

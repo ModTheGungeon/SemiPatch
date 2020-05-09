@@ -1,0 +1,2 @@
+TEST 
+-s /home/zatherz/Projects/C#/SemiPatch/SemiPatch.sln -p 39063 --hostPID 621619

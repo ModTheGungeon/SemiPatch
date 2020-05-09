@@ -70,6 +70,70 @@ namespace SemiPatch {
         public static TypeReference Orig_n29 = SemiPatch.SemiPatchModule.GetType("SemiPatch.Orig`30");
         public static TypeReference Orig_n30 = SemiPatch.SemiPatchModule.GetType("SemiPatch.Orig`31");
 
+        public static TypeReference ExplicitThisVoidOrig_n0 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`1");
+        public static TypeReference ExplicitThisVoidOrig_n1 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`2");
+        public static TypeReference ExplicitThisVoidOrig_n2 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`3");
+        public static TypeReference ExplicitThisVoidOrig_n3 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`4");
+        public static TypeReference ExplicitThisVoidOrig_n4 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`5");
+        public static TypeReference ExplicitThisVoidOrig_n5 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`6");
+        public static TypeReference ExplicitThisVoidOrig_n6 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`7");
+        public static TypeReference ExplicitThisVoidOrig_n7 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`8");
+        public static TypeReference ExplicitThisVoidOrig_n8 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`9");
+        public static TypeReference ExplicitThisVoidOrig_n9 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`10");
+        public static TypeReference ExplicitThisVoidOrig_n10 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`11");
+        public static TypeReference ExplicitThisVoidOrig_n11 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`12");
+        public static TypeReference ExplicitThisVoidOrig_n12 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`13");
+        public static TypeReference ExplicitThisVoidOrig_n13 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`14");
+        public static TypeReference ExplicitThisVoidOrig_n14 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`15");
+        public static TypeReference ExplicitThisVoidOrig_n15 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`16");
+        public static TypeReference ExplicitThisVoidOrig_n16 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`17");
+        public static TypeReference ExplicitThisVoidOrig_n17 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`18");
+        public static TypeReference ExplicitThisVoidOrig_n18 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`19");
+        public static TypeReference ExplicitThisVoidOrig_n19 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`20");
+        public static TypeReference ExplicitThisVoidOrig_n20 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`21");
+        public static TypeReference ExplicitThisVoidOrig_n21 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`22");
+        public static TypeReference ExplicitThisVoidOrig_n22 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`23");
+        public static TypeReference ExplicitThisVoidOrig_n23 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`24");
+        public static TypeReference ExplicitThisVoidOrig_n24 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`25");
+        public static TypeReference ExplicitThisVoidOrig_n25 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`26");
+        public static TypeReference ExplicitThisVoidOrig_n26 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`27");
+        public static TypeReference ExplicitThisVoidOrig_n27 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`28");
+        public static TypeReference ExplicitThisVoidOrig_n28 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`29");
+        public static TypeReference ExplicitThisVoidOrig_n29 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`30");
+        public static TypeReference ExplicitThisVoidOrig_n30 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisVoidOrig`31");
+
+        public static TypeReference ExplicitThisOrig_n0 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`2");
+        public static TypeReference ExplicitThisOrig_n1 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`3");
+        public static TypeReference ExplicitThisOrig_n2 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`4");
+        public static TypeReference ExplicitThisOrig_n3 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`5");
+        public static TypeReference ExplicitThisOrig_n4 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`6");
+        public static TypeReference ExplicitThisOrig_n5 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`7");
+        public static TypeReference ExplicitThisOrig_n6 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`8");
+        public static TypeReference ExplicitThisOrig_n7 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`9");
+        public static TypeReference ExplicitThisOrig_n8 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`10");
+        public static TypeReference ExplicitThisOrig_n9 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`11");
+        public static TypeReference ExplicitThisOrig_n10 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`12");
+        public static TypeReference ExplicitThisOrig_n11 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`13");
+        public static TypeReference ExplicitThisOrig_n12 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`14");
+        public static TypeReference ExplicitThisOrig_n13 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`15");
+        public static TypeReference ExplicitThisOrig_n14 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`16");
+        public static TypeReference ExplicitThisOrig_n15 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`17");
+        public static TypeReference ExplicitThisOrig_n16 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`18");
+        public static TypeReference ExplicitThisOrig_n17 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`19");
+        public static TypeReference ExplicitThisOrig_n18 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`20");
+        public static TypeReference ExplicitThisOrig_n19 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`21");
+        public static TypeReference ExplicitThisOrig_n20 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`22");
+        public static TypeReference ExplicitThisOrig_n21 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`23");
+        public static TypeReference ExplicitThisOrig_n22 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`24");
+        public static TypeReference ExplicitThisOrig_n23 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`25");
+        public static TypeReference ExplicitThisOrig_n24 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`26");
+        public static TypeReference ExplicitThisOrig_n25 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`27");
+        public static TypeReference ExplicitThisOrig_n26 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`28");
+        public static TypeReference ExplicitThisOrig_n27 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`29");
+        public static TypeReference ExplicitThisOrig_n28 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`30");
+        public static TypeReference ExplicitThisOrig_n29 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`31");
+        public static TypeReference ExplicitThisOrig_n30 = SemiPatch.SemiPatchModule.GetType("SemiPatch.ExplicitThisOrig`32");
+
         public static TypeReference GetBaseOrigType(int param_count, bool is_void) {
             if (is_void) {
                 // VoidOrig
@@ -450,6 +514,307 @@ namespace SemiPatch {
                 else if (param_count == 28) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
                 else if (param_count == 29) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
                 else if (param_count == 30) return typeof(Orig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+            }
+
+            throw new InvalidOperationException($"SemiPatch cannot create delegates for methods with over 30 arguments ({param_count} > 30).");
+        }
+
+        public static TypeReference GetBaseExplicitThisOrigType(int param_count, bool is_void = false) {
+            if (is_void) {
+                // ExplicitThisVoidOrig
+                if (param_count == 0) {
+                    return ExplicitThisVoidOrig_n0;
+                } else if (param_count == 1) {
+                    return ExplicitThisVoidOrig_n1;
+                } else if (param_count == 2) {
+                    return ExplicitThisVoidOrig_n2;
+                } else if (param_count == 3) {
+                    return ExplicitThisVoidOrig_n3;
+                } else if (param_count == 4) {
+                    return ExplicitThisVoidOrig_n4;
+                } else if (param_count == 5) {
+                    return ExplicitThisVoidOrig_n5;
+                } else if (param_count == 6) {
+                    return ExplicitThisVoidOrig_n6;
+                } else if (param_count == 7) {
+                    return ExplicitThisVoidOrig_n7;
+                } else if (param_count == 8) {
+                    return ExplicitThisVoidOrig_n8;
+                } else if (param_count == 9) {
+                    return ExplicitThisVoidOrig_n9;
+                } else if (param_count == 10) {
+                    return ExplicitThisVoidOrig_n10;
+                } else if (param_count == 11) {
+                    return ExplicitThisVoidOrig_n11;
+                } else if (param_count == 12) {
+                    return ExplicitThisVoidOrig_n12;
+                } else if (param_count == 13) {
+                    return ExplicitThisVoidOrig_n13;
+                } else if (param_count == 14) {
+                    return ExplicitThisVoidOrig_n14;
+                } else if (param_count == 15) {
+                    return ExplicitThisVoidOrig_n15;
+                } else if (param_count == 16) {
+                    return ExplicitThisVoidOrig_n16;
+                } else if (param_count == 17) {
+                    return ExplicitThisVoidOrig_n17;
+                } else if (param_count == 18) {
+                    return ExplicitThisVoidOrig_n18;
+                } else if (param_count == 19) {
+                    return ExplicitThisVoidOrig_n19;
+                } else if (param_count == 20) {
+                    return ExplicitThisVoidOrig_n20;
+                } else if (param_count == 21) {
+                    return ExplicitThisVoidOrig_n21;
+                } else if (param_count == 22) {
+                    return ExplicitThisVoidOrig_n22;
+                } else if (param_count == 23) {
+                    return ExplicitThisVoidOrig_n23;
+                } else if (param_count == 24) {
+                    return ExplicitThisVoidOrig_n24;
+                } else if (param_count == 25) {
+                    return ExplicitThisVoidOrig_n25;
+                } else if (param_count == 26) {
+                    return ExplicitThisVoidOrig_n26;
+                } else if (param_count == 27) {
+                    return ExplicitThisVoidOrig_n27;
+                } else if (param_count == 28) {
+                    return ExplicitThisVoidOrig_n28;
+                } else if (param_count == 29) {
+                    return ExplicitThisVoidOrig_n29;
+                } else if (param_count == 30) {
+                    return ExplicitThisVoidOrig_n30;
+                } else {
+                    throw new InvalidOperationException($"SemiPatch cannot create delegates for methods with over 30 arguments ({param_count} > 30).");
+                }
+            } else {
+                // ExplicitThisOrig
+                if (param_count == 0) {
+                    return ExplicitThisOrig_n0;
+                } else if (param_count == 1) {
+                    return ExplicitThisOrig_n1;
+                } else if (param_count == 2) {
+                    return ExplicitThisOrig_n2;
+                } else if (param_count == 3) {
+                    return ExplicitThisOrig_n3;
+                } else if (param_count == 4) {
+                    return ExplicitThisOrig_n4;
+                } else if (param_count == 5) {
+                    return ExplicitThisOrig_n5;
+                } else if (param_count == 6) {
+                    return ExplicitThisOrig_n6;
+                } else if (param_count == 7) {
+                    return ExplicitThisOrig_n7;
+                } else if (param_count == 8) {
+                    return ExplicitThisOrig_n8;
+                } else if (param_count == 9) {
+                    return ExplicitThisOrig_n9;
+                } else if (param_count == 10) {
+                    return ExplicitThisOrig_n10;
+                } else if (param_count == 11) {
+                    return ExplicitThisOrig_n11;
+                } else if (param_count == 12) {
+                    return ExplicitThisOrig_n12;
+                } else if (param_count == 13) {
+                    return ExplicitThisOrig_n13;
+                } else if (param_count == 14) {
+                    return ExplicitThisOrig_n14;
+                } else if (param_count == 15) {
+                    return ExplicitThisOrig_n15;
+                } else if (param_count == 16) {
+                    return ExplicitThisOrig_n16;
+                } else if (param_count == 17) {
+                    return ExplicitThisOrig_n17;
+                } else if (param_count == 18) {
+                    return ExplicitThisOrig_n18;
+                } else if (param_count == 19) {
+                    return ExplicitThisOrig_n19;
+                } else if (param_count == 20) {
+                    return ExplicitThisOrig_n20;
+                } else if (param_count == 21) {
+                    return ExplicitThisOrig_n21;
+                } else if (param_count == 22) {
+                    return ExplicitThisOrig_n22;
+                } else if (param_count == 23) {
+                    return ExplicitThisOrig_n23;
+                } else if (param_count == 24) {
+                    return ExplicitThisOrig_n24;
+                } else if (param_count == 25) {
+                    return ExplicitThisOrig_n25;
+                } else if (param_count == 26) {
+                    return ExplicitThisOrig_n26;
+                } else if (param_count == 27) {
+                    return ExplicitThisOrig_n27;
+                } else if (param_count == 28) {
+                    return ExplicitThisOrig_n28;
+                } else if (param_count == 29) {
+                    return ExplicitThisOrig_n29;
+                } else if (param_count == 30) {
+                    return ExplicitThisOrig_n30;
+                } else {
+                    throw new InvalidOperationException($"SemiPatch cannot create delegates for methods with over 30 arguments ({param_count} > 30).");
+                }
+            }
+        }
+
+        public static GenericInstanceType GetInstancedExplicitThisOrigType(ModuleDefinition module, int param_count, bool is_void, TypeReference return_type, params TypeReference[] param_types) {
+            var type = GetBaseExplicitThisOrigType(param_count, is_void);
+            var inst = new GenericInstanceType(module.ImportReference(type));
+            for (var i = 0; i < param_types.Length; i++) {
+                inst.GenericArguments.Add(param_types[i]);
+            }
+
+            if (!is_void) {
+                inst.GenericArguments.Add(return_type);
+            }
+            return inst;
+        }
+
+        public static TypeReference ExplicitThisOrigTypeForOrig(ModuleDefinition module, TypeReference instance_type, GenericInstanceType orig_type) {
+            var is_void = OrigFactory.TypeIsGenericVoidOrig(orig_type);
+            if (!OrigFactory.TypeIsGenericOrig(orig_type) && !is_void) {
+                throw new ArgumentException("Type must be generic Orig or VoidOrig", nameof(orig_type));
+            }
+
+            var param_count = OrigFactory.GetParameterCount(orig_type);
+
+            var type = GetBaseExplicitThisOrigType(param_count, is_void);
+            var inst = new GenericInstanceType(module.ImportReference(type));
+            inst.GenericArguments.Add(instance_type);
+            for (var i = 0; i < param_count; i++) {
+                var orig_arg = orig_type.GenericArguments[i];
+                inst.GenericArguments.Add(orig_arg);
+            }
+
+            return inst;
+        }
+
+        public static bool TypeIsGenericExplicitThisOrig(TypeReference type) {
+            return type.IsSame(ExplicitThisOrig_n0, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n1, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n2, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n3, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n4, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n5, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n6, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n7, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n8, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n9, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n10, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n11, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n12, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n13, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n14, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n15, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n16, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n17, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n18, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n19, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n20, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n21, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n22, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n23, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n24, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n25, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n26, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n27, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n28, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n29, exclude_generic_args: true) || type.IsSame(ExplicitThisOrig_n30, exclude_generic_args: true);
+        }
+
+        public static bool TypeIsGenericExplicitThisVoidOrig(TypeReference type) {
+            return type.IsSame(ExplicitThisVoidOrig_n0, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n1, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n2, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n3, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n4, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n5, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n6, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n7, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n8, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n9, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n10, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n11, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n12, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n13, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n14, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n15, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n16, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n17, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n18, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n19, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n20, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n21, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n22, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n23, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n24, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n25, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n26, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n27, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n28, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n29, exclude_generic_args: true) || type.IsSame(ExplicitThisVoidOrig_n30, exclude_generic_args: true);
+        }
+
+        public static MethodReference GetExplicitThisInvokeMethod(TypeReference type) {
+            if (!TypeIsGenericExplicitThisOrig(type) && !TypeIsGenericExplicitThisVoidOrig(type)) throw new ArgumentException("Argument must be an ExplicitThisOrig or ExplicitThisVoidOrig TypeReference", nameof(type));
+
+            var resolved = type.Resolve();
+            for (var i = 0; i < resolved.Methods.Count; i++) {
+                var method = resolved.Methods[i];
+
+                if (method.Name == "Invoke") {
+                    var generic_method = new MethodReference(method.Name, method.ReturnType, type);
+                    for (var j = 0; j < method.Parameters.Count; j++) {
+                        var param = method.Parameters[j];
+                        generic_method.Parameters.Add(new ParameterDefinition(
+                            param.Name,
+                            param.Attributes,
+                            param.ParameterType
+                        ));
+                    }
+                    generic_method.HasThis = method.HasThis;
+                    generic_method.ExplicitThis = method.ExplicitThis;
+
+                    return generic_method;
+                }
+            }
+
+            throw new Exception("unreachable");
+        }
+
+        public static MethodReference NativePointerConstructorForExplicitThisOrigType(ModuleDefinition module, TypeReference type) {
+            if (!TypeIsGenericExplicitThisOrig(type) && !TypeIsGenericExplicitThisVoidOrig(type)) throw new ArgumentException("Argument must be an ExplicitThisOrig or ExplicitThisVoidOrig TypeReference", nameof(type));
+            var resolved = type.Resolve();
+            for (var i = 0; i < resolved.Methods.Count; i++) {
+                var method = resolved.Methods[i];
+
+                if (method.IsConstructor && method.Parameters.Count == 2) {
+                    var generic_method = new MethodReference(method.Name, method.ReturnType, type);
+                    for (var j = 0; j < method.Parameters.Count; j++) {
+                        var param = method.Parameters[j];
+                        generic_method.Parameters.Add(new ParameterDefinition(
+                            param.Name,
+                            param.Attributes,
+                            param.ParameterType
+                        ));
+                    }
+                    generic_method.HasThis = method.HasThis;
+                    generic_method.ExplicitThis = method.ExplicitThis;
+
+                    return generic_method;
+                }
+            }
+
+            throw new Exception("unreachable");
+        }
+
+        public static Type GetExplicitThisReflectionType(bool is_void, int param_count) {
+            if (is_void) {
+                if (param_count == 0) return typeof(ExplicitThisVoidOrig<>);
+                else if (param_count == 1) return typeof(ExplicitThisVoidOrig<,>);
+                else if (param_count == 2) return typeof(ExplicitThisVoidOrig<,,>);
+                else if (param_count == 3) return typeof(ExplicitThisVoidOrig<,,,>);
+                else if (param_count == 4) return typeof(ExplicitThisVoidOrig<,,,,>);
+                else if (param_count == 5) return typeof(ExplicitThisVoidOrig<,,,,,>);
+                else if (param_count == 6) return typeof(ExplicitThisVoidOrig<,,,,,,>);
+                else if (param_count == 7) return typeof(ExplicitThisVoidOrig<,,,,,,,>);
+                else if (param_count == 8) return typeof(ExplicitThisVoidOrig<,,,,,,,,>);
+                else if (param_count == 9) return typeof(ExplicitThisVoidOrig<,,,,,,,,,>);
+                else if (param_count == 10) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,>);
+                else if (param_count == 11) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,>);
+                else if (param_count == 12) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,>);
+                else if (param_count == 13) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,>);
+                else if (param_count == 14) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,>);
+                else if (param_count == 15) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,>);
+                else if (param_count == 16) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,>);
+                else if (param_count == 17) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 18) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 19) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 20) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 21) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 22) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 23) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 24) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 25) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 26) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 27) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 28) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 29) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 30) return typeof(ExplicitThisVoidOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+            } else {
+                if (param_count == 0) return typeof(ExplicitThisOrig<,>);
+                else if (param_count == 1) return typeof(ExplicitThisOrig<,,>);
+                else if (param_count == 2) return typeof(ExplicitThisOrig<,,,>);
+                else if (param_count == 3) return typeof(ExplicitThisOrig<,,,,>);
+                else if (param_count == 4) return typeof(ExplicitThisOrig<,,,,,>);
+                else if (param_count == 5) return typeof(ExplicitThisOrig<,,,,,,>);
+                else if (param_count == 6) return typeof(ExplicitThisOrig<,,,,,,,>);
+                else if (param_count == 7) return typeof(ExplicitThisOrig<,,,,,,,,>);
+                else if (param_count == 8) return typeof(ExplicitThisOrig<,,,,,,,,,>);
+                else if (param_count == 9) return typeof(ExplicitThisOrig<,,,,,,,,,,>);
+                else if (param_count == 10) return typeof(ExplicitThisOrig<,,,,,,,,,,,>);
+                else if (param_count == 11) return typeof(ExplicitThisOrig<,,,,,,,,,,,,>);
+                else if (param_count == 12) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,>);
+                else if (param_count == 13) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,>);
+                else if (param_count == 14) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,>);
+                else if (param_count == 15) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,>);
+                else if (param_count == 16) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 17) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 18) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 19) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 20) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 21) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 22) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 23) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 24) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 25) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 26) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 27) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 28) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 29) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
+                else if (param_count == 30) return typeof(ExplicitThisOrig<,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,>);
             }
 
             throw new InvalidOperationException($"SemiPatch cannot create delegates for methods with over 30 arguments ({param_count} > 30).");

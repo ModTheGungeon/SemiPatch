@@ -64,13 +64,13 @@ namespace SemiPatch {
                 };
 
                 if (field.Patch.HasConstant) {
-                    target_field.Constant = _ImportUntyped(field.Patch.Constant);
+                    target_field.Constant = field.Patch.Constant.ImportUntyped(TargetModule);
                 }
                 type.TargetType.Fields.Add(target_field);
             } else target_field = field.Target;
 
             for (var i = 0; i < field.Patch.CustomAttributes.Count; i++) {
-                target_field.CustomAttributes.Add(_Clone(field.Patch.CustomAttributes[i]));
+                target_field.CustomAttributes.Add(field.Patch.CustomAttributes[i].Clone(TargetModule));
             }
 
             _Relinker.Map(field.PatchPath, Relinker.MemberEntry.FromPatchData(
@@ -96,7 +96,7 @@ namespace SemiPatch {
                 };
 
                 if (prop.Patch.HasConstant) {
-                    target_prop.Constant = _ImportUntyped(prop.Patch.Constant);
+                    target_prop.Constant = prop.Patch.Constant.ImportUntyped(TargetModule);
                 }
 
                 if (prop.Patch.GetMethod != null) {
@@ -111,7 +111,7 @@ namespace SemiPatch {
             } else target_prop = prop.Target;
 
             for (var i = 0; i < prop.Patch.CustomAttributes.Count; i++) {
-                target_prop.CustomAttributes.Add(_Clone(prop.Patch.CustomAttributes[i]));
+                target_prop.CustomAttributes.Add(prop.Patch.CustomAttributes[i].Clone(TargetModule));
             }
 
             _Relinker.Map(prop.PatchPath, Relinker.MemberEntry.FromPatchData(
@@ -158,7 +158,7 @@ namespace SemiPatch {
                 orig_def.GenericParameters.Add(orig_param);
             }
             for (var i = 0; i < target.Parameters.Count; i++) {
-                orig_def.Parameters.Add(_Clone(target.Parameters[i]));
+                orig_def.Parameters.Add(target.Parameters[i].Clone(TargetModule));
             }
             orig_def.Body = method.Target.Body.Clone(orig_def);
             orig_def.Body.Variables.Clear();
@@ -369,7 +369,7 @@ namespace SemiPatch {
             }
 
             for (var i = 0; i < method.Patch.CustomAttributes.Count; i++) {
-                target_method.CustomAttributes.Add(_Clone(method.Patch.CustomAttributes[i]));
+                target_method.CustomAttributes.Add(method.Patch.CustomAttributes[i].Clone(TargetModule));
             }
 
             var original_target_variables = new VariableDefinition[target_method.Body.Variables.Count];
@@ -388,7 +388,7 @@ namespace SemiPatch {
             if (method.ReceivesOriginal) {
                 _HandleReceiveOriginalMethod(method, target_method, original_target_variables);
             } else {
-                target_method.Body = method.Patch.Body.CloneBodyAndReimport(TargetModule, target_method);
+                target_method.Body = method.Patch.Body.Clone(target_method, TargetModule);
             }
 
             _Relinker.Map(method.PatchPath, Relinker.MemberEntry.FromPatchData(
@@ -434,7 +434,7 @@ namespace SemiPatch {
                 preinject_def.GenericParameters.Add(orig_param);
             }
             for (var i = 0; i < inject.Target.Parameters.Count; i++) {
-                preinject_def.Parameters.Add(_Clone(inject.Target.Parameters[i]));
+                preinject_def.Parameters.Add(inject.Target.Parameters[i].Clone(TargetModule));
             }
             preinject_def.Body = inject.Target.Body.Clone(preinject_def);
             type.TargetType.Methods.Add(preinject_def);
@@ -493,7 +493,7 @@ namespace SemiPatch {
             }
 
             for (var i = 0; i < type.PatchType.CustomAttributes.Count; i++) {
-                type.TargetType.CustomAttributes.Add(_Clone(type.PatchType.CustomAttributes[i]));
+                type.TargetType.CustomAttributes.Add(type.PatchType.CustomAttributes[i].Clone(TargetModule));
             }
 
             _Relinker.Map(type.PatchType.ToPath(), Relinker.TypeEntry.FromPatchData(
@@ -508,211 +508,6 @@ namespace SemiPatch {
             }
         }
 
-        private object _ImportUntyped(object obj) {
-            if (obj is IMetadataTokenProvider) return (object)TargetModule.ImportReference((IMetadataTokenProvider)obj);
-            return obj;
-        }
-
-        private EventDefinition _Clone(TypeDefinition decl_type, EventDefinition ev) {
-            var new_event = new EventDefinition(
-                ev.Name,
-                ev.Attributes,
-                TargetModule.ImportReference(ev.EventType)
-            ) {
-                AddMethod = ev.AddMethod?.ToPath()?.WithDeclaringType(decl_type)?.FindIn<MethodDefinition>(TargetModule),
-                RemoveMethod = ev.RemoveMethod?.ToPath()?.WithDeclaringType(decl_type)?.FindIn<MethodDefinition>(TargetModule),
-                InvokeMethod = ev.InvokeMethod?.ToPath()?.WithDeclaringType(decl_type)?.FindIn<MethodDefinition>(TargetModule)
-            };
-
-
-            for (var i = 0; i < ev.OtherMethods.Count; i++) {
-                var other_method = ev.OtherMethods[i];
-                new_event.OtherMethods.Add(
-                    other_method.ToPath().WithDeclaringType(decl_type).FindIn<MethodDefinition>(TargetModule)
-                );
-            }
-
-            for (var i = 0; i < ev.CustomAttributes.Count; i++) {
-                var attr = ev.CustomAttributes[i];
-                var new_attr = new CustomAttribute(
-                    TargetModule.ImportReference(attr.Constructor),
-                    attr.GetBlob()
-                );
-                new_event.CustomAttributes.Add(new_attr);
-            }
-
-            return new_event;
-        }
-
-        private PropertyDefinition _Clone(TypeDefinition decl_type, PropertyDefinition prop) {
-            var new_prop = new PropertyDefinition(
-                prop.Name,
-                prop.Attributes,
-                TargetModule.ImportReference(prop.PropertyType)
-            ) {
-                HasDefault = prop.HasDefault,
-                GetMethod = prop.GetMethod?.ToPath()?.WithDeclaringType(decl_type)?.FindIn<MethodDefinition>(TargetModule),
-                SetMethod = prop.SetMethod?.ToPath()?.WithDeclaringType(decl_type)?.FindIn<MethodDefinition>(TargetModule)
-            };
-
-            if (prop.HasConstant) {
-                new_prop.Constant = _ImportUntyped(prop.Constant);
-            }
-
-            for (var i = 0; i < prop.OtherMethods.Count; i++) {
-                var other_method = prop.OtherMethods[i];
-                new_prop.OtherMethods.Add(
-                    other_method.ToPath().WithDeclaringType(decl_type).FindIn<MethodDefinition>(TargetModule)
-                );
-            }
-
-            for (var i = 0; i < prop.CustomAttributes.Count; i++) {
-                var attr = prop.CustomAttributes[i];
-                var new_attr = new CustomAttribute(
-                    TargetModule.ImportReference(attr.Constructor),
-                    attr.GetBlob()
-                );
-                new_prop.CustomAttributes.Add(new_attr);
-            }
-
-            return new_prop;
-        }
-
-        private FieldDefinition _Clone(TypeDefinition decl_type, FieldDefinition field) {
-            var new_field = new FieldDefinition(
-                field.Name,
-                field.Attributes,
-                TargetModule.ImportReference(field.FieldType)
-            ) {
-                InitialValue = field.InitialValue,
-                HasDefault = field.HasDefault
-            };
-
-            if (field.HasConstant) {
-                field.Constant = _ImportUntyped(field.Constant);
-            }
-
-            for (var i = 0; i < field.CustomAttributes.Count; i++) {
-                var attr = field.CustomAttributes[i];
-                var new_attr = new CustomAttribute(
-                    TargetModule.ImportReference(attr.Constructor),
-                    attr.GetBlob()
-                );
-                new_field.CustomAttributes.Add(new_attr);
-            }
-
-            return new_field;
-        }
-
-        private GenericParameter _Clone(IGenericParameterProvider owner, GenericParameter param) {
-            var new_param = new GenericParameter(
-                param.Name,
-                owner
-            );
-            for (var i = 0; i < param.Constraints.Count; i++) {
-                new_param.Constraints.Add(TargetModule.ImportReference(param.Constraints[i]));
-            }
-            return new_param;
-        }
-
-        private CustomAttributeArgument _Clone(CustomAttributeArgument arg) {
-            return new CustomAttributeArgument(
-                TargetModule.ImportReference(arg.Type),
-                _ImportUntyped(arg.Value)
-            );
-        }
-
-        private CustomAttributeNamedArgument _Clone(CustomAttributeNamedArgument arg) {
-            return new CustomAttributeNamedArgument(
-                arg.Name,
-                _Clone(arg.Argument)
-            );
-        }
-
-        private CustomAttribute _Clone(CustomAttribute attr) {
-            var new_attr = new CustomAttribute(
-                TargetModule.ImportReference(attr.Constructor)
-            );
-
-            for (var i = 0; i < attr.ConstructorArguments.Count; i++) {
-                new_attr.ConstructorArguments.Add(_Clone(attr.ConstructorArguments[i]));
-            }
-
-            for (var i = 0; i < attr.Fields.Count; i++) {
-                new_attr.Fields.Add(_Clone(attr.Fields[i]));
-            }
-
-            for (var i = 0; i < attr.Properties.Count; i++) {
-                new_attr.Properties.Add(_Clone(attr.Properties[i]));
-            }
-            return new_attr;
-        }
-
-        private ParameterDefinition _Clone(ParameterDefinition param) {
-            var new_param = new ParameterDefinition(
-                param.Name,
-                param.Attributes,
-                TargetModule.ImportReference(param.ParameterType)
-            ) { HasDefault = param.HasDefault };
-            if (param.HasConstant) {
-                new_param.Constant = _ImportUntyped(param.Constant);
-            }
-            return new_param;
-        }
-
-        private MethodDefinition _Clone(TypeDefinition decl_type, MethodDefinition method) {
-            var new_method = new MethodDefinition(
-                method.Name,
-                method.Attributes,
-                TargetModule.ImportReference(method.ReturnType)
-            ) {
-                ImplAttributes = method.ImplAttributes,
-                SemanticsAttributes = method.SemanticsAttributes,
-                CallingConvention = method.CallingConvention,
-                AggressiveInlining = method.AggressiveInlining,
-                DebugInformation = method.DebugInformation,
-                ExplicitThis = method.ExplicitThis,
-                HasThis = method.HasThis,
-                NoOptimization = method.NoOptimization
-            };
-
-            for (var i = 0; i < method.CustomAttributes.Count; i++) {
-                var attr = method.CustomAttributes[i];
-                var new_attr = new CustomAttribute(
-                    TargetModule.ImportReference(attr.Constructor),
-                    attr.GetBlob()
-                );
-                new_method.CustomAttributes.Add(new_attr);
-            }
-
-            for (var i = 0; i < method.Parameters.Count; i++) {
-                new_method.Parameters.Add(_Clone(method.Parameters[i]));
-            }
-
-            for (var i = 0; i < method.GenericParameters.Count; i++) {
-                var param = method.GenericParameters[i];
-                var new_param = new GenericParameter(
-                    param.Name,
-                    new_method
-                );
-                new_method.GenericParameters.Add(new_param);
-            }
-
-            new_method.Body = method.Body.CloneBodyAndReimport(TargetModule, new_method);
-
-            return new_method;
-        }
-
-        private InterfaceImplementation _Clone(InterfaceImplementation impl) {
-            var new_impl = new InterfaceImplementation(
-                TargetModule.ImportReference(impl.InterfaceType)
-            );
-            for (var i = 0; i < impl.CustomAttributes.Count; i++) {
-                new_impl.CustomAttributes.Add(_Clone(impl.CustomAttributes[i]));
-            }
-            return new_impl;
-        }
-
         private TypeDefinition _Clone(TypeDefinition type) {
             var new_type = new TypeDefinition(
                 type.Namespace,
@@ -723,34 +518,34 @@ namespace SemiPatch {
 
 
             for (var i = 0; i < type.Fields.Count; i++) {
-                new_type.Fields.Add(_Clone(new_type, type.Fields[i]));
+                new_type.Fields.Add(type.Fields[i].Clone(new_type, TargetModule));
             }
 
             // since properties and events depend on existing methods,
             // methods have to be copied first so that they can be resolved
 
             for (var i = 0; i < type.Methods.Count; i++) {
-                new_type.Methods.Add(_Clone(new_type, type.Methods[i]));
+                new_type.Methods.Add(type.Methods[i].Clone(new_type, TargetModule));
             }
 
             for (var i = 0; i < type.Properties.Count; i++) {
-                new_type.Properties.Add(_Clone(new_type, type.Properties[i]));
+                new_type.Properties.Add(type.Properties[i].Clone(new_type, TargetModule));
             }
 
             for (var i = 0; i < type.Events.Count; i++) {
-                new_type.Events.Add(_Clone(new_type, type.Events[i]));
+                new_type.Events.Add(type.Events[i].Clone(new_type, TargetModule));
             }
 
             for (var i = 0; i < type.GenericParameters.Count; i++) {
-                new_type.GenericParameters.Add(_Clone(new_type, type.GenericParameters[i]));
+                new_type.GenericParameters.Add(type.GenericParameters[i].Clone(new_type, TargetModule));
             }
 
             for (var i = 0; i < type.CustomAttributes.Count; i++) {
-                new_type.CustomAttributes.Add(_Clone(type.CustomAttributes[i]));
+                new_type.CustomAttributes.Add(type.CustomAttributes[i].Clone(TargetModule));
             }
 
             for (var i = 0; i < type.Interfaces.Count; i++) {
-                new_type.Interfaces.Add(_Clone(type.Interfaces[i]));
+                new_type.Interfaces.Add(type.Interfaces[i].Clone(TargetModule));
             }
 
             for (var i = 0; i < type.NestedTypes.Count; i++) {

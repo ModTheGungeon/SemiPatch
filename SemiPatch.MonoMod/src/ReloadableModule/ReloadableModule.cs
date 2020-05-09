@@ -77,7 +77,7 @@ namespace SemiPatch {
         private Stream _SourceStream;
 
         public readonly Stream PatchAssemblyStream;
-        // MonoMod Static Generator
+        // MonoMod public static Generator
         public readonly Stream MMSGAssemblyStream;
         // RuntimeDetour Bootstrap
         public readonly Stream RDBSAssemblyStream;

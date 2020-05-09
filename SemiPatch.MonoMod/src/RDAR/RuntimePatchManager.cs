@@ -23,57 +23,19 @@ namespace SemiPatch {
         public static TypeDefinition RuntimeReflectionExtensionsType = SemiPatch.MscorlibModule.GetType("System.Reflection.RuntimeReflectionExtensions");
         public static TypeDefinition DelegateType = SemiPatch.MscorlibModule.GetType("System.Delegate");
         public static TypeDefinition ObjectType = SemiPatch.MscorlibModule.GetType("System.Object");
-        public static MethodDefinition GetMethodInfoMethod;
-        public static MethodDefinition GetTypeFromHandleMethod;
-        public static MethodDefinition CreateDelegateMethod;
+        public static MethodDefinition GetMethodInfoMethod =
+            RuntimeReflectionExtensionsType.GetMethodDef("System.Reflection.MethodInfo GetMethodInfo(System.Delegate)");
+        public static MethodDefinition GetTypeFromHandleMethod =
+            TypeType.GetMethodDef("System.Type GetTypeFromHandle(System.RuntimeTypeHandle)");
+        public static MethodDefinition CreateDelegateMethod =
+            DelegateType.GetMethodDef("System.Delegate CreateDelegate(System.Type, System.Object, System.Reflection.MethodInfo)");
         public static Logger Logger = new Logger("RuntimePatchManager");
-
-        static RuntimePatchManager() {
-            for (var i = 0; i < TypeType.Methods.Count; i++) {
-                var method = TypeType.Methods[i];
-
-                if (method.Name == "GetTypeFromHandle"
-                    && method.Parameters.Count == 1
-                    && method.Parameters[0].ParameterType.IsSame(RuntimeTypeHandleType)
-                ) {
-                    GetTypeFromHandleMethod = method;
-                    break;
-                }
-            }
-
-            for (var i = 0; i < RuntimeReflectionExtensionsType.Methods.Count; i++) {
-                var method = RuntimeReflectionExtensionsType.Methods[i];
-
-                if (method.Name == "GetMethodInfo"
-                    && method.Parameters.Count == 1
-                    && method.Parameters[0].ParameterType.IsSame(DelegateType)
-                ) {
-                    GetMethodInfoMethod = method;
-                    break;
-                }
-            }
-
-            for (var i = 0; i < DelegateType.Methods.Count; i++) {
-                var method = DelegateType.Methods[i];
-
-                if (method.Name == "CreateDelegate"
-                    && method.Parameters.Count == 3
-                    && method.Parameters[0].ParameterType.IsSame(TypeType)
-                    && method.Parameters[1].ParameterType.IsSame(ObjectType)
-                    && method.Parameters[2].ParameterType.IsSame(MethodInfoType)
-                ) {
-                    CreateDelegateMethod = method;
-                    break;
-                }
-            }
-        }
 
         private Dictionary<MemberPath, IDetour> _MethodPatchMap = new Dictionary<MemberPath, IDetour>();
         private Dictionary<MemberPath, IDetour> _CallStubToOrigMap = new Dictionary<MemberPath, IDetour>();
         private ModuleDefinition _RunningModule;
         private System.Reflection.Assembly _RunningAssembly;
         private RuntimeInjectionManager _InjectionManager;
-
 
         public RuntimePatchManager(System.Reflection.Assembly asm, ModuleDefinition running_module) {
             _RunningAssembly = asm;
@@ -144,7 +106,7 @@ namespace SemiPatch {
 
                     if (!_CallStubToOrigMap.ContainsKey(target_path)) {
                         Logger.Debug($"Inserted call stub in '{target_path}' to '{orig_sig}'.");
-                        var stub = CreateCallStub(target_method, orig_method);
+                        var stub = RDARPrimitive.CreateThunk(target_method, orig_method);
                         var orig_stub_detour = new Hook(target_method, stub);
 
                         _CallStubToOrigMap[target_path] = orig_stub_detour;
@@ -161,7 +123,7 @@ namespace SemiPatch {
             _MethodPatchMap[patch_method.ToPath()] = hook;
         }
 
-        private void _ProcessMethodDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+        protected virtual void _ProcessMethodDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
             Logger.Debug($"Processing method difference for target '{diff.TargetPath}'");
 
             var patch_path = ((MethodDefinition)diff.Member).ToPath();
@@ -189,13 +151,13 @@ namespace SemiPatch {
             }
         }
 
-        private void _ProcessFieldDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+        protected virtual void _ProcessFieldDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
             Logger.Debug($"Processing field difference for target '{diff.TargetPath}'");
 
             throw new UnsupportedRDAROperationException(diff);
         }
 
-        private void _ProcessPropertyDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+        protected virtual void _ProcessPropertyDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
             Logger.Debug($"Processing property difference for target '{diff.TargetPath}'");
 
             throw new UnsupportedRDAROperationException(diff);
@@ -213,48 +175,76 @@ namespace SemiPatch {
             }
         }
 
-        private void _ProcessTypeDifference(Relinker relinker, TypeDifference diff, bool update_running_module = false) {
-            Logger.Debug($"Processing type difference {diff.ToString()}");
+        protected virtual void _ProcessTypeAdded(Relinker relinker, TypeAdded diff, bool update_running_module = false) {
+            throw new UnsupportedRDAROperationException(diff);
+        }
 
-            if (diff is TypeAdded) {
-                throw new UnsupportedRDAROperationException(diff);
-            }
+        protected virtual void _ProcessTypeRemoved(Relinker relinker, TypeRemoved diff, bool update_running_module = false) {
+            throw new UnsupportedRDAROperationException(diff);
+        }
 
-            if (diff is TypeRemoved) {
-                throw new UnsupportedRDAROperationException(diff);
-            }
-
-            var change = (TypeChanged)diff;
-
+        protected virtual void _ProcessTypeChanged(Relinker relinker, TypeChanged diff, bool update_running_module = false) {
             // injections should be processed before methods can
             // to retain proper ordering of receiveoriginal patches +
             // injections (i.e. orig will be hooked by the injection stub
             // first and then it will be hooked by the patch hook)
-            for (var i = 0; i < change.InjectionDifferences.Count; i++) {
-                _InjectionManager.ProcessInjectionDifference(relinker, change.InjectionDifferences[i], update_running_module);
+            for (var i = 0; i < diff.InjectionDifferences.Count; i++) {
+                _InjectionManager.ProcessInjectionDifference(relinker, diff.InjectionDifferences[i], update_running_module);
             }
 
-            for (var i = 0; i < change.MemberDifferences.Count; i++) {
-                _ProcessMemberDifference(relinker, change.MemberDifferences[i], update_running_module);
+            for (var i = 0; i < diff.MemberDifferences.Count; i++) {
+                _ProcessMemberDifference(relinker, diff.MemberDifferences[i], update_running_module);
             }
 
-            for (var i = 0; i < change.NestedTypeDifferences.Count; i++) {
-                _ProcessTypeDifference(relinker, change.NestedTypeDifferences[i], update_running_module);
+            for (var i = 0; i < diff.NestedTypeDifferences.Count; i++) {
+                _ProcessTypeDifference(relinker, diff.NestedTypeDifferences[i], update_running_module);
             }
         }
 
-        private bool _CanPatchTypeAtRuntime(TypeChanged type_changed) {
-            for (var i = 0; i < type_changed.MemberDifferences.Count; i++) {
-                var member = type_changed.MemberDifferences[i];
+        private void _ProcessTypeDifference(Relinker relinker, TypeDifference diff, bool update_running_module = false) {
+            Logger.Debug($"Processing type difference {diff.ToString()}");
+
+            if (diff is TypeAdded) {
+                _ProcessTypeAdded(relinker, (TypeAdded)diff, update_running_module);
+            } else if (diff is TypeRemoved) {
+                _ProcessTypeRemoved(relinker, (TypeRemoved)diff, update_running_module);
+            } else if (diff is TypeChanged) {
+                _ProcessTypeChanged(relinker, (TypeChanged)diff, update_running_module);
+            } else {
+                throw new UnsupportedRDAROperationException(diff);
+            }
+        }
+
+        protected bool _IsTypeGeneric(TypeDefinition type) {
+            // types nested within generic types copy the generic parameters
+            // (e.g. Class<T>.NestedClass is actually compiled as Class`1.NestedClass<T>)
+            return type.GenericParameters.Count > 0;
+        }
+
+        protected bool _IsMethodGeneric(MethodDefinition method) {
+            // we don't support neither generic type members nor generic members
+            // themselves
+            return _IsTypeGeneric(method.DeclaringType) || method.GenericParameters.Count > 0;
+        }
+
+        protected virtual bool _CanPatchTypeAtRuntime(TypeDifference type_diff) {
+            if (_IsTypeGeneric(type_diff.OldType)) {
+                return false;
+            }
+            if (!(type_diff is TypeChanged change)) throw new UnsupportedRDAROperationException(type_diff);
+
+            for (var i = 0; i < change.MemberDifferences.Count; i++) {
+                var member = change.MemberDifferences[i];
                 if (member.Type == MemberType.Method) {
                     if (!(member is MemberChanged)) {
                         return false;
                     }
+                    if (_IsMethodGeneric((MethodDefinition)member.Member)) return false;
                 } else return false;
             }
 
-            for (var i = 0; i < type_changed.NestedTypeDifferences.Count; i++) {
-                var nested_type = type_changed.NestedTypeDifferences[i];
+            for (var i = 0; i < change.NestedTypeDifferences.Count; i++) {
+                var nested_type = change.NestedTypeDifferences[i];
                 if (nested_type is TypeChanged nested_type_changed) {
                     if (!_CanPatchTypeAtRuntime(nested_type_changed)) {
                         return false;
@@ -269,9 +259,7 @@ namespace SemiPatch {
             for (var i = 0; i < diff.TypeDifferences.Count; i++) {
                 var type = diff.TypeDifferences[i];
 
-                if (type is TypeChanged type_changed) {
-                    if (!_CanPatchTypeAtRuntime(type_changed)) return false;
-                } else return false;
+                if (!_CanPatchTypeAtRuntime(type)) return false;
             }
 
             return true;
@@ -307,7 +295,7 @@ namespace SemiPatch {
             _InjectionManager.Dispose();
         }
 
-        private static void _RewriteOrigToExplicitOrig(MethodDefinition method, TypeReference explicit_orig_type, ParameterDefinition orig_param) {
+        private void _RewriteOrigToExplicitThisOrig(MethodDefinition method, TypeReference explicit_orig_type, ParameterDefinition orig_param) {
             var body = method.Body;
 
             var orig_type = orig_param.ParameterType;
@@ -368,7 +356,7 @@ namespace SemiPatch {
                             optimized_orig_ldarg_offs_set.Add(orig_ldarg_instr);
                             il.InsertAfter(orig_ldarg_instr, il.Create(OpCodes.Ldarg_0));
                             var new_invoke_method = method.Module.ImportReference(
-                                ExplicitOrigFactory.GetInvokeMethod(explicit_orig_type)
+                                OrigFactory.GetExplicitThisInvokeMethod(explicit_orig_type)
                             );
                             invoke_instr.Operand = new_invoke_method;
                         } else {
@@ -429,7 +417,7 @@ namespace SemiPatch {
                         i += 1;
 
                         // the purpose is to create an Orig/VoidOrig out of an
-                        // ExplicitOrig/ExplicitVoidOrig, therefore as the type
+                        // ExplicitThisOrig/ExplicitThisVoidOrig, therefore as the type
                         // of the new delegate we push the non-explicit orig type
                         il.InsertBefore(prev_instr, prev_instr = il.Create(OpCodes.Ldtoken, orig_type));
                         i += 1;
@@ -459,8 +447,8 @@ namespace SemiPatch {
             body.OptimizeMacros();
         }
 
-        private static void _RewriteMethodAsHookTarget(MethodDefinition method, TypeReference instance_type, bool has_orig) {
-            // for static methods we're set
+        private void _RewriteMethodAsHookTarget(MethodDefinition method, TypeReference instance_type, bool has_orig) {
+            // for public static methods we're set
             // order is (orig,...args) and orig doesn't take an instance type
 
             // for instance methods however, some work has to be done
@@ -479,12 +467,12 @@ namespace SemiPatch {
                 if (has_orig) {
                     orig_param = method.Parameters[0];
                     var orig_type = (GenericInstanceType)orig_param.ParameterType;
-                    explicit_orig_type = ExplicitOrigFactory.ExplicitOrigTypeForOrig(
+                    explicit_orig_type = OrigFactory.ExplicitThisOrigTypeForOrig(
                         module,
                         instance_type, // DeclaringType of target method
                         orig_type
                     );
-                    _RewriteOrigToExplicitOrig(
+                    _RewriteOrigToExplicitThisOrig(
                        method,
                        explicit_orig_type,
                        method.Parameters[0]
@@ -503,7 +491,7 @@ namespace SemiPatch {
                     // new order: (orig,self,...args)
                     method.Parameters.Insert(1, self_param);
 
-                    // change out orig with explicitorig
+                    // change out orig with ExplicitThisOrig
                     method.Parameters[0] = new ParameterDefinition(
                         orig_param.Name,
                         orig_param.Attributes,
@@ -540,47 +528,12 @@ namespace SemiPatch {
             }
         }
 
-        private static MethodDefinition _PreprocessPatchMethodForHooking(MethodDefinition method, TypeReference instance_type, bool has_orig, bool preserve_method_definition = false) {
+        private MethodDefinition _PreprocessPatchMethodForHooking(MethodDefinition method, TypeReference instance_type, bool has_orig, bool preserve_method_definition = false) {
             if (preserve_method_definition) method = method.Clone();
 
             _RewriteMethodAsHookTarget(method, instance_type, has_orig);
 
             return method;
-        }
-
-        public static System.Reflection.MethodInfo CreateCallStub(System.Reflection.MethodBase source, System.Reflection.MethodBase target) {
-            var patched_params = source.GetParameters();
-            var stub_param_length = patched_params.Length;
-            if (!source.IsStatic) stub_param_length += 1;
-
-            var param_types = new Type[stub_param_length];
-            if (!source.IsStatic) param_types[0] = source.DeclaringType;
-            for (var i = 0; i < patched_params.Length; i++) {
-                param_types[source.IsStatic ? i : i + 1] = patched_params[i].ParameterType;
-            }
-            var dmd = new DynamicMethodDefinition(source.Name, (source as System.Reflection.MethodInfo)?.ReturnType ?? typeof(void), param_types);
-
-            var body = dmd.Definition.Body;
-            var il = body.GetILProcessor();
-
-            dmd.Definition.IsStatic = true;
-            dmd.Definition.HasThis = false;
-            dmd.Definition.ExplicitThis = false;
-
-            for (var i = 0; i < stub_param_length; i++) {
-                il.Append(il.Create(OpCodes.Ldarg, dmd.Definition.Parameters[i]));
-            }
-
-            if (target.IsVirtual) {
-                il.Append(il.Create(OpCodes.Callvirt, target));
-            } else il.Append(il.Create(OpCodes.Call, target));
-
-            il.Append(il.Create(OpCodes.Ret));
-
-            body.OptimizeMacros();
-
-            var gen = dmd.Generate();
-            return gen;
         }
     }
 }

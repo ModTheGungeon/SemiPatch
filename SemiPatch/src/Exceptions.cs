@@ -38,6 +38,83 @@ namespace SemiPatch {
         }
     }
 
+    public class TargetMethodSearchFailureException : AnalyzerException {
+        public MethodPath MethodPath;
+
+        public TargetMethodSearchFailureException(MethodPath target_method, string extra_info)
+        : base($"Failed to locate target method '{target_method}' ({extra_info}).") {
+            MethodPath = target_method;
+        }
+    }
+
+    public class UntaggedConstructorException : AnalyzerException {
+        public MethodPath PatchPath;
+
+        public UntaggedConstructorException(MethodPath patch_path)
+        : base($"Only a single untagged, empty and parameterless constructor can exist in a patch class. If you wish to patch, insert or otherwise alter '{patch_path}', tag it with the TreatLikeMethod attribute.") {
+            PatchPath = patch_path;
+        }
+    }
+
+    public class InsertTargetExistsException : AnalyzerException {
+        public MemberPath PatchPath;
+        public MemberPath TargetPath;
+
+        public InsertTargetExistsException(string msg, MemberPath patch_path, MemberPath target_path)
+        : base($"{msg} (patch path: '{patch_path}', target path: {target_path})") {
+            PatchPath = patch_path;
+            TargetPath = target_path;
+        }
+    }
+
+    public class PatchTargetNotFoundException : AnalyzerException {
+        public MemberPath PatchPath;
+        public MemberPath TargetPath;
+
+        public PatchTargetNotFoundException(string msg, MemberPath patch_path, MemberPath target_path)
+        : base(msg) {
+            PatchPath = patch_path;
+            TargetPath = target_path;
+        }
+    }
+
+    public class InvalidTargetTypeScopeException : AnalyzerException {
+        public TypePath Path;
+
+        public InvalidTargetTypeScopeException(string msg, TypePath target_path)
+        : base(msg) {
+            Path = target_path;
+        }
+    }
+
+    public class PatchTargetAttributeMismatchException : AnalyzerException {
+        public MemberPath PatchPath;
+        public MemberPath TargetPath;
+
+        public PatchTargetAttributeMismatchException(string msg, MemberPath patch_path, MemberPath target_path)
+        : base(msg) {
+            PatchPath = patch_path;
+            TargetPath = target_path;
+        }
+    }
+
+    public class InvalidReceiveOriginalPatchException : AnalyzerException { 
+        public MethodPath PatchPath;
+
+        public InvalidReceiveOriginalPatchException(string msg, MethodPath patch_path)
+        : base(msg) {
+            PatchPath = patch_path;
+        }
+    }
+
+    public class InvalidAttributeCombinationException : AnalyzerException {
+        public InvalidAttributeCombinationException(string info) : base($"Invalid attribute combination. {info}") { }
+    }
+
+    public class PatchDataDeserializationException : AnalyzerException {
+        public PatchDataDeserializationException(string msg) : base($"Deserialization error: {msg}") {}
+    }
+
     /// <summary>
     /// Thrown when attempting to use codegen-only fields from <see cref="InjectionState"/>
     /// or <see cref="InjectionState{T}"/>.

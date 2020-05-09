@@ -1,0 +1,918 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"has_attac",
+				"has_attachment"
+			],
+			[
+				"mobiPr",
+				"mobiProxyGET"
+			],
+			[
+				"DISCO",
+				"DISCOVERY_WORKER"
+			],
+			[
+				"DISCOVERY_WORK",
+				"DISCOVERY_WORKER_FUNCS"
+			],
+			[
+				"INTERNAL",
+				"INTERNAL_cnxml_element_free_attr_iter"
+			],
+			[
+				"INTERNAL_CNXML",
+				"INTERNAL_cnxml_element_write"
+			],
+			[
+				"INTERNAL_cnxml",
+				"INTERNAL_cnxml_element_write"
+			],
+			[
+				"INTERNAL_",
+				"INTERNAL_cnxml_writer_writeline"
+			],
+			[
+				"song_len",
+				"song_len_adjusted_amount"
+			],
+			[
+				"SCALES_",
+				"SCALE_DESCS"
+			],
+			[
+				"track_",
+				"tracks_by_name"
+			],
+			[
+				"sele",
+				"has_selected_track"
+			],
+			[
+				"get_",
+				"get_sub_prefix"
+			],
+			[
+				"cur_opcode",
+				"cur_opcode_progress"
+			],
+			[
+				"PUSH_I",
+				"PUSH_IMM32_LEN"
+			],
+			[
+				"a",
+				"MultiAttr"
+			],
+			[
+				"skips",
+				"SKIP_SECTIONS"
+			],
+			[
+				"REAUDIO_decod",
+				"REAUDIO_create_ogg_decoder"
+			],
+			[
+				"ma_un",
+				"ma_device_uninit"
+			],
+			[
+				"AMMONOMIC",
+				"AMMONOMICON_ITEMS_HASH"
+			],
+			[
+				"username_continue",
+				"username_continue_start"
+			],
+			[
+				"TRASH_",
+				"TRASH_IMAGE_UPLOADER_MIN_COUNT"
+			],
+			[
+				"DEFAL",
+				"FLAG_DEFAULT_AVATAR"
+			],
+			[
+				"TRASH_IM",
+				"FLAG_TRASH_IMAGE_UPLOADER"
+			],
+			[
+				"FLAG_",
+				"FLAG_MASS_TYPHLOPOSTER"
+			],
+			[
+				"u",
+				"unif\tunix_filter { .. }"
+			],
+			[
+				"c",
+				"cl\tclassify { |e| .. }"
+			],
+			[
+				"API_U",
+				"API_URL_BASE"
+			],
+			[
+				"Already",
+				"AlreadyVotedError"
+			],
+			[
+				"API_URL",
+				"API_URL_OAUTH2_TOKEN"
+			],
+			[
+				"include",
+				"include_directories\tcommand"
+			],
+			[
+				"ANALOG_CONFIG_",
+				"ANALOG_CONFIG_default_id"
+			],
+			[
+				"ANALOG_ENV_",
+				"ANALOG_ENV_COLOR_PREFIX_LEN"
+			],
+			[
+				"ANALOG_EN",
+				"ANALOG_ENV_COLOR_PREFIX_LEN"
+			],
+			[
+				"analog_e",
+				"ANALOG_ENV_COLOR_PREFIX_LEN"
+			],
+			[
+				"ANALOG_DEFINE_",
+				"ANALOG_DEFINE_LOG_TYPE_X"
+			],
+			[
+				"ANALOG_",
+				"ANALOG_CALLBACK_allow_log"
+			],
+			[
+				"toolc",
+				"toolchain_prefix"
+			],
+			[
+				"AUTOAPTCH_INTERNAL_SYMTAB",
+				"AUTOPATCH_INTERNAL_symtab_ary_capacity"
+			],
+			[
+				"AUTOPATCH_",
+				"AUTOPATCH_INTERNAL_debugf"
+			],
+			[
+				"AUTOPATCH_DEBUG",
+				"AUTOPATCH_DEBUG_VALUE"
+			],
+			[
+				"flags",
+				"AUTOPATCH_INTERNAL_flags"
+			],
+			[
+				"autopatch_ansi",
+				"AUTOPATCH_ANSI_FG_RED"
+			],
+			[
+				"ansigre",
+				"AUTOPATCH_ANSI_FG_GREEN"
+			],
+			[
+				"ansigree",
+				"AUTOPATCH_ANSI_FG_BRIGHT_GREEN"
+			],
+			[
+				"AUTOPATCH_ANSI",
+				"AUTOPATCH_ANSI_RESET"
+			],
+			[
+				"PLATFORM_INTERNA",
+				"PLATFORM_INTERNAL_base_addr"
+			],
+			[
+				"PLATOFRM_INT",
+				"PLATFORM_INTERNAL_base_addr"
+			],
+			[
+				"PLATFORM_INTERNAL",
+				"PLATFORM_INTERNAL_base_addr_set"
+			],
+			[
+				"AUTOPATCH_INTERNAL",
+				"AUTOPATCH_INTERNAL_errorf"
+			],
+			[
+				"AUTOPATCH_INTERNA",
+				"AUTOPATCH_INTERNAL_symtab_ary_len"
+			],
+			[
+				"Autopatch_internal_symtab_",
+				"AUTOPATCH_INTERNAL_symtab_ary_capacity"
+			],
+			[
+				"AUTopatch_internal_sym",
+				"AUTOPATCH_INTERNAL_symtab_ary_len"
+			],
+			[
+				"username",
+				"username_type"
+			],
+			[
+				"specl",
+				"special_attributes"
+			],
+			[
+				"special",
+				"special_attributes"
+			],
+			[
+				"concept",
+				"concept_art_url"
+			],
+			[
+				"assert_",
+				"assert_header_fields"
+			],
+			[
+				"assert_header",
+				"assert_header_field"
+			],
+			[
+				"asserT_header",
+				"assert_header_field"
+			],
+			[
+				"code",
+				"status_code"
+			],
+			[
+				"SNowflak",
+				"SnowflakeArrayConverter"
+			],
+			[
+				"timesta",
+				"TimestampConverter"
+			],
+			[
+				"Mesageacti",
+				"MessageActivityType"
+			],
+			[
+				"chanen",
+				"channel_id"
+			],
+			[
+				"control",
+				"control_pressed"
+			],
+			[
+				"curren",
+				"current_playback_octave"
+			],
+			[
+				"curre",
+				"current_playback_octave"
+			],
+			[
+				"current_play",
+				"current_playback_note"
+			],
+			[
+				"e",
+				"else"
+			],
+			[
+				"rectape",
+				"rectape_position"
+			],
+			[
+				"tempo",
+				"tempo_scale"
+			],
+			[
+				"octa",
+				"octave_control_pressed"
+			],
+			[
+				"cin__type",
+				"cin___TYPE_var___SPEC_member_inlined_origobject___ORIGCLASSNAMEIDX_0___MEMBER_x___SCOPE_0___NAME_p2"
+			],
+			[
+				"cin_",
+				"cin___TYPE_var___SPEC_member_inlined_origobject___ORIGCLASSNAMEIDX_0___MEMBER_x___SCOPE_0___NAME_p1"
+			],
+			[
+				"cin__",
+				"cin___TYPE_var___SPEC_member_inlined_origobject___ORIGCLASSNAMEIDX_0___MEMBER_x___SCOPE_0___NAME_p2"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "using System;\nusing System.Collections.Generic;\nusing ModTheGungeon;\nusing Mono.Cecil;\nusing Mono.Cecil.Cil;\nusing Mono.Collections.Generic;\n\nnamespace SemiPatch {\n    /// <summary>\n    /// The SemiPatch analyzer is the first thing you will ever run when\n    /// patching with SP. The analyzer reads through the types of a patch assembly\n    /// and extracts information specifically tagged for SemiPatch, such as\n    /// which classes actually patch something, what members they patch, etc.\n    /// </summary>\n    public class Analyzer {\n        public static Logger Logger = new Logger(\"Analyzer\");\n        private static Dictionary<InjectQuery, IInjectionAnalysisHandler> _InjectQueryHandlers = new Dictionary<InjectQuery, IInjectionAnalysisHandler>{\n            [InjectQuery.Head] = new HeadInjectionAnalysisHandler(),\n            [InjectQuery.Tail] = new TailInjectionAnalysisHandler(),\n            [InjectQuery.MethodCall] = new MethodCallInjectionAnalysisHandler()\n        };\n\n        public ModuleDefinition TargetModule;\n        public IList<ModuleDefinition> PatchModules;\n        public IDictionary<MethodPath, MethodDefinition> MethodMap;\n        public IDictionary<FieldPath, FieldDefinition> FieldMap;\n        public IDictionary<PropertyPath, PropertyDefinition> PropertyMap;\n\n        public HashSet<MethodDefinition> IgnoredMethods;\n        public HashSet<FieldDefinition> IgnoredFields;\n\n        public PatchData PatchData;\n        public Relinker ValidationRelinker;\n\n        private Dictionary<TypePath, MethodReference> _ParameterlessCtorCache;\n\n        public Analyzer(string target_path, IList<string> patch_paths) {\n            Logger.Debug($\"New Patcher created from {patch_paths.Count} paths\");\n            MethodMap = new Dictionary<MethodPath, MethodDefinition>();\n            FieldMap = new Dictionary<FieldPath, FieldDefinition>();\n            PropertyMap = new Dictionary<PropertyPath, PropertyDefinition>();\n            IgnoredMethods = new HashSet<MethodDefinition>();\n            IgnoredFields = new HashSet<FieldDefinition>();\n            ValidationRelinker = new Relinker();\n\n            patch_paths[0].\n\n            ValidationRelinker.Map(\n                SemiPatch.InjectionStateOverrideReturnField.ToPath(),\n                Relinker.MemberEntry.Rejected(new InjectionStateIllegalAccessException(\n                    SemiPatch.InjectionStateOverrideReturnField.ToPath()\n                ))\n            );\n\n            ValidationRelinker.Map(\n                SemiPatch.VoidInjectionStateOverrideReturnField.ToPath(),\n                Relinker.MemberEntry.Rejected(new InjectionStateIllegalAccessException(\n                    SemiPatch.VoidInjectionStateOverrideReturnField.ToPath()\n                ))\n            );\n\n            ValidationRelinker.Map(\n                SemiPatch.InjectionStateReturnValueField.ToPath(),\n                Relinker.MemberEntry.Rejected(new InjectionStateIllegalAccessException(\n                    SemiPatch.InjectionStateReturnValueField.ToPath()\n                ))\n            );\n\n            _ParameterlessCtorCache = new Dictionary<TypePath, MethodReference>();\n\n            PatchModules = new ModuleDefinition[patch_paths.Count];\n            var i = 0;\n            foreach (var path in patch_paths) {\n                var mod = PatchModules[i] = ModuleDefinition.ReadModule(path);\n                Logger.Debug($\"Adding new module to Patcher: {mod.Name}\");\n                i += 1;\n            }\n            TargetModule = ModuleDefinition.ReadModule(target_path);\n\n            Logger.Info($\"Analyzing target module: {TargetModule.Name}\");\n            foreach (var type in TargetModule.Types) {\n                Logger.Debug($\"Scanning type: {type.FullName}\");\n                foreach (var method in type.Methods) {\n                    var path = method.ToPath();\n                    Logger.Debug($\"Caching method: '{path}'\");\n                    MethodMap[path] = method;\n                }\n                foreach (var field in type.Fields) {\n                    var path = field.ToPath();\n                    Logger.Debug($\"Caching field: '{path}'\");\n                    FieldMap[path] = field;\n                }\n                foreach (var prop in type.Properties) {\n                    var path = prop.ToPath();\n                    Logger.Debug($\"Caching property: '{path}'\");\n                    PropertyMap[path] = prop;\n                }\n            }\n        }\n\n        public MethodReference TryGetParameterlessCtor(TypeReference type) {\n            var r = type.Resolve();\n            Type\n            var path = r.ToPath();\n            if (_ParameterlessCtorCache.TryGetValue(path, out MethodReference method)) return method;\n            for (var i = 0; i < r.Methods.Count; i++) {\n                var typemethod = r.Methods[i];\n                if (typemethod.IsConstructor && typemethod.Parameters.Count == 0) {\n                    return _ParameterlessCtorCache[path] = typemethod;\n                }\n            }\n            return _ParameterlessCtorCache[path] = null;\n        }\n\n        public MethodDefinition TryGetTargetMethod(MethodPath path) {\n            if (MethodMap.TryGetValue(path, out MethodDefinition def)) return def;\n            return null;\n        }\n\n        public FieldDefinition TryGetTargetField(FieldPath path) {\n            if (FieldMap.TryGetValue(path, out FieldDefinition def)) return def;\n            return null;\n        }\n\n        public PropertyDefinition TryGetTargetProperty(PropertyPath path) {\n            if (PropertyMap.TryGetValue(path, out PropertyDefinition def)) return def;\n            return null;\n        }\n\n        private IInjectionAnalysisHandler _GetInjectionAnalysisHandler(MethodPath handler_path, InjectQuery query) {\n            if (_InjectQueryHandlers.TryGetValue(query, out IInjectionAnalysisHandler handler)) return handler;\n            throw new InvalidInjectQueryException(handler_path, query);\n        }\n\n        private void _HandleInject(PatchTypeData type_data, MethodDefinition handler, SpecialAttributeData attrs) {\n            Logger.Debug($\"Processing injection handler: {handler.BuildSignature()}\");\n\n            var handler_path = handler.ToPath();\n            var inject_data = attrs.InjectData;\n\n            MethodDefinition target = null;\n            for (var i = 0; i < type_data.TargetType.Methods.Count; i++) {\n                var candidate_method = type_data.TargetType.Methods[i];\n                var candidate_sig = new Signature(candidate_method);\n\n                if (candidate_sig == inject_data.Inside) {\n                    target = candidate_method;\n                    break;\n                }\n            }\n\n            if (target == null) {\n                var error_target_path = new MethodPath(new Signature(inject_data.Inside, null), type_data.TargetType);\n                throw new TargetMethodSearchFailureException(error_target_path, $\"target of injection handler '{handler_path}', within the type '{type_data.TargetType.FullName}'\");\n            }\n\n            if (target.RVA == 0 || !target.HasBody || target.Body.Instructions.Count == 0) {\n                throw new EmptyInjectTargetMethodException(target.ToPath());\n            }\n\n            var target_path = target.ToPath();\n            var expected_callback_type = Injector.GetInjectionStateType(handler.Module, target.ReturnType);\n\n            var is_valid_handler = true;\n            if (target.Parameters.Count + 1 != handler.Parameters.Count) is_valid_handler = false;\n            if (is_valid_handler && !handler.Parameters[0].ParameterType.IsSame(expected_callback_type, exclude_generic_args: true)) {\n                is_valid_handler = false;\n            }\n            if (is_valid_handler) {\n                for (var i = 0; i < target.Parameters.Count; i++) {\n                    if (!handler.Parameters[i + 1].ParameterType.IsSame(target.Parameters[i].ParameterType)) {\n                        is_valid_handler = false;\n                        break;\n                    }\n                }\n            }\n\n            if (!is_valid_handler) {\n                throw new InvalidInjectHandlerException(\n                    handler_path, target_path,\n                    new Signature(\n                        target.BuildSignature(\n                            forced_name: \"<handler name>\",\n                            forced_return_type: \"void\",\n                            forced_first_arg: $\"{expected_callback_type.BuildSignature()}\"\n                        ),\n                        \"<handler name>\"\n                    )\n                );\n            }\n\n            var analysis_handler = _GetInjectionAnalysisHandler(handler_path, inject_data.Query);\n\n            var position = inject_data.Position == InjectPosition.Default ? analysis_handler.DefaultPosition : inject_data.Position;\n\n            var patch_inject_data = analysis_handler.GetPatchData(\n                position,\n                type_data.TargetType.Module,\n                type_data.PatchType.Module,\n                target, handler,\n                new InjectAttribute.ArgumentHandler(inject_data)\n            ).Unwrap();\n            patch_inject_data.LocalCaptures = attrs.LocalCaptures;\n\n            type_data.Injections.Add(patch_inject_data);\n\n\n            //var handler_insert_target_path = new MethodPath(\n            //    new Signature(handler, forced_name: attrs.AliasedName),\n            //    type_data.TargetType\n            //);\n            //var handler_insert_target = TryGetTargetMethod(handler_insert_target_path);\n            //if (handler_insert_target != null) {\n            //    throw new InjectHandlerNameTakenException(handler_path, handler_insert_target_path);\n            //}\n\n            //var handler_insert_data = new PatchMethodData(\n            //    handler,\n            //    handler_insert_target_path, handler_path,\n            //    aliased_name: attrs.AliasedName,\n            //    injection_handler: true\n            //);\n\n            //type_data.Methods.Add(handler_insert_data);\n        }\n\n        public void ScanMethods(PatchTypeData type_data, Mono.Collections.Generic.Collection<MethodDefinition> methods) {\n            foreach (var method in methods) {\n                if (IgnoredMethods.Contains(method)) {\n                    Logger.Debug($\"Method {method.BuildSignature()} is excluded from analysis\");\n                    continue;\n                }\n\n                Logger.Debug($\"Scanning method: {method.BuildSignature()}\");\n\n                var method_attrs = new SpecialAttributeData(method.CustomAttributes);\n\n                if (method_attrs.InjectData != null) {\n                    _HandleInject(type_data, method, method_attrs);\n                    continue;\n                }\n\n                var is_void = method.ReturnType.IsSame(SemiPatch.VoidType);\n                var patch_path = method.ToPath();\n                var name = method_attrs.AliasedName ?? method.Name;\n                var target_path = method.ToPath(method_attrs.ReceiveOriginal, forced_name: name).WithDeclaringType(type_data.TargetType.Resolve());\n                var target = TryGetTargetMethod(target_path);\n\n                if (method.IsConstructor) {\n                    if (!method_attrs.TreatConstructorLikeMethod) {\n                        if (method.Parameters.Count != 0) throw new UntaggedConstructorException(patch_path);\n                        if (method.Body.Instructions.Count == 0) {\n                            Logger.Debug($\"Skipping default constructor with 0 instructions (some weirdness is afoot?)\");\n                            continue;\n                        }\n\n                        var instr = method.Body.Instructions[0];\n                        instr = instr.FirstAfterNops();\n                        if (instr == null || instr.OpCode != OpCodes.Ldarg_0) {\n                            throw new UntaggedConstructorException(patch_path);\n                        }\n                        var base_type_ctor_path = TryGetParameterlessCtor(type_data.PatchType.BaseType).Resolve().ToPath();\n                        instr = instr.Next?.FirstAfterNops();\n                        if (instr == null || (instr.OpCode != OpCodes.Call || ((MethodReference)instr.Operand).Resolve().ToPath() != base_type_ctor_path)) {\n                            throw new UntaggedConstructorException(patch_path);\n                        }\n\n                        instr = instr.Next?.FirstAfterNops();\n                        if (instr == null || instr.OpCode != OpCodes.Ret) {\n                            throw new UntaggedConstructorException(patch_path);\n                        }\n\n                        Logger.Debug($\"Adding empty default constructor as Proxy: '{patch_path}' -> '{target_path}'\");\n\n                        var ctor_data = new PatchMethodData(target, method, target_path, patch_path, proxy: true);\n                        type_data.Methods.Add(ctor_data);\n\n                        if (target == null) {\n                            Logger.Warn($\"Empty default constructor '{patch_path}' doesn't exist in target under '{target_path}' - it will be marked as FalseDefaultConstructor, and Relinker will reject calls.\");\n                            ctor_data.FalseDefaultConstructor = true;\n\n                        }\n                        continue;\n                    }\n                }\n\n                Logger.Debug($\"Path: '{patch_path}'\");\n\n                var method_data = new PatchMethodData(method, target_path, patch_path, receives_original: method_attrs.ReceiveOriginal);\n                type_data.Methods.Add(method_data);\n\n                if (method_attrs.AliasedName != null) {\n                    method_data.AliasedName = method_attrs.AliasedName;\n                }\n\n                if (method_attrs.Ignore) {\n                    Logger.Debug($\"Ignored!\");\n                    method_data.ExplicitlyIgnored = true;\n                    continue;\n                }\n\n                if (method_attrs.ReceiveOriginal && method.Parameters.Count == 0) {\n                    throw new Exception($\"Method '{patch_path}' is marked as ReceiveOriginal, but it has no arguments.\");\n                }\n                \n\n                if (method_attrs.IsPropertyMethod) {\n                    if (method_attrs.PropertyGetter != null && method_attrs.PropertySetter != null) {\n                        throw new Exception($\"Method '{patch_path}' may not be marked as both Getter and Setter at the same time.\");\n                    }\n\n                    PropertyPath target_prop_path = null;\n\n                    if (method_attrs.PropertyGetter != null) {\n                        name = $\"get_{method_attrs.PropertyGetter}\";\n                        target_prop_path = method.ToPropertyPathFromGetter(method_attrs.PropertyGetter);\n                    } else if (method_attrs.PropertySetter != null) {\n                        name = $\"set_{method_attrs.PropertySetter}\";\n                        target_prop_path = method.ToPropertyPathFromSetter(method_attrs.PropertySetter, skip_first_arg: method_attrs.ReceiveOriginal);\n                    }\n\n                    method_data.AliasedName = name;\n\n                    target_prop_path = target_prop_path.WithDeclaringType(type_data.TargetType.Resolve());\n\n                    var target_prop = TryGetTargetProperty(target_prop_path);\n\n                    if (method_attrs.Insert) {\n                        if (target_prop != null && ((target_prop.GetMethod != null && method_attrs.PropertyGetter != null) || (target_prop.SetMethod != null && method_attrs.PropertySetter != null))) {\n                            throw new Exception($\"Found matching property '{target_prop_path}', but Getter/Setter patch method '{patch_path}' was marked Insert - drop the attribute if you want to modify the getter/setter of this property.\");\n                        }\n                    } else {\n                        if (target_prop == null) {\n                            throw new Exception($\"Failed to locate property '{target_prop_path}' patched in Getter/Setter patch method '{patch_path}' - use the Insert attribute on a real property if you want to add one, or change the Getter/Setter attribute argument if you want to use a different attribute.\");\n\n                        }\n                        if (target_prop != null && ((target_prop.GetMethod == null && method_attrs.PropertyGetter != null) || (target_prop.SetMethod == null && method_attrs.PropertySetter != null))) {\n                            throw new Exception($\"Found matching property '{target_prop_path}', but the getter/setter targetted by the patch method '{patch_path}' doesn't exist - use the Insert attribute on the Getter/Setter method to add it.\");\n                        }\n                    }\n                }\n\n                if (method_attrs.Proxy) {\n                    if (method_attrs.ReceiveOriginal) {\n                        throw new Exception($\"Proxy method '{patch_path}' may not be marked as ReceiveOriginal\");\n                    }\n                    if (target == null) {\n                        throw new Exception($\"Failed to locate method '{target_path}' proxied in '{patch_path}' - use the Insert attribute instead of Proxy if it should be added, or the TargetName attribute if you want to use a different name.\");\n                    }\n                    Logger.Debug($\"Ignored (Proxy)!\");\n                    method_data.Proxy = true;\n                    continue;\n                }\n\n                if (method_attrs.ReceiveOriginal) {\n                    if (method.Parameters.Count == 0) throw new Exception($\"Method '{patch_path}' is marked as ReceiveOriginal, but it has no arguments\");\n                    var orig_type = method.Parameters[0].ParameterType;\n                    if (OrigFactory.TypeIsGenericOrig(orig_type)) {\n                        if (is_void) throw new Exception($\"First parameter of method '{patch_path}' (marked ReceiveOriginal) is of type Orig, but the method does not return anything.\");\n                    } else if (OrigFactory.TypeIsGenericVoidOrig(orig_type)) {\n                        if (!is_void) throw new Exception($\"First parameter of method '{patch_path}' (marked ReceiveOriginal) is of type VoidOrig, but the method returns a non-void value.\");\n                    } else {\n                        throw new Exception($\"First parameter of method '{patch_path}' (tagged with ReceiveOriginal) must be a Orig or VoidOrig delegate.\");\n                    }\n\n                    var orig_sig = OrigFactory.GetMethodSignatureFromOrig(orig_type, method_attrs.AliasedName ?? method.Name, method.GenericParameters);\n                    var maybe_new_orig_sig = new Signature(OrigFactory.OrigTypeForMethod(method.Module, method, skip_first_arg: true));\n\n                    if (target_path.Signature != orig_sig) {\n                        throw new Exception($\"Orig mismatch detected in method '{patch_path}'. Method is tagged as ReceiveOriginal and contains an Orig parameter '{orig_type.BuildSignature()}'. The method's signature points to '{target_path}', but the signature generated from the first argument of the method is '{orig_sig}'. Check if your patch method's signature matches the original method. If it is the Orig/VoidOrig parameter that's wrong, use this signature: '{maybe_new_orig_sig}'.\");\n                    }\n\n                    ValidationRelinker.Map(\n                        patch_path,\n                        Relinker.MemberEntry.Rejected(new ReceiveOriginalInvokeException(\n                            patch_path\n                        ))\n                    );\n                } else {\n                    if (method.Parameters.Count > 0 && (OrigFactory.TypeIsGenericOrig(method.Parameters[0].ParameterType) || OrigFactory.TypeIsGenericVoidOrig(method.Parameters[0].ParameterType))) {\n                        throw new Exception($\"First parameter of method '{patch_path}' is an Orig or VoidOrig delegate, but the method is not marked with the ReceiveOriginal attribute. Please add the attribute if you wish to call the original method within the patch or get rid of the argument if you don't.\");\n                    }\n                }\n\n\n                method_data.TargetPath = target_path;\n                method_data.ReceivesOriginal = method_attrs.ReceiveOriginal;\n\n                if (method_attrs.Insert) {\n                    Logger.Debug($\"Method is marked for insertion\");\n                    if (target != null) {\n                        throw new Exception($\"Found matching method '{target_path}', but patch in '{patch_path}' was marked Insert - drop the attribute if you want to modify the method.\");\n                    }\n                } else {\n                    Logger.Debug($\"Searching in target type\");\n                    if (target == null) {\n                        throw new Exception($\"Failed to locate method '{target_path}' patched in '{patch_path}' - use the Insert attribute if it should be added, or the TargetName attribute if you want to use a different name.\");\n                    }\n\n                    var target_attrs = target.Attributes;\n                    var patch_attrs = method.Attributes;\n\n                    if (method_attrs.IsPropertyMethod) {\n                        patch_attrs |= MethodAttributes.SpecialName;\n                    }\n\n                    if (target_attrs != patch_attrs) {\n                        throw new Exception($\"Attribute mismatch in patch method '{patch_path}' targetting method '{target_path}' - patch attributes are '{method.Attributes}', but target attributes are '{target.Attributes}'. The mismatch is with the following attribute(s): '{((MethodAttributes)((uint)target_attrs ^ (uint)patch_attrs)).ToString().Replace(\"ReuseSlot, \", \"\")}'.\");\n                    }\n\n                    method_data.TargetMember = target;\n                }\n            }\n        }\n\n        public void ScanFields(PatchTypeData type_data, Collection<FieldDefinition> fields) {\n            foreach (var field in fields) {\n                if (IgnoredFields.Contains(field)) {\n                    Logger.Debug($\"Field {field.BuildSignature()} is excluded from analysis\");\n                    continue;\n                }\n\n                Logger.Debug($\"Scanning field: {field.FullName}\");\n                var field_attrs = new SpecialAttributeData(field.CustomAttributes);\n\n                var patch_path = field.ToPath();\n                var target_path = field_attrs.AliasedName == null ? patch_path : field.ToPath(forced_name: field_attrs.AliasedName);\n                target_path = target_path.WithDeclaringType(type_data.TargetType.Resolve());\n\n                var field_data = new PatchFieldData(field, target_path, patch_path);\n                type_data.Fields.Add(field_data);\n\n                if (field_attrs.Ignore) {\n                    Logger.Debug($\"Ignored!\");\n                    field_data.ExplicitlyIgnored = true;\n                    continue;\n                }\n\n                if (field_attrs.AliasedName != null) {\n                    field_data.AliasedName = field_attrs.AliasedName;\n                }\n\n                var target_field = TryGetTargetField(target_path);\n\n                if (field_attrs.Proxy) {\n                    Logger.Debug($\"Field is marked for proxying\");\n                    if (target_field == null) {\n                        throw new Exception($\"Failed to locate field'{target_path}' proxied in patch field '{patch_path}'. Use the Insert attribute if you want to add the field.\");\n                    }\n                    field_data.TargetMember = target_field;\n                } else if (field_attrs.Insert) {\n                    Logger.Debug($\"Field is marked for insertion\");\n                    if (target_field != null) {\n                        throw new Exception($\"Found matching field '{target_path}', but patch field '{patch_path}' was marked Insert - use the Proxy attribute instead if you want to access fields on the class.\");\n                    }\n                } else {\n                    throw new Exception($\"Field '{patch_path}' must be marked as either Ignore, Insert, or Proxy. Fields without attributes are not allowed.\");\n                }\n            }\n        }\n\n        public void ScanProperties(PatchTypeData type_data, Collection<PropertyDefinition> props) {\n            for (var i = 0; i < props.Count; i++) {\n                var prop = props[i];\n\n                Logger.Debug($\"Scanning property: {prop.FullName}\");\n\n                var patch_path = prop.ToPath();\n\n                var prop_attrs = new SpecialAttributeData(prop.CustomAttributes);\n                if (!prop_attrs.Insert && !prop_attrs.Proxy && !prop_attrs.Ignore) {\n                    throw new Exception($\"Failed patching property '{patch_path}'. Properties may not be used in a patch class unless they are marked with Insert, Proxy or Ignore. For patching properties, use the Getter and Setter attributes.\");\n                }\n\n                var target_path = prop_attrs.AliasedName == null ? patch_path : prop.ToPath(forced_name: prop_attrs.AliasedName);\n                target_path = target_path.WithDeclaringType(type_data.TargetType.Resolve());\n\n                var prop_data = new PatchPropertyData(prop, target_path, patch_path);\n                type_data.Properties.Add(prop_data);\n\n                if (prop_attrs.Proxy) {\n                    prop_data.Proxy = true;\n                }\n\n                if (prop_attrs.AliasedName != null) {\n                    prop_data.AliasedName = prop_attrs.AliasedName;\n                }\n\n                if (prop.GetMethod != null) {\n                    var get_path = prop.GetMethod.ToPath();\n                    var get_data = new PatchMethodData(prop.GetMethod, get_path.WithDeclaringType(type_data.TargetType.Resolve()), get_path);\n                    if (prop_attrs.Proxy) get_data.Proxy = true;\n                    if (prop_data.AliasedName != null) get_data.AliasedName = $\"get_{prop_data.AliasedName}\";\n                    if (prop_attrs.Ignore) get_data.ExplicitlyIgnored = true;\n                    type_data.Methods.Add(get_data);\n                    IgnoredMethods.Add(prop.GetMethod);\n                }\n\n                if (prop.SetMethod != null) {\n                    var set_path = prop.SetMethod.ToPath();\n                    var set_data = new PatchMethodData(prop.SetMethod, set_path.WithDeclaringType(type_data.TargetType.Resolve()), set_path);\n                    if (prop_attrs.Proxy) set_data.Proxy = true;\n                    if (prop_data.AliasedName != null) set_data.AliasedName = $\"set_{prop_data.AliasedName}\";\n                    if (prop_attrs.Ignore) set_data.ExplicitlyIgnored = true;\n                    type_data.Methods.Add(set_data);\n                    IgnoredMethods.Add(prop.SetMethod);\n                }\n\n                var backing_field_name = $\"<{prop.Name}>k__BackingField\";\n                FieldDefinition backing_field = null;\n                for (var j = 0; j < prop.DeclaringType.Fields.Count; j++) {\n                    var field = prop.DeclaringType.Fields[j];\n                    if (field.Name == backing_field_name) {\n                        backing_field = field;\n                        break;\n                    }\n                }\n\n                if (backing_field != null) {\n                    var backing_field_path = backing_field.ToPath();\n                    var backing_field_data = new PatchFieldData(backing_field, backing_field_path, backing_field_path);\n                    if (prop_attrs.Proxy) backing_field_data.Proxy = true;\n                    if (backing_field_data.AliasedName != null) backing_field_data.AliasedName = $\"<{prop_data.AliasedName}>k__BackingField\";\n                    if (prop_attrs.Ignore) backing_field_data.ExplicitlyIgnored = true;\n                    type_data.Fields.Add(backing_field_data);\n                    IgnoredFields.Add(backing_field);\n                }\n\n                if (prop_attrs.Ignore) {\n                    Logger.Debug($\"Ignored!\");\n                    prop_data.ExplicitlyIgnored = true;\n                    continue;\n                }\n\n                var target_prop = TryGetTargetProperty(target_path);\n\n                if (prop_attrs.Insert) {\n                    if (target_prop != null) {\n                        throw new Exception($\"Property '{patch_path}' was marked with Insert, but the target class also contains this property - '{target_path}'. If you want to patch properties, use the Getter and Setter attributes.\");\n                    }\n                } else if (prop_attrs.Proxy) {\n                    if (target_prop == null) {\n                        throw new Exception($\"Property '{patch_path}' was marked with Proxy, but the target class does not contain the property '{target_path}'. If you want to add properties, use the Insert attribute.\");\n                    }\n\n                    if (prop.GetMethod != null && target_prop.GetMethod == null) {\n                        throw new Exception($\"Property '{patch_path}' was marked with Proxy and the target property '{target_path}' exists, but it does not have a getter. If you want to add the getter, use the Getter and Insert attributes on a method.\");\n                    }\n\n                    if (prop.SetMethod != null && target_prop.SetMethod == null) {\n                        throw new Exception($\"Property '{patch_path}' was marked with Proxy and the target property '{target_path}' exists, but it does not have a setter. If you want to add the setter, use the Setter and Insert attributes on a method.\");\n                    }\n                }\n            }\n        }\n\n        public void ScanTypes(Mono.Collections.Generic.Collection<TypeDefinition> types) {\n            Logger.Info($\"Scanning {types.Count} types\");\n            foreach (var type in types) {\n                Logger.Debug($\"Scanning type: {type.Name}\");\n                var attrs = new SpecialAttributeData(type.CustomAttributes);\n                if (attrs.PatchType == null) continue;\n                if (attrs.Ignore) continue;\n\n                Logger.Debug($\"Patch attribute detected on type: {type.Name}\");\n\n                if (!attrs.PatchType.Scope.IsSame(TargetModule)) {\n                    throw new Exception($\"Patch target must be a type within the target module ('{TargetModule.FileName}')\");\n                }\n\n                var type_data = new PatchTypeData(attrs.PatchType, type);\n                PatchData.Types.Add(type_data);\n\n                ScanProperties(type_data, type.Properties);\n                ScanFields(type_data, type.Fields);\n                ScanMethods(type_data, type.Methods);\n                ScanTypes(type.NestedTypes);\n            }\n        }\n\n        private void _Validate(ModuleDefinition module) {\n            ValidationRelinker.Relink(module);\n        }\n\n        public PatchData Analyze() {\n            PatchData = new PatchData(TargetModule, PatchModules);\n            foreach (var mod in PatchModules) {\n                Logger.Info($\"Scanning module: {mod.Name}\");\n                ScanTypes(mod.Types);\n            }\n            foreach (var mod in PatchModules) {\n                _Validate(mod);\n            }\n            return PatchData;\n        }\n    }\n}\n",
+			"file": "SemiPatch/src/Analyzer/Analyzer.cs",
+			"file_size": 31276,
+			"file_write_time": 132333995787351043,
+			"settings":
+			{
+				"buffer_size": 31305,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "SemiPatch.sublime-project",
+			"settings":
+			{
+				"buffer_size": 163,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 174.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"toggle log",
+				"LSP: Toggle Log Panel"
+			],
+			[
+				"rest",
+				"LSP: Restart Servers"
+			],
+			[
+				"enable",
+				"LSP: Enable Language Server in Project"
+			],
+			[
+				"lsp set",
+				"Preferences: LSP Settings"
+			],
+			[
+				"toggle l",
+				"LSP: Toggle Log Panel"
+			],
+			[
+				"toggle log p",
+				"LSP: Toggle Log Panel"
+			],
+			[
+				"restart",
+				"LSP: Restart Servers"
+			],
+			[
+				"enable ser",
+				"LSP: Enable Language Server in Project"
+			],
+			[
+				"lsp",
+				"LSP: Toggle Log Panel"
+			],
+			[
+				"lsp settin",
+				"Preferences: LSP Settings"
+			],
+			[
+				"omnis",
+				"OmniSharpSublime: Show Info Panel"
+			],
+			[
+				"lua",
+				"Set Syntax: Lua"
+			],
+			[
+				"c#",
+				"Set Syntax: C#"
+			],
+			[
+				"plaint",
+				"Set Syntax: Plain Text"
+			],
+			[
+				"cs",
+				"Set Syntax: CSS"
+			],
+			[
+				"yml",
+				"Set Syntax: YAML"
+			],
+			[
+				"json",
+				"Set Syntax: JSON"
+			],
+			[
+				"plain",
+				"Set Syntax: Plain Text"
+			],
+			[
+				"ymal",
+				"Set Syntax: YAML"
+			],
+			[
+				"xml",
+				"Set Syntax: XML"
+			],
+			[
+				"xml\\",
+				"Set Syntax: XML"
+			],
+			[
+				"cryst",
+				"Set Syntax: Crystal"
+			],
+			[
+				"python",
+				"Set Syntax: Python"
+			],
+			[
+				"syntax",
+				"Set Syntax: Gradle"
+			],
+			[
+				"rust",
+				"Set Syntax: Rust"
+			],
+			[
+				"c++",
+				"Set Syntax: C++"
+			],
+			[
+				"c",
+				"Set Syntax: C"
+			],
+			[
+				"ruby",
+				"Set Syntax: Ruby"
+			],
+			[
+				"C#",
+				"Set Syntax: C#"
+			],
+			[
+				"wrap",
+				"Word Wrap: Toggle"
+			],
+			[
+				"java",
+				"Set Syntax: JavaScript"
+			],
+			[
+				"markd",
+				"Set Syntax: Markdown"
+			],
+			[
+				"mark",
+				"Set Syntax: Markdown"
+			],
+			[
+				"bash",
+				"Set Syntax: Bourne Again Shell (bash)"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"javasc",
+				"Set Syntax: JavaScript"
+			],
+			[
+				"js",
+				"Set Syntax: JSON"
+			],
+			[
+				"wr",
+				"Word Wrap: Toggle"
+			],
+			[
+				"semiani",
+				"Set Syntax: SemiAnimation"
+			],
+			[
+				"semi c",
+				"Set Syntax: SemiCollection"
+			],
+			[
+				"mcfunc",
+				"Set Syntax: MC Function"
+			],
+			[
+				"crystal",
+				"Set Syntax: Crystal"
+			],
+			[
+				"yaml",
+				"Set Syntax: YAML"
+			],
+			[
+				"color",
+				"UI: Select Color Scheme"
+			],
+			[
+				"colors",
+				"UI: Select Color Scheme"
+			],
+			[
+				"color sch",
+				"UI: Select Color Scheme"
+			],
+			[
+				"markdow",
+				"Set Syntax: Markdown"
+			],
+			[
+				"got",
+				"DKit: Goto Definition"
+			],
+			[
+				"dkit ",
+				"DKit: Goto Definition"
+			],
+			[
+				"goto",
+				"sublime-d: Go To Definition"
+			],
+			[
+				"sublime-d",
+				"sublime-d: Go To Definition"
+			],
+			[
+				"format",
+				"sublime-d: Format Code"
+			],
+			[
+				"forma",
+				"sublime-d: Format Code"
+			],
+			[
+				"d",
+				"Set Syntax: D"
+			],
+			[
+				"sublime",
+				"sublime-d: Format Code"
+			],
+			[
+				"pytho",
+				"Set Syntax: Python"
+			],
+			[
+				"batch",
+				"Set Syntax: Batch File"
+			],
+			[
+				"perl",
+				"Set Syntax: Perl"
+			],
+			[
+				"syntax: C++",
+				"Set Syntax: C++"
+			],
+			[
+				"scheme",
+				"UI: Select Color Scheme"
+			]
+		],
+		"width": 549.0
+	},
+	"console":
+	{
+		"height": 188.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/home/zatherz/Projects/CSharp/SemiPatch"
+	],
+	"file_history":
+	[
+		"/home/zatherz/Projects/C/freedomlib/src/freedom.cpp",
+		"/home/zatherz/.local/share/noitawine/drive_c/users/zatherz/AppData/LocalLow/Nolla_Games_Noita/save00/test.salakieli",
+		"/home/zatherz/.local/share/noitawine/drive_c/Noita/mods/lidl_noita/data/zombie_test.xml",
+		"/home/zatherz/.local/share/noitawine/drive_c/Noita/mods/goldeqpower/files/entity_setup.lua",
+		"/home/zatherz/.local/share/noitawine/drive_c/Noita/mods/goldeqpower/files/entity.xml",
+		"/home/zatherz/.local/share/Steam/steamapps/common/Noita/mods/ommel2/libs/logger",
+		"/home/zatherz/.local/share/Steam/steamapps/common/Noita/test/data/schemas/9e5af037cfaffd5d941f0bbb4da81f87.xml",
+		"/home/zatherz/Projects/XWitch/Schemas/ecs.xml",
+		"/home/zatherz/.local/share/noitawine/drive_c/Noita/.ommel-backup/data/shaders",
+		"/windows/Users/USER/Noita/Noita/data/entities/_debug/debug_xray.xml",
+		"/windows/Users/USER/Noita/Noita/data/entities/_debug/spawn_perk.lua",
+		"/windows/Users/USER/Noita/Noita/data/scripts/_examples/credits.lua",
+		"/home/zatherz/.local/share/noitawine/drive_c/users/steamuser/AppData/LocalLow/Nolla_Games_Noita/save00/test.txt",
+		"/home/zatherz/.minecraft/saves/PackTest/datapacks/untitled/data/untitled/item",
+		"/home/zatherz/Projects/HermitMarket/location.listing",
+		"/home/zatherz/.config/unity3d/Dodge Roll/Enter the Gungeon/Player.log",
+		"/home/zatherz/Misc/FSG3D_B3/physics.txt",
+		"/home/zatherz/primary-player.json",
+		"/home/zatherz/Projects/Ruby/Robot/warnings.rb",
+		"/home/zatherz/Projects/Ruby/Robot/colors.rb",
+		"/home/zatherz/Projects/Ruby/Robot/permissions.rb",
+		"/home/zatherz/Projects/ETGContest/Website/browse/style.css",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_hybrid/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_hybrid2/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_pirate2/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_ape/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_waster/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/daigun/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_gambler/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_apprentice/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_druid/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_baker/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_caveman/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_assassin/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_banished/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_doodle/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/gunny_starburst/index.html",
+		"/home/zatherz/Projects/BirdSeed/zakupy.txt",
+		"/home/zatherz/Projects/ETGContest/Website/browse/the_vengeful/index.html",
+		"/home/zatherz/Projects/ETGContest/Website/browse/blanky/index.html",
+		"/home/zatherz/Misc/1lobreak/passwords.txt",
+		"/home/zatherz/pieniadze.txt",
+		"/home/zatherz/.local/share/Steam/steamapps/common/Enter the Gungeon/Stock/bumpstock.lua",
+		"/home/zatherz/.local/share/Steam/steamapps/common/Enter the Gungeon/Stock/main.lua",
+		"/home/zatherz/Misc/nb/var/www/html/vote/error/acc_too_young/index.html",
+		"/home/zatherz/Misc/nb/var/www/html/browse/debug6/index.html",
+		"/home/zatherz/Misc/nb/var/www/html/browse/the_corrupted/index.html",
+		"/home/zatherz/Misc/nb/var/www/html/browse/the_rebel/index.html",
+		"/home/zatherz/Misc/nb/etgcontest/src/http.cr",
+		"/home/zatherz/Misc/nb/etgcontest/src/reddit/error.cr",
+		"/home/zatherz/Misc/nb/etgcontest/src/error.cr",
+		"/home/zatherz/Misc/nb/etgcontest/src/utils.cr",
+		"/mnt/the_commander/index.html",
+		"/mnt/the_gunsmith/index.html",
+		"/home/zatherz/Projects/C/lune/src/CMakeLists.txt",
+		"/home/zatherz/Projects/akit/analog/CMakeLists.txt",
+		"/home/zatherz/Projects/akit/analog/analog/analog.c",
+		"/home/zatherz/Projects/akit/analog/src/colors.h",
+		"/home/zatherz/Projects/C/autopatch/autopatch/colors.h",
+		"/home/zatherz/Projects/C/autopatch/autopatch/autopatch.c",
+		"/home/zatherz/Projects/akit/analog/src/analog.h",
+		"/home/zatherz/Projects/akit/analog/src/analog.c",
+		"/home/zatherz/Projects/C/autopatch/test-executable/pdlsym.c",
+		"/home/zatherz/Projects/C/autopatch/SConstruct",
+		"/home/zatherz/Projects/C/autopatch/autopatch/../SConstruct",
+		"/home/zatherz/.config/Mod the Gungeon/custom-components.yml",
+		"/usr/include/dlang/dmd/std/stdio.d",
+		"/home/zatherz/.config/sublime-text-3/Packages/DKit/DKit.sublime-settings",
+		"/home/zatherz/.config/sublime-text-3/Packages/User/DKit.sublime-settings",
+		"/home/zatherz/Downloads/Enter the Gungeon Discord Server's Gungeoneer Contest Submission Form (Responses) - Responses.tsv",
+		"/home/zatherz/test.h",
+		"/home/zatherz/Projects/Crystal/cord/src/cord/discord/channel.cr",
+		"/home/zatherz/Projects/Crystal/cord/src/cord/cord.cr",
+		"/home/zatherz/Projects/Crystal/PSMCbot/src/psmc.cr",
+		"/home/zatherz/Projects/Crystal/PSMCbot/src/psmc/channel_name.cr",
+		"/home/zatherz/Projects/Crystal/PSMCbot/src/commands.cr",
+		"/home/zatherz/Projects/Crystal/PSMCbot/src/config.cr",
+		"/home/zatherz/Projects/AVR/SpeakerTest1/test",
+		"/home/zatherz/Projects/AVR/SpeakerTest1/common.h",
+		"/home/zatherz/Projects/AVR/SpeakerTest1/util.c",
+		"/home/zatherz/Projects/AVR/SpeakerTest1/util.cstatic void delay_ms(uint16_t count) {"
+	],
+	"find":
+	{
+		"height": 29.0
+	},
+	"find_in_files":
+	{
+		"height": 158.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+		],
+		"highlight": false,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "SemiPatch/src/Analyzer/Analyzer.cs",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 31305,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2137,
+								2137
+							]
+						],
+						"settings":
+						{
+							"auto_complete_triggers":
+							[
+								{
+									"characters": ".<",
+									"selector": "source.cs"
+								}
+							],
+							"lsp_active": true,
+							"lsp_language":
+							{
+								"omnisharp": "csharp"
+							},
+							"show_definitions": false,
+							"syntax": "Packages/C#/C#.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 641.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "SemiPatch.sublime-project",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 163,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								88,
+								88
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 29.0
+	},
+	"input":
+	{
+		"height": 67.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.diagnostics":
+	{
+		"height": 144.0
+	},
+	"output.exec":
+	{
+		"height": 132.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.language servers":
+	{
+		"height": 144.0
+	},
+	"output.variable_get":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "SemiPatch.sublime-project",
+	"replace":
+	{
+		"height": 54.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"scene_tree_",
+				"editor/scene_tree_dock.cpp"
+			],
+			[
+				"scene_tree",
+				"editor/scene_tree_editor.cpp"
+			],
+			[
+				"",
+				"scene/gui/text_edit.h"
+			],
+			[
+				"text_Ed",
+				"scene/gui/text_edit.h"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 277.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

@@ -1,0 +1,19 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+	"settings":
+	{
+		"LSP":
+		{
+			"omnisharp":
+			{
+				"enabled": true
+			}
+		}
+	},
+	"solution_file": "SemiPatch.sln"
+}

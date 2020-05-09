@@ -9,46 +9,16 @@ namespace SemiPatch {
     public static class Injector {
         public static TypeDefinition VoidInjectionState = SemiPatch.SemiPatchModule.GetType("SemiPatch.InjectionState");
         public static TypeDefinition InjectionState = SemiPatch.SemiPatchModule.GetType("SemiPatch.InjectionState`1");
-        public static TypeDefinition StringType;
-        public static TypeDefinition ObjectType;
-        public static GenericInstanceType StringToObjectDictionaryType;
-        public static MethodReference StringToObjectDictionarySetItemMethod;
-        public static MethodReference StringToObjectDictionaryGetItemMethod;
+        public static TypeDefinition StringType = SemiPatch.MscorlibModule.GetType("System.String");
+        public static TypeDefinition ObjectType = SemiPatch.MscorlibModule.GetType("System.Object");
+        public static GenericInstanceType StringToObjectDictionaryType =
+            SemiPatch.MscorlibModule.GetType("System.Collections.Generic.IDictionary`2").MakeGeneric(StringType, ObjectType);
+        public static MethodReference StringToObjectDictionarySetItemMethod =
+            StringToObjectDictionaryType.GetMethodRef("void set_Item(TKey, TValue)");
+        public static MethodReference StringToObjectDictionaryGetItemMethod =
+            StringToObjectDictionaryType.GetMethodRef("TValue get_Item(TKey)");
 
         public static Logger Logger = new Logger("Injector");
-
-        static Injector() {
-            StringType = SemiPatch.MscorlibModule.GetType("System.String");
-            ObjectType = SemiPatch.MscorlibModule.GetType("System.Object");
-
-            var dict_type = SemiPatch.MscorlibModule.GetType("System.Collections.Generic.IDictionary`2");
-            MethodDefinition dict_set_item = null;
-            MethodDefinition dict_get_item = null;
-            for (var i = 0; i < dict_type.Methods.Count; i++) {
-                var method = dict_type.Methods[i];
-
-                if (method.Name == "set_Item") {
-                    dict_set_item = method;
-                } else if (method.Name == "get_Item") {
-                    dict_get_item = method;
-                }
-
-                if (dict_set_item != null && dict_get_item != null) {
-                    break;
-                }
-            }
-
-            StringToObjectDictionaryType = new GenericInstanceType(dict_type);
-            StringToObjectDictionaryType.GenericArguments.Add(StringType);
-            StringToObjectDictionaryType.GenericArguments.Add(ObjectType);
-
-            StringToObjectDictionarySetItemMethod = MakeDictionaryMethod(
-                dict_set_item, StringToObjectDictionaryType
-            );
-            StringToObjectDictionaryGetItemMethod = MakeDictionaryMethod(
-                dict_get_item, StringToObjectDictionaryType
-            );
-        }
 
         private static MethodReference MakeDictionaryMethod(MethodDefinition base_method, GenericInstanceType type) {
             var new_method = new MethodReference(

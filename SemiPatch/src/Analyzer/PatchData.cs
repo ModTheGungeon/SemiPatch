@@ -101,7 +101,7 @@ namespace SemiPatch {
             if (fallback_module_map?.TryGetValue(target_module_name, out target_module) != true) {
                 var patch_asm = System.Reflection.Assembly.ReflectionOnlyLoad(target_module_name);
                 if (patch_asm == null || target_module_name != patch_asm.FullName) {
-                    throw new Exception($"Failed loading target assembly (version must match exactly): '{target_module_name}'");
+                    throw new PatchDataDeserializationException($"Failed loading target assembly (version must match exactly): '{target_module_name}'");
                 }
                 target_module = ModuleDefinition.ReadModule(patch_asm.Location);
             }
@@ -115,7 +115,7 @@ namespace SemiPatch {
                 if (fallback_module_map?.TryGetValue(patch_asm_name, out patch_module) != true) {
                     var patch_asm = System.Reflection.Assembly.ReflectionOnlyLoad(patch_asm_name);
                     if (patch_asm == null || patch_asm_name != patch_asm.FullName) {
-                        throw new Exception($"Failed loading patch assembly (version must match exactly): '{patch_asm_name}'");
+                        throw new PatchDataDeserializationException($"Failed loading patch assembly (version must match exactly): '{patch_asm_name}'");
                     }
                     patch_module = ModuleDefinition.ReadModule(patch_asm.Location);
                 }

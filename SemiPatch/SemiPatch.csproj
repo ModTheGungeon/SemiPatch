@@ -57,7 +57,6 @@
     <Compile Include="src\Analyzer\PatchPropertyData.cs" />
     <Compile Include="src\AsmDiff\AssemblyDiff.cs" />
     <Compile Include="src\AsmDiff\Difference.cs" />
-    <Compile Include="src\Utils\Extensions.cs" />
     <Compile Include="src\Paths.cs" />
     <Compile Include="src\Analyzer\PatchMemberData.cs" />
     <Compile Include="src\Utils\EndOfPositionalArguments.cs" />
@@ -77,9 +76,15 @@
     <Compile Include="src\Analyzer\InjectionAnalysis.cs" />
     <Compile Include="src\ILInject\InjectionHandlerProxy.cs" />
     <Compile Include="src\Orig\ExplicitOrig.cs" />
-    <Compile Include="src\Orig\ExplicitOrigFactory.cs" />
     <Compile Include="src\Orig\ExplicitVoidOrig.cs" />
     <Compile Include="src\ILInject\InjectionSignature.cs" />
+    <Compile Include="src\Extensions\Miscellaneous.cs" />
+    <Compile Include="src\Extensions\CecilComparisons.cs" />
+    <Compile Include="src\Extensions\Signatures.cs" />
+    <Compile Include="src\Extensions\BinarySerialization.cs" />
+    <Compile Include="src\Extensions\Paths.cs" />
+    <Compile Include="src\Extensions\QuickCecil.cs" />
+    <Compile Include="src\Utils\GlobalModuleLoader.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\" />
@@ -90,6 +95,7 @@
     <Folder Include="src\Relinker\" />
     <Folder Include="src\AsmDiff\DiffSources\" />
     <Folder Include="src\ILInject\" />
+    <Folder Include="src\Extensions\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\libs\Logger\Logger.csproj">

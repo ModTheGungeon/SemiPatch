@@ -119,7 +119,7 @@ namespace SemiPatch {
 
         }
 
-        private static void _InitTypePathRecursive(IList<string> list, TypeDefinition type) {
+        private void _InitTypePathRecursive(IList<string> list, TypeDefinition type) {
             if (type == null) return;
             _InitTypePathRecursive(list, type.DeclaringType);
             list.Add(type.Name);
@@ -133,7 +133,7 @@ namespace SemiPatch {
             }
         }
 
-        private static void _InitTypePathRecursive(IList<string> list, Type type) {
+        private void _InitTypePathRecursive(IList<string> list, Type type) {
             if (type == null) return;
             _InitTypePathRecursive(list, type.DeclaringType);
             list.Add(type.Name);
@@ -576,7 +576,7 @@ namespace SemiPatch {
             }
         }
 
-        private static void _InitTypePathRecursive(IList<string> list, TypeDefinition type) {
+        private void _InitTypePathRecursive(IList<string> list, TypeDefinition type) {
             if (type == null) return;
             _InitTypePathRecursive(list, type.DeclaringType);
             list.Add(type.Name);
@@ -592,7 +592,7 @@ namespace SemiPatch {
             }
         }
 
-        private static void _InitTypePathRecursive(IList<string> list, Type type) {
+        private void _InitTypePathRecursive(IList<string> list, Type type) {
             if (type == null) return;
             _InitTypePathRecursive(list, type.DeclaringType);
             list.Add(type.Name);
@@ -794,7 +794,7 @@ namespace SemiPatch {
             var full_name = DeclaringType;
             if (full_name == null) full_name = Signature.Name;
             else full_name += $".{Signature.Name}";
-            var type = SemiPatch.FindType(mod, full_name);
+            var type = GlobalModuleLoader.FindType(mod, full_name);
             if (type == null) throw PathSearchException();
             return type;
         }
