@@ -1,69 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SemiPatch\SemiPatch.csproj" />
+    <ProjectReference Include="..\SemiPatch.MonoMod\SemiPatch.MonoMod.csproj" />
+    <ProjectReference Include="..\TargetTest\TargetTest.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mono.Cecil" Version="0.10.4" />
+  </ItemGroup>
+
   <PropertyGroup>
-    <ProjectGuid>{754272A7-61C3-44F7-9079-5F316E72A6BE}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
-    <RootNamespace>PatchTest</RootNamespace>
+    <TargetFramework>net35</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;</DefineConstants>
-    <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release</OutputPath>
-    <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="Mono.Cecil">
-      <HintPath>..\packages\Mono.Cecil.0.11.2\lib\net40\Mono.Cecil.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Mdb">
-      <HintPath>..\packages\Mono.Cecil.0.11.2\lib\net40\Mono.Cecil.Mdb.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Pdb">
-      <HintPath>..\packages\Mono.Cecil.0.11.2\lib\net40\Mono.Cecil.Pdb.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Rocks">
-      <HintPath>..\packages\Mono.Cecil.0.11.2\lib\net40\Mono.Cecil.Rocks.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.Utils">
-      <HintPath>..\packages\MonoMod.Utils.20.3.5.1\lib\net40\MonoMod.Utils.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod">
-      <HintPath>..\packages\MonoMod.20.3.5.1\lib\net40\MonoMod.exe</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>..\packages\MonoMod.RuntimeDetour.20.3.5.1\lib\net40\MonoMod.RuntimeDetour.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="MyClass.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\TargetTest\TargetTest.csproj">
-      <Project>{E6634779-C4A9-44E6-87BF-5CB68BB21193}</Project>
-      <Name>TargetTest</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SemiPatch.MonoMod\SemiPatch.MonoMod.csproj">
-      <Project>{38143A7B-A727-4864-918E-84362D34F127}</Project>
-      <Name>SemiPatch.MonoMod</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SemiPatch\SemiPatch.csproj">
-      <Project>{4CA58FDE-E581-4269-82DD-166739E4114B}</Project>
-      <Name>SemiPatch</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+
 </Project>

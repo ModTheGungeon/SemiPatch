@@ -280,7 +280,7 @@ namespace SemiPatch {
             if (instr.Next != null && instr.Next.OpCode != OpCodes.Ret) {
                 if (local_captures != null && local_captures.Count > 0) {
                     il.InsertAfter(instr, instr = il.Create(
-                        OpCodes.Ldloc_1
+                        OpCodes.Ldloc, injection_state_local
                     ));
 
                     il.InsertAfter(instr, instr = il.Create(
@@ -329,9 +329,11 @@ namespace SemiPatch {
                     injection_state_ovr_field
                 ));
 
+                var handler_end_marker_instr = il.Create(OpCodes.Nop);
+
                 il.InsertAfter(instr, instr = il.Create(
                     OpCodes.Brfalse,
-                    instr.Next
+                    handler_end_marker_instr
                 ));
 
                 for (var i = 0; i < stack_delta; i++) {
@@ -354,6 +356,8 @@ namespace SemiPatch {
                 il.InsertAfter(instr, instr = il.Create(
                     OpCodes.Ret
                 ));
+
+                il.InsertAfter(instr, instr = handler_end_marker_instr);
 
                 //// see emit_debug_br definition above for explanation on
                 //// what this is for

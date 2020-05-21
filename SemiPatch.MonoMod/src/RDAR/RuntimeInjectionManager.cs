@@ -13,6 +13,7 @@ namespace SemiPatch {
 
         private ModuleDefinition _RunningModule;
         private System.Reflection.Assembly _RunningAssembly;
+        public Relinker Relinker;
 
         private Dictionary<InjectionSignature, DynamicMethodDefinition> _InjectHandlerDMDMap = new Dictionary<InjectionSignature, DynamicMethodDefinition>();
         private Dictionary<MethodPath, DynamicMethodDefinition> _InjectTargetDMDMap = new Dictionary<MethodPath, DynamicMethodDefinition>();
@@ -20,15 +21,19 @@ namespace SemiPatch {
         private Dictionary<Instruction, Instruction> _InjectInstructionMap = new Dictionary<Instruction, Instruction>();
         private Dictionary<InjectionSignature, DynamicMethodCallHandlerProxy> _InjectHandlerDMDCallProxyMap = new Dictionary<InjectionSignature, DynamicMethodCallHandlerProxy>();
 
+        private Dictionary<InjectionSignature, InjectionDifference> _InjectDiffMap = new Dictionary<InjectionSignature, InjectionDifference>();
+        private HashSet<MethodPath> _TargetsWithGrandfatheredStaticInjections = new HashSet<MethodPath>();
+
         private List<IDetour> _Detours = new List<IDetour>();
 
-        public RuntimeInjectionManager(System.Reflection.Assembly asm, ModuleDefinition mod) {
+        public RuntimeInjectionManager(Relinker relinker, System.Reflection.Assembly asm, ModuleDefinition mod) {
             _RunningModule = mod;
             _RunningAssembly = asm;
+            Relinker = relinker;
         }
 
-        public DynamicMethodDefinition GetInjectionTargetDMD(string name, MethodPath target_path, ModuleDefinition target_module, System.Reflection.MethodBase method) {
-            var method_path = method.ToPath();
+        public DynamicMethodDefinition GetInjectionTargetDMD(Relinker relinker, string name, MethodPath target_path, ModuleDefinition target_module, System.Reflection.MethodBase target_method_reflection) {
+            var method_path = target_method_reflection.ToPath();
 
             if (_InjectTargetDMDMap.TryGetValue(method_path, out DynamicMethodDefinition cached_dmd)) {
                 return cached_dmd;
@@ -36,17 +41,17 @@ namespace SemiPatch {
 
             Logger.Debug($"Building DynamicMethodDefinition for method '{method_path}', target of at least one injection");
 
-            var method_params = method.GetParameters();
+            var method_params = target_method_reflection.GetParameters();
             var param_length = method_params.Length;
-            if (!method.IsStatic) param_length += 1;
+            if (!target_method_reflection.IsStatic) param_length += 1;
 
             var param_types = new Type[param_length];
-            if (!method.IsStatic) param_types[0] = method.DeclaringType;
+            if (!target_method_reflection.IsStatic) param_types[0] = target_method_reflection.DeclaringType;
             for (var i = 0; i < method_params.Length; i++) {
-                param_types[method.IsStatic ? i : i + 1] = method_params[i].ParameterType;
+                param_types[target_method_reflection.IsStatic ? i : i + 1] = method_params[i].ParameterType;
             }
 
-            var dmd = new DynamicMethodDefinition(name, (method as System.Reflection.MethodInfo)?.ReturnType ?? typeof(void), param_types);
+            var dmd = new DynamicMethodDefinition(name, (target_method_reflection as System.Reflection.MethodInfo)?.ReturnType ?? typeof(void), param_types);
 
             dmd.Definition.IsStatic = true;
             dmd.Definition.HasThis = false;
@@ -61,8 +66,49 @@ namespace SemiPatch {
             }
 
             _InjectTargetDMDMap[target_path] = dmd;
-
+            
             return dmd;
+        }
+
+        private void _EnsureStaticInjectionsLoaded(MethodPath target_path, ModuleDefinition target_module) {
+            if (_TargetsWithGrandfatheredStaticInjections.Contains(target_path)) return;
+
+            var running_method = target_path.FindIn<MethodDefinition>(_RunningModule);
+            // if static patched, this can contain data about static injections
+            //
+            var target_method = target_path.FindIn<MethodDefinition>(target_module);
+
+            Logger.Debug($"Looking for static injections in '{target_path}'... ({running_method.CustomAttributes.Count} attributes)");
+            var attrs = new RDARSupport.SupportAttributeData(running_method.CustomAttributes);
+            if (attrs.StaticInjectionHandlers != null) {
+                Logger.Debug($"Target has static injections - copying");
+                for (var i = 0; i < attrs.StaticInjectionHandlers.Count; i++) {
+                    var inj = attrs.StaticInjectionHandlers[i];
+
+                    var path = new MethodPath(
+                        new Signature(inj.HandlerSignature, inj.HandlerName),
+                        running_method.DeclaringType
+                    );
+
+                    var sig = new InjectionSignature(inj.Signature);
+                    var static_handler_method = path.FindIn<MethodDefinition>(_RunningModule);
+
+                    var semipatch_attrs = new SpecialAttributeData(static_handler_method.CustomAttributes);
+
+                    Logger.Debug($"Grandfathering static injection: '{sig}'");
+
+                    _InjectDiffMap[sig] = new InjectionAdded(
+                        target_method,
+                        target_method.ToPath(),
+                        static_handler_method,
+                        path,
+                        target_method.Body.Instructions[inj.InstructionIndex],
+                        semipatch_attrs.LocalCaptures,
+                        inj.Position
+                    );
+                }
+            }
+            _TargetsWithGrandfatheredStaticInjections.Add(target_path);
         }
 
         public DynamicMethodDefinition GetInjectionHandlerDMD(InjectionSignature sig, MethodDefinition handler_method, System.Reflection.MethodBase preinject_target_method) {
@@ -105,7 +151,31 @@ namespace SemiPatch {
             return handler_dmd;
         }
 
-        public void ProcessInjectionDifference(Relinker relinker, InjectionDifference diff, bool update_running_module = false) {
+        private void _InstallInjection(InjectionSignature sig, MethodDefinition handler_method, Instruction injection_point, InjectPosition pos, DynamicMethodDefinition preinject_dmd, System.Reflection.MethodBase preinject_reflection, IList<CaptureLocalAttribute> captures) {
+            var handler_dmd = GetInjectionHandlerDMD(sig, handler_method, preinject_reflection);
+
+            Relinker.Relink(new Relinker.State(_RunningModule), handler_dmd.Definition);
+
+            var target_instr = _InjectInstructionMap[injection_point];
+
+            var handler = handler_dmd.Generate();
+
+            var call_proxy = new DynamicMethodCallHandlerProxy(handler, !preinject_reflection.IsStatic);
+
+            _InjectHandlerDMDCallProxyMap[sig] = call_proxy;
+
+            Injector.InsertInjectCall(
+                preinject_dmd.Definition,
+                handler_dmd.Definition,
+                call_proxy,
+                target_instr,
+                pos,
+                captures
+            );
+        }
+
+        public void ProcessInjectionDifference(InjectionDifference diff, bool update_running_module = false) {
+            _EnsureStaticInjectionsLoaded(diff.TargetPath, diff.Target.Module);
             Logger.Debug($"Processing injection difference for injection handler '{diff.HandlerPath}', target '{diff.TargetPath}'");
 
             if (diff is InjectionRemoved || diff is InjectionChanged) {
@@ -116,6 +186,8 @@ namespace SemiPatch {
                     old_dmd.Dispose();
                 }
                 _InjectHandlerDMDMap.Remove(diff.Signature);
+
+                _InjectDiffMap.Remove(diff.Signature);
 
                 if (_InjectHandlerDMDCallProxyMap.TryGetValue(diff.Signature, out DynamicMethodCallHandlerProxy old_proxy)) {
                     old_proxy.Dispose();
@@ -137,30 +209,11 @@ namespace SemiPatch {
             }
 
             var preinject_reflection = preinject_path.FindIn(_RunningAssembly) as System.Reflection.MethodBase;
-            var preinject_dmd = GetInjectionTargetDMD(target_path.Signature.Name, target_path, diff.Target.Module, preinject_reflection);
+            var preinject_dmd = GetInjectionTargetDMD(Relinker, target_path.Signature.Name, target_path, diff.Target.Module, preinject_reflection);
 
             if (diff is InjectionRemoved) return;
 
-            var handler_dmd = GetInjectionHandlerDMD(diff.Signature, diff.Handler, preinject_reflection);
-
-            relinker.Relink(new Relinker.State(_RunningModule), handler_dmd.Definition);
-
-            var target_instr = _InjectInstructionMap[diff.InjectionPoint];
-
-            var handler = handler_dmd.Generate();
-
-            var call_proxy = new DynamicMethodCallHandlerProxy(handler, !preinject_reflection.IsStatic);
-
-            _InjectHandlerDMDCallProxyMap[diff.Signature] = call_proxy;
-
-            Injector.InsertInjectCall(
-                preinject_dmd.Definition,
-                handler_dmd.Definition,
-                call_proxy,
-                target_instr,
-                diff.Position,
-                diff.LocalCaptures
-            );
+            _InjectDiffMap[diff.Signature] = diff;
         }
 
         private void _CreateInjectionDMDThunk(MethodPath path, DynamicMethodDefinition dmd) {
@@ -192,6 +245,24 @@ namespace SemiPatch {
 
         public void GenerateInjectionTargets() {
             Logger.Debug($"Patching injection targets");
+
+            foreach (var kv in _InjectDiffMap) {
+                var sig = kv.Key;
+                var diff = kv.Value;
+
+                Logger.Debug($"Post-process (inject) for '{sig}'");
+
+                var preinject_dmd = _InjectTargetDMDMap[diff.Target.ToPath()];
+                var preinject_reflection = diff.Target.ToPath().FindIn(_RunningAssembly) as System.Reflection.MethodBase;
+
+                _InstallInjection(
+                    diff.Signature, diff.Handler,
+                    diff.InjectionPoint, diff.Position,
+                    preinject_dmd, preinject_reflection,
+                    diff.LocalCaptures
+                );
+            }
+
             foreach (var kv in _InjectTargetDMDMap) {
                 _CreateInjectionDMDThunk(kv.Key, kv.Value);
             }
@@ -209,6 +280,7 @@ namespace SemiPatch {
                     kv.Value.Dispose();
                 }
             }
+            _TargetsWithGrandfatheredStaticInjections.Clear();
             _InjectTargetDMDMap.Clear();
             _InjectInstructionMap.Clear();
         }

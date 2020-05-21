@@ -34,8 +34,9 @@ namespace SemiPatch {
 
         private Dictionary<TypePath, MethodReference> _ParameterlessCtorCache;
 
-        public Analyzer(string target_path, IList<string> patch_paths) {
-            Logger.Debug($"New Patcher created from {patch_paths.Count} paths");
+        public Analyzer(ModuleDefinition target_module, IList<ModuleDefinition> patch_modules) {
+            Logger.Debug($"New Analyzer created from {patch_modules.Count} modules");
+
             MethodMap = new Dictionary<MethodPath, MethodDefinition>();
             FieldMap = new Dictionary<FieldPath, FieldDefinition>();
             PropertyMap = new Dictionary<PropertyPath, PropertyDefinition>();
@@ -66,14 +67,9 @@ namespace SemiPatch {
 
             _ParameterlessCtorCache = new Dictionary<TypePath, MethodReference>();
 
-            PatchModules = new ModuleDefinition[patch_paths.Count];
+            PatchModules = patch_modules;
             var i = 0;
-            foreach (var path in patch_paths) {
-                var mod = PatchModules[i] = ModuleDefinition.ReadModule(path);
-                Logger.Debug($"Adding new module to Patcher: {mod.Name}");
-                i += 1;
-            }
-            TargetModule = ModuleDefinition.ReadModule(target_path);
+            TargetModule = target_module;
 
             Logger.Info($"Analyzing target module: {TargetModule.Name}");
             foreach (var type in TargetModule.Types) {

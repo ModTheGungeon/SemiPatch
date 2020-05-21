@@ -11,18 +11,25 @@ namespace SemiPatch {
     public class StaticPatcher {
         public static ModuleDefinition MscorlibModule;
         public static TypeReference StringType;
+        public static TypeReference IntType;
+        public static TypeReference InjectPositionType;
         public static MethodDefinition RDARSupportNameAliasedFromAttributeConstructor;
         public static MethodDefinition RDARSupportHasOriginalInAttributeConstructor;
         public static MethodDefinition RDARSupportHasPreinjectInAttributeConstructor;
         public static MethodDefinition RDARSupportStaticallyInjectedAttributeConstructor;
+        public static MethodDefinition RDARSupportStaticInjectionHandlerAttributeConstructor;
 
         static StaticPatcher() {
             MscorlibModule = ModuleDefinition.ReadModule(typeof(string).Assembly.Location);
             StringType = MscorlibModule.GetType("System.String");
+            IntType = MscorlibModule.GetType("System.Int32");
+            InjectPositionType = SemiPatch.SemiPatchModule.GetType("SemiPatch.InjectPosition");
+
             RDARSupportNameAliasedFromAttributeConstructor = RDARSupport.RDARSupport.RDARSupportNameAliasedFromAttribute.Methods[0];
             RDARSupportHasOriginalInAttributeConstructor = RDARSupport.RDARSupport.RDARSupportHasOriginalInAttribute.Methods[0];
             RDARSupportHasPreinjectInAttributeConstructor = RDARSupport.RDARSupport.RDARSupportHasPreinjectInAttribute.Methods[0];
             RDARSupportStaticallyInjectedAttributeConstructor = RDARSupport.RDARSupport.RDARSupportStaticallyInjectedAttribute.Methods[0];
+            RDARSupportStaticInjectionHandlerAttributeConstructor = RDARSupport.RDARSupport.RDARSupportStaticInjectionHandlerAttribute.Methods[0];
         }
 
         private Relinker _Relinker;
@@ -48,29 +55,35 @@ namespace SemiPatch {
         }
 
         private void _ProcessPatch(PatchTypeData type, PatchFieldData field) {
-            if (field.ExplicitlyIgnored) Logger.Debug($"Ignored field: '{field.PatchPath}'");
+            if (field.ExplicitlyIgnored) {
+                Logger.Debug($"Ignored field: '{field.PatchPath}'");
+                return;
+            }
+            if (field.Proxy) Logger.Debug($"Proxied field: '{field.PatchPath}'");
 
-            Logger.Debug($"Patching field: '{field.Patch.ToPath()}', target: '{field.Target?.ToPath().ToString() ?? "<none>"}'");
-            FieldDefinition target_field;
+            if (!field.EffectivelyIgnored) {
+                Logger.Debug($"Patching field: '{field.Patch.ToPath()}', target: '{field.Target?.ToPath().ToString() ?? "<none>"}'");
+                FieldDefinition target_field;
 
-            if (field.IsInsert) {
-                target_field = new FieldDefinition(
-                    field.Patch.Name,
-                    field.Patch.Attributes,
-                    type.TargetType.Module.ImportReference(field.Patch.FieldType)
-                ) {
-                    HasDefault = field.Patch.HasDefault,
-                    DeclaringType = type.TargetType
-                };
+                if (field.IsInsert) {
+                    target_field = new FieldDefinition(
+                        field.Patch.Name,
+                        field.Patch.Attributes,
+                        type.TargetType.Module.ImportReference(field.Patch.FieldType)
+                    ) {
+                        HasDefault = field.Patch.HasDefault,
+                        DeclaringType = type.TargetType
+                    };
 
-                if (field.Patch.HasConstant) {
-                    target_field.Constant = field.Patch.Constant.ImportUntyped(TargetModule);
+                    if (field.Patch.HasConstant) {
+                        target_field.Constant = field.Patch.Constant.ImportUntyped(TargetModule);
+                    }
+                    type.TargetType.Fields.Add(target_field);
+                } else target_field = field.Target;
+
+                for (var i = 0; i < field.Patch.CustomAttributes.Count; i++) {
+                    target_field.CustomAttributes.Add(field.Patch.CustomAttributes[i].Clone(TargetModule));
                 }
-                type.TargetType.Fields.Add(target_field);
-            } else target_field = field.Target;
-
-            for (var i = 0; i < field.Patch.CustomAttributes.Count; i++) {
-                target_field.CustomAttributes.Add(field.Patch.CustomAttributes[i].Clone(TargetModule));
             }
 
             _Relinker.Map(field.PatchPath, Relinker.MemberEntry.FromPatchData(
@@ -81,44 +94,51 @@ namespace SemiPatch {
         }
 
         private void _ProcessPatch(PatchTypeData type, PatchPropertyData prop) {
-            if (prop.ExplicitlyIgnored) Logger.Debug($"Ignored property: '{prop.PatchPath}'");
-
-            Logger.Debug($"Patching property: '{prop.Patch.ToPath()}', target: '{prop.Target?.ToPath().ToString() ?? "<none>"}'");
-            PropertyDefinition target_prop;
-
-            if (prop.IsInsert) {
-                target_prop = new PropertyDefinition(
-                    prop.Patch.Name,
-                    prop.Patch.Attributes,
-                    type.TargetType.Module.ImportReference(prop.Patch.PropertyType)
-                ) {
-                    DeclaringType = type.TargetType
-                };
-
-                if (prop.Patch.HasConstant) {
-                    target_prop.Constant = prop.Patch.Constant.ImportUntyped(TargetModule);
-                }
-
-                if (prop.Patch.GetMethod != null) {
-                    target_prop.GetMethod = prop.Patch.GetMethod.ToPath().WithDeclaringType(type.TargetType).FindIn<MethodDefinition>(type.TargetType.Module);
-                }
-
-                if (prop.Patch.SetMethod != null) {
-                    target_prop.SetMethod = prop.Patch.SetMethod.ToPath().WithDeclaringType(type.TargetType).FindIn<MethodDefinition>(type.TargetType.Module);
-                }
-
-                type.TargetType.Properties.Add(target_prop);
-            } else target_prop = prop.Target;
-
-            for (var i = 0; i < prop.Patch.CustomAttributes.Count; i++) {
-                target_prop.CustomAttributes.Add(prop.Patch.CustomAttributes[i].Clone(TargetModule));
+            if (prop.ExplicitlyIgnored) {
+                Logger.Debug($"Ignored property: '{prop.PatchPath}'");
+                return;
             }
+            if (prop.Proxy) Logger.Debug($"Proxied property: '{prop.PatchPath}'");
 
+            if (!prop.EffectivelyIgnored) {
+                Logger.Debug($"Patching property: '{prop.Patch.ToPath()}', target: '{prop.Target?.ToPath().ToString() ?? "<none>"}'");
+                PropertyDefinition target_prop;
+
+                if (prop.IsInsert) {
+                    target_prop = new PropertyDefinition(
+                        prop.Patch.Name,
+                        prop.Patch.Attributes,
+                        type.TargetType.Module.ImportReference(prop.Patch.PropertyType)
+                    ) {
+                        DeclaringType = type.TargetType
+                    };
+
+                    if (prop.Patch.HasConstant) {
+                        target_prop.Constant = prop.Patch.Constant.ImportUntyped(TargetModule);
+                    }
+
+                    if (prop.Patch.GetMethod != null) {
+                        target_prop.GetMethod = prop.Patch.GetMethod.ToPath().WithDeclaringType(type.TargetType).FindIn<MethodDefinition>(type.TargetType.Module);
+                    }
+
+                    if (prop.Patch.SetMethod != null) {
+                        target_prop.SetMethod = prop.Patch.SetMethod.ToPath().WithDeclaringType(type.TargetType).FindIn<MethodDefinition>(type.TargetType.Module);
+                    }
+
+                    type.TargetType.Properties.Add(target_prop);
+                } else target_prop = prop.Target;
+
+                for (var i = 0; i < prop.Patch.CustomAttributes.Count; i++) {
+                    target_prop.CustomAttributes.Add(prop.Patch.CustomAttributes[i].Clone(TargetModule));
+                }
+            }
+            
             _Relinker.Map(prop.PatchPath, Relinker.MemberEntry.FromPatchData(
                 type.TargetType.Module,
                 type,
                 prop
             ));
+
         }
 
         public string _MapOrigForMethod(PatchMethodData method) {
@@ -325,70 +345,78 @@ namespace SemiPatch {
         }
 
         private void _ProcessPatch(PatchTypeData type, PatchMethodData method) {
-            if (method.ExplicitlyIgnored) Logger.Debug($"Ignored method: '{method.PatchPath}'");
+            if (method.ExplicitlyIgnored) {
+                Logger.Debug($"Ignored method: '{method.PatchPath}'");
+                return;
+            }
 
-            Logger.Debug($"Patching method: '{method.Patch.ToPath()}', target: '{method.Target?.ToPath().ToString() ?? "<none>"}'");
-            MethodDefinition target_method;
+            if (method.FalseDefaultConstructor) Logger.Debug($"Ignored method (false-default-ctor): '{method.PatchPath}'");
+            if (method.Proxy) Logger.Debug($"Proxied method: '{method.PatchPath}'");
 
-            if (method.IsInsert) {
-                target_method = new MethodDefinition(
-                    method.Patch.Name,
-                    method.Patch.Attributes,
-                    type.TargetType.Module.ImportReference(method.Patch.ReturnType)
-                ) {
-                    DeclaringType = type.TargetType,
-                    HasThis = method.Patch.HasThis,
-                    ExplicitThis = method.Patch.ExplicitThis,
-                    DebugInformation = method.Patch.DebugInformation,
-                    ImplAttributes = method.Patch.ImplAttributes,
-                    SemanticsAttributes = method.Patch.SemanticsAttributes,
-                };
+            if (!method.EffectivelyIgnored) { 
+                Logger.Debug($"Patching method: '{method.Patch.ToPath()}', target: '{method.Target?.ToPath().ToString() ?? "<none>"}'");
+                MethodDefinition target_method; 
 
-                for (var i = 0; i < method.Patch.Parameters.Count; i++) {
-                    var param = method.Patch.Parameters[i];
-                    var new_param = new ParameterDefinition(
-                        param.Name,
-                        param.Attributes,
-                        type.TargetType.Module.ImportReference(param.ParameterType)
-                    );
-                    target_method.Parameters.Add(new_param);
+                if (method.IsInsert) {
+                    target_method = new MethodDefinition(
+                        method.Patch.Name,
+                        method.Patch.Attributes,
+                        type.TargetType.Module.ImportReference(method.Patch.ReturnType)
+                    ) {
+                        DeclaringType = type.TargetType,
+                        HasThis = method.Patch.HasThis,
+                        ExplicitThis = method.Patch.ExplicitThis,
+                        DebugInformation = method.Patch.DebugInformation,
+                        ImplAttributes = method.Patch.ImplAttributes,
+                        SemanticsAttributes = method.Patch.SemanticsAttributes,
+                    };
+
+                    for (var i = 0; i < method.Patch.Parameters.Count; i++) {
+                        var param = method.Patch.Parameters[i];
+                        var new_param = new ParameterDefinition(
+                            param.Name,
+                            param.Attributes,
+                            type.TargetType.Module.ImportReference(param.ParameterType)
+                        );
+                        target_method.Parameters.Add(new_param);
+                    }
+
+                    for (var i = 0; i < method.Patch.GenericParameters.Count; i++) {
+                        var param = method.Patch.GenericParameters[i];
+                        var new_param = new GenericParameter(
+                            param.Name,
+                            target_method
+                        );
+                        target_method.GenericParameters.Add(new_param);
+                    }
+
+                    type.TargetType.Methods.Add(target_method);
+                } else {
+                    target_method = method.Target;
                 }
 
-                for (var i = 0; i < method.Patch.GenericParameters.Count; i++) {
-                    var param = method.Patch.GenericParameters[i];
-                    var new_param = new GenericParameter(
-                        param.Name,
-                        target_method
-                    );
-                    target_method.GenericParameters.Add(new_param);
+                for (var i = 0; i < method.Patch.CustomAttributes.Count; i++) {
+                    target_method.CustomAttributes.Add(method.Patch.CustomAttributes[i].Clone(TargetModule));
                 }
 
-                type.TargetType.Methods.Add(target_method);
-            } else {
-                target_method = method.Target;
-            }
+                var original_target_variables = new VariableDefinition[target_method.Body.Variables.Count];
+                for (var i = 0; i < target_method.Body.Variables.Count; i++) {
+                    original_target_variables[i] = target_method.Body.Variables[i];
+                }
 
-            for (var i = 0; i < method.Patch.CustomAttributes.Count; i++) {
-                target_method.CustomAttributes.Add(method.Patch.CustomAttributes[i].Clone(TargetModule));
-            }
+                target_method.Body.Variables.Clear();
+                for (var i = 0; i < method.Patch.Body.Variables.Count; i++) {
+                    var var_def = method.Patch.Body.Variables[i];
+                    target_method.Body.Variables.Add(
+                        new VariableDefinition(TargetModule.ImportReference(var_def.VariableType))
+                    );
+                }
 
-            var original_target_variables = new VariableDefinition[target_method.Body.Variables.Count];
-            for (var i = 0; i < target_method.Body.Variables.Count; i++) {
-                original_target_variables[i] = target_method.Body.Variables[i];
-            }
-
-            target_method.Body.Variables.Clear();
-            for (var i = 0; i < method.Patch.Body.Variables.Count; i++) {
-                var var_def = method.Patch.Body.Variables[i];
-                target_method.Body.Variables.Add(
-                    new VariableDefinition(TargetModule.ImportReference(var_def.VariableType))
-                );
-            }
-
-            if (method.ReceivesOriginal) {
-                _HandleReceiveOriginalMethod(method, target_method, original_target_variables);
-            } else {
-                target_method.Body = method.Patch.Body.Clone(target_method, TargetModule);
+                if (method.ReceivesOriginal) {
+                    _HandleReceiveOriginalMethod(method, target_method, original_target_variables);
+                } else {
+                    target_method.Body = method.Patch.Body.Clone(target_method, TargetModule);
+                }
             }
 
             _Relinker.Map(method.PatchPath, Relinker.MemberEntry.FromPatchData(
@@ -396,6 +424,8 @@ namespace SemiPatch {
                 type,
                 method
             ));
+
+
         }
 
         //private Instruction _GetMappedInstruction(MethodPath target_path, MethodDefinition target, Instruction instr) {
@@ -427,32 +457,50 @@ namespace SemiPatch {
             Logger.Debug($"Injecting: '{inject.HandlerPath}', target: '{inject.TargetPath}'");
 
             var preinject_name = _MapPreinjectForInjection(inject);
-            var preinject_def = new MethodDefinition(preinject_name, inject.Target.Attributes, inject.Target.ReturnType);
-            for (var i = 0; i < inject.Target.GenericParameters.Count; i++) {
-                var patch_param = inject.Target.GenericParameters[i];
-                var orig_param = new GenericParameter(patch_param.Name, preinject_def);
-                preinject_def.GenericParameters.Add(orig_param);
-            }
-            for (var i = 0; i < inject.Target.Parameters.Count; i++) {
-                preinject_def.Parameters.Add(inject.Target.Parameters[i].Clone(TargetModule));
-            }
-            preinject_def.Body = inject.Target.Body.Clone(preinject_def);
-            type.TargetType.Methods.Add(preinject_def);
-
-            var attr = new CustomAttribute(TargetModule.ImportReference(RDARSupportHasPreinjectInAttributeConstructor));
-            attr.ConstructorArguments.Add(new CustomAttributeArgument(StringType, preinject_def.Name));
-            inject.Target.CustomAttributes.Add(attr);
+            MethodDefinition preinject_def;
 
             var rdar_attrs = new RDARSupport.SupportAttributeData(inject.Target.CustomAttributes);
             if (!rdar_attrs.IsStaticallyInjected) {
+                preinject_def = new MethodDefinition(preinject_name, inject.Target.Attributes, inject.Target.ReturnType);
+                for (var i = 0; i < inject.Target.GenericParameters.Count; i++) {
+                    var patch_param = inject.Target.GenericParameters[i];
+                    var orig_param = new GenericParameter(patch_param.Name, preinject_def);
+                    preinject_def.GenericParameters.Add(orig_param);
+                }
+                for (var i = 0; i < inject.Target.Parameters.Count; i++) {
+                    preinject_def.Parameters.Add(inject.Target.Parameters[i].Clone(TargetModule));
+                }
+                preinject_def.Body = inject.Target.Body.Clone(preinject_def);
+                type.TargetType.Methods.Add(preinject_def);
+
+                var attr = new CustomAttribute(TargetModule.ImportReference(RDARSupportHasPreinjectInAttributeConstructor));
+                attr.ConstructorArguments.Add(new CustomAttributeArgument(StringType, preinject_def.Name));
+                inject.Target.CustomAttributes.Add(attr);
+
                 var injected_attr = new CustomAttribute(TargetModule.ImportReference(RDARSupportStaticallyInjectedAttributeConstructor));
                 inject.Target.CustomAttributes.Add(injected_attr);
+            } else {
+                preinject_def = new MethodPath(
+                    new Signature(inject.Target, forced_name: preinject_name),
+                    inject.Target.DeclaringType
+                ).FindIn<MethodDefinition>(TargetModule);
             }
 
             var handler_path = inject.HandlerPath.WithDeclaringType(type.TargetType);
             if (inject.HandlerAliasedName != null) {
                 handler_path = inject.HandlerPath.WithSignature(new Signature(inject.Handler, forced_name: inject.HandlerAliasedName));
             }
+
+            var rdar_handler_attr = new CustomAttribute(TargetModule.ImportReference(
+                RDARSupportStaticInjectionHandlerAttributeConstructor)
+            );
+            var injection_sig = new InjectionSignature(inject.Handler.ToPath(), inject.Target.ToPath());
+            rdar_handler_attr.ConstructorArguments.Add(new CustomAttributeArgument(StringType, injection_sig.ToString()));
+            rdar_handler_attr.ConstructorArguments.Add(new CustomAttributeArgument(StringType, inject.Handler.Name));
+            rdar_handler_attr.ConstructorArguments.Add(new CustomAttributeArgument(StringType, new Signature(inject.Handler).ToString()));
+            rdar_handler_attr.ConstructorArguments.Add(new CustomAttributeArgument(IntType, inject.BodyIndex));
+            rdar_handler_attr.ConstructorArguments.Add(new CustomAttributeArgument(InjectPositionType, inject.Position));
+            inject.Target.CustomAttributes.Add(rdar_handler_attr);
 
             _ProcessPatch(
                 type,
@@ -508,62 +556,12 @@ namespace SemiPatch {
             }
         }
 
-        private TypeDefinition _Clone(TypeDefinition type) {
-            var new_type = new TypeDefinition(
-                type.Namespace,
-                type.Name,
-                type.Attributes,
-                type.BaseType != null ? TargetModule.ImportReference(type.BaseType) : null
-            );
-
-
-            for (var i = 0; i < type.Fields.Count; i++) {
-                new_type.Fields.Add(type.Fields[i].Clone(new_type, TargetModule));
-            }
-
-            // since properties and events depend on existing methods,
-            // methods have to be copied first so that they can be resolved
-
-            for (var i = 0; i < type.Methods.Count; i++) {
-                new_type.Methods.Add(type.Methods[i].Clone(new_type, TargetModule));
-            }
-
-            for (var i = 0; i < type.Properties.Count; i++) {
-                new_type.Properties.Add(type.Properties[i].Clone(new_type, TargetModule));
-            }
-
-            for (var i = 0; i < type.Events.Count; i++) {
-                new_type.Events.Add(type.Events[i].Clone(new_type, TargetModule));
-            }
-
-            for (var i = 0; i < type.GenericParameters.Count; i++) {
-                new_type.GenericParameters.Add(type.GenericParameters[i].Clone(new_type, TargetModule));
-            }
-
-            for (var i = 0; i < type.CustomAttributes.Count; i++) {
-                new_type.CustomAttributes.Add(type.CustomAttributes[i].Clone(TargetModule));
-            }
-
-            for (var i = 0; i < type.Interfaces.Count; i++) {
-                new_type.Interfaces.Add(type.Interfaces[i].Clone(TargetModule));
-            }
-
-            for (var i = 0; i < type.NestedTypes.Count; i++) {
-                var nested_type = type.NestedTypes[i];
-                if (_IsExcludedFromMerging(nested_type)) continue;
-                Logger.Debug($"Merging type: {nested_type.BuildSignature()}");
-                new_type.NestedTypes.Add(_Clone(nested_type));
-            }
-
-            return new_type;
-        }
-
         private void _MergeModule(ModuleDefinition mod) {
             for (var i = 0; i < mod.Types.Count; i++) {
                 var type = mod.Types[i];
                 if (_IsExcludedFromMerging(type)) continue;
                 Logger.Debug($"Merging type: {type.BuildSignature()}");
-                TargetModule.Types.Add(_Clone(type));
+                type.Clone(TargetModule, _IsExcludedFromMerging);
             }
         }
 

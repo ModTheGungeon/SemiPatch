@@ -1,92 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{38143A7B-A727-4864-918E-84362D34F127}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>SemiPatch.MonoMod</RootNamespace>
-    <AssemblyName>SemiPatch.MonoMod</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFramework>net35</TargetFramework>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release</OutputPath>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="Mono.Cecil">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Mdb">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Mdb.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Pdb">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Pdb.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Rocks">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Rocks.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.Utils">
-      <HintPath>..\packages\MonoMod.Utils.20.5.2.5\lib\net35\MonoMod.Utils.dll</HintPath>
-    </Reference>
-    <Reference Include="MonoMod">
-      <HintPath>..\packages\MonoMod.20.5.2.5\lib\net35\MonoMod.exe</HintPath>
-    </Reference>
-    <Reference Include="MonoMod.RuntimeDetour">
-      <HintPath>..\packages\MonoMod.RuntimeDetour.20.5.2.5\lib\net35\MonoMod.RuntimeDetour.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\SemiPatch\SemiPatch.csproj" />
+    <ProjectReference Include="..\libs\Logger\Logger.csproj" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="src\RDAR\Support.cs" />
-    <Compile Include="src\RDAR\RuntimePatchManager.cs" />
-    <Compile Include="src\Exceptions.cs" />
-    <Compile Include="src\ReloadableModule\ReloadableModule.cs" />
-    <Compile Include="src\ReloadableModule\SpanStream.cs" />
-    <Compile Include="src\PatchClient\Client.cs" />
-    <Compile Include="src\PatchClient\RuntimeClient.cs" />
-    <Compile Include="src\PatchClient\StaticClient.cs" />
-    <Compile Include="src\Static\StaticPatcher.cs" />
-    <Compile Include="src\RDAR\RuntimeInjectionManager.cs" />
-    <Compile Include="src\ERDAR\ExperimentalRuntimePatchManager.cs" />
-    <Compile Include="src\Extensions\CecilClone.cs" />
-    <Compile Include="src\RDAR\RDARPrimitive.cs" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.4" />
+    <PackageReference Include="MonoMod" Version="20.5.7.1" />
+    <PackageReference Include="MonoMod.RuntimeDetour" Version="20.5.7.1" />
+    <PackageReference Include="MonoMod.Utils" Version="20.5.7.1" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\SemiPatch\SemiPatch.csproj">
-      <Project>{4CA58FDE-E581-4269-82DD-166739E4114B}</Project>
-      <Name>SemiPatch</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\libs\Logger\Logger.csproj">
-      <Project>{1C734127-AC83-4ECB-ABCA-32B98DFE49C7}</Project>
-      <Name>Logger</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="src\" />
-    <Folder Include="src\RDAR\" />
-    <Folder Include="src\Static\" />
-    <Folder Include="src\ReloadableModule\" />
-    <Folder Include="src\PatchClient\" />
-    <Folder Include="src\ERDAR\" />
-    <Folder Include="src\Extensions\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+
 </Project>

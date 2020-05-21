@@ -375,6 +375,7 @@ namespace SemiPatch {
             }
 
             method.ReturnType = Relink(state, method.ReturnType);
+            method.DeclaringType = Relink(state, method.DeclaringType);
 
             for (var i = 0; i < method.GenericParameters.Count; i++) {
                 var param = method.GenericParameters[i];
@@ -402,6 +403,7 @@ namespace SemiPatch {
             }
 
             field.FieldType = Relink(state, field.FieldType);
+            field.DeclaringType = Relink(state, field.DeclaringType);
             return state.Module.ImportReference(field);
         }
 
@@ -421,6 +423,7 @@ namespace SemiPatch {
 
             prop.PropertyType = Relink(state, prop.PropertyType);
             for (var i = 0; i < prop.Parameters.Count; i++) Relink(state, prop.Parameters[i]);
+            prop.DeclaringType = Relink(state, prop.DeclaringType);
 
             return prop;
         }

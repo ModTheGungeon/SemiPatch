@@ -24,6 +24,7 @@ namespace SemiPatch {
         }
 
         public bool IsTypeExcluded(TypeDefinition type) {
+            if (type.FullName == "<Module>") return true;
             for (var i = 0; i < type.CustomAttributes.Count; i++) {
                 var attr = type.CustomAttributes[i];
                 if (attr.AttributeType.IsSame(SemiPatch.PatchAttribute)) return true;

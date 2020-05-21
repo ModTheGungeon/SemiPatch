@@ -44,23 +44,23 @@ namespace PatchTest.Patches {
             Console.WriteLine($"injection changed at runtime! (name = {name}, test_local = {test_loc})");
         }
 
-        //[Inject(
-        //    inside: "void Hello(string)",
-        //    at: InjectQuery.MethodCall,
-        //    where: InjectPosition.After,
-        //    path: "[System.Console] void WriteLine(string)",
-        //    index: 1
-        //)]
-        //[CaptureLocal(
-        //    index: 0,
-        //    type: typeof(string),
-        //    name: "test_local"
-        //)]
-        //public void HelloInject2(InjectionState state, string name) {
-        //    var test_loc = state.GetLocal<string>("test_local");
-        //    state.SetLocal("test_local", "injection!");
-        //    Console.WriteLine($"After second call (name = {name}, test_local = {test_loc})");
-        //}
+        [Inject(
+            inside: "void Hello(string)",
+            at: InjectQuery.MethodCall,
+            where: InjectPosition.After,
+            path: "[System.Console] void WriteLine(string)",
+            index: 1
+        )]
+        [CaptureLocal(
+            index: 0,
+            type: typeof(string),
+            name: "test_local"
+        )]
+        public void HelloInject2(InjectionState state, string name) {
+            var test_loc = state.GetLocal<string>("test_local");
+            state.SetLocal("test_local", "injection!");
+            Console.WriteLine($"After second call (name = {name}, test_local = {test_loc})");
+        }
 
         [Inject(
             inside: "string GetName(int)",

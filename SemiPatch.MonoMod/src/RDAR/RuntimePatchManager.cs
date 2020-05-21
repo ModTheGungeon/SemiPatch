@@ -36,14 +36,16 @@ namespace SemiPatch {
         private ModuleDefinition _RunningModule;
         private System.Reflection.Assembly _RunningAssembly;
         private RuntimeInjectionManager _InjectionManager;
+        public Relinker Relinker;
 
-        public RuntimePatchManager(System.Reflection.Assembly asm, ModuleDefinition running_module) {
+        public RuntimePatchManager(Relinker relinker, System.Reflection.Assembly asm, ModuleDefinition running_module) {
             _RunningAssembly = asm;
             _RunningModule = running_module;
-            _InjectionManager = new RuntimeInjectionManager(asm, running_module);
+            Relinker = relinker;
+            _InjectionManager = new RuntimeInjectionManager(relinker, asm, running_module);
         }
 
-        private void _ReplaceMethod(Relinker relinker, MethodDefinition patch_method, MethodPath target_path, System.Reflection.Assembly target_asm, ModuleDefinition target_module, bool update_running_module = false) {
+        private void _ReplaceMethod(MethodDefinition patch_method, MethodPath target_path, System.Reflection.Assembly target_asm, ModuleDefinition target_module, bool update_running_module = false) {
             var target_method = (System.Reflection.MethodBase)target_path.FindIn(target_asm);
 
             var has_orig = (patch_method.Parameters.Count >= 1
@@ -52,7 +54,7 @@ namespace SemiPatch {
                     || OrigFactory.TypeIsGenericVoidOrig(patch_method.Parameters[0].ParameterType)
                 ));
 
-            relinker.Relink(new Relinker.State(patch_method.Module), patch_method);
+            Relinker.Relink(new Relinker.State(patch_method.Module), patch_method);
 
             var method = _PreprocessPatchMethodForHooking(
                 patch_method,
@@ -123,7 +125,7 @@ namespace SemiPatch {
             _MethodPatchMap[patch_method.ToPath()] = hook;
         }
 
-        protected virtual void _ProcessMethodDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+        protected virtual void _ProcessMethodDifference(MemberDifference diff, bool update_running_module = false) {
             Logger.Debug($"Processing method difference for target '{diff.TargetPath}'");
 
             var patch_path = ((MethodDefinition)diff.Member).ToPath();
@@ -139,7 +141,6 @@ namespace SemiPatch {
                 throw new UnsupportedRDAROperationException(diff);
             } else if (diff is MemberChanged change_diff) {
                 _ReplaceMethod(
-                    relinker,
                     change_diff.Member as MethodDefinition,
                     change_diff.TargetPath as MethodPath,
                     _RunningAssembly,
@@ -151,65 +152,65 @@ namespace SemiPatch {
             }
         }
 
-        protected virtual void _ProcessFieldDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+        protected virtual void _ProcessFieldDifference(MemberDifference diff, bool update_running_module = false) {
             Logger.Debug($"Processing field difference for target '{diff.TargetPath}'");
 
             throw new UnsupportedRDAROperationException(diff);
         }
 
-        protected virtual void _ProcessPropertyDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+        protected virtual void _ProcessPropertyDifference(MemberDifference diff, bool update_running_module = false) {
             Logger.Debug($"Processing property difference for target '{diff.TargetPath}'");
 
             throw new UnsupportedRDAROperationException(diff);
         }
 
-        private void _ProcessMemberDifference(Relinker relinker, MemberDifference diff, bool update_running_module = false) {
+        private void _ProcessMemberDifference(MemberDifference diff, bool update_running_module = false) {
             if (diff.Type == MemberType.Method) {
-                _ProcessMethodDifference(relinker, diff, update_running_module);
+                _ProcessMethodDifference(diff, update_running_module);
             } else if (diff.Type == MemberType.Field) {
-                _ProcessFieldDifference(relinker, diff, update_running_module);
+                _ProcessFieldDifference(diff, update_running_module);
             } else if (diff.Type == MemberType.Property) {
-                _ProcessPropertyDifference(relinker, diff, update_running_module);
+                _ProcessPropertyDifference(diff, update_running_module);
             } else {
                 throw new UnsupportedRDAROperationException(diff);
             }
         }
 
-        protected virtual void _ProcessTypeAdded(Relinker relinker, TypeAdded diff, bool update_running_module = false) {
+        protected virtual void _ProcessTypeAdded(TypeAdded diff, bool update_running_module = false) {
             throw new UnsupportedRDAROperationException(diff);
         }
 
-        protected virtual void _ProcessTypeRemoved(Relinker relinker, TypeRemoved diff, bool update_running_module = false) {
+        protected virtual void _ProcessTypeRemoved(TypeRemoved diff, bool update_running_module = false) {
             throw new UnsupportedRDAROperationException(diff);
         }
 
-        protected virtual void _ProcessTypeChanged(Relinker relinker, TypeChanged diff, bool update_running_module = false) {
+        protected virtual void _ProcessTypeChanged(TypeChanged diff, bool update_running_module = false) {
             // injections should be processed before methods can
             // to retain proper ordering of receiveoriginal patches +
             // injections (i.e. orig will be hooked by the injection stub
             // first and then it will be hooked by the patch hook)
             for (var i = 0; i < diff.InjectionDifferences.Count; i++) {
-                _InjectionManager.ProcessInjectionDifference(relinker, diff.InjectionDifferences[i], update_running_module);
+                _InjectionManager.ProcessInjectionDifference(diff.InjectionDifferences[i], update_running_module);
             }
 
             for (var i = 0; i < diff.MemberDifferences.Count; i++) {
-                _ProcessMemberDifference(relinker, diff.MemberDifferences[i], update_running_module);
+                _ProcessMemberDifference(diff.MemberDifferences[i], update_running_module);
             }
 
             for (var i = 0; i < diff.NestedTypeDifferences.Count; i++) {
-                _ProcessTypeDifference(relinker, diff.NestedTypeDifferences[i], update_running_module);
+                _ProcessTypeDifference(diff.NestedTypeDifferences[i], update_running_module);
             }
         }
 
-        private void _ProcessTypeDifference(Relinker relinker, TypeDifference diff, bool update_running_module = false) {
+        private void _ProcessTypeDifference(TypeDifference diff, bool update_running_module = false) {
             Logger.Debug($"Processing type difference {diff.ToString()}");
 
             if (diff is TypeAdded) {
-                _ProcessTypeAdded(relinker, (TypeAdded)diff, update_running_module);
+                _ProcessTypeAdded((TypeAdded)diff, update_running_module);
             } else if (diff is TypeRemoved) {
-                _ProcessTypeRemoved(relinker, (TypeRemoved)diff, update_running_module);
+                _ProcessTypeRemoved((TypeRemoved)diff, update_running_module);
             } else if (diff is TypeChanged) {
-                _ProcessTypeChanged(relinker, (TypeChanged)diff, update_running_module);
+                _ProcessTypeChanged((TypeChanged)diff, update_running_module);
             } else {
                 throw new UnsupportedRDAROperationException(diff);
             }
@@ -228,7 +229,7 @@ namespace SemiPatch {
         }
 
         protected virtual bool _CanPatchTypeAtRuntime(TypeDifference type_diff) {
-            if (_IsTypeGeneric(type_diff.OldType)) {
+            if (type_diff.OldType != null && _IsTypeGeneric(type_diff.OldType)) {
                 return false;
             }
             if (!(type_diff is TypeChanged change)) throw new UnsupportedRDAROperationException(type_diff);
@@ -265,10 +266,10 @@ namespace SemiPatch {
             return true;
         }
 
-        public void ProcessDifference(Relinker relinker, AssemblyDiff diff, bool update_running_module = false) {
+        public void ProcessDifference(AssemblyDiff diff, bool update_running_module = false) {
             Logger.Debug($"Processing assembly difference");
             for (var i = 0; i < diff.TypeDifferences.Count; i++) {
-                _ProcessTypeDifference(relinker, diff.TypeDifferences[i], update_running_module);
+                _ProcessTypeDifference(diff.TypeDifferences[i], update_running_module);
             }
         }
 

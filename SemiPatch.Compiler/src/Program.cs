@@ -19,7 +19,9 @@ namespace SemiPatch.MonoMod.Compiler {
             if (!File.Exists(target_path)) throw new CompilerException($"Target assembly '{target_path}' doesn't exist.");
             if (!File.Exists(patch_path)) throw new CompilerException($"Patch assembly '{patch_path}' doesn't exist");
 
-            var p = new Analyzer(target_path, new List<string> { patch_path });
+            var target_mod = ModuleDefinition.ReadModule(target_path);
+            var patch_mod = ModuleDefinition.ReadModule(patch_path);
+            var p = new Analyzer(target_mod, new ModuleDefinition[] { patch_mod });
             var patch_data = p.Analyze();
             Console.WriteLine(patch_data);
 

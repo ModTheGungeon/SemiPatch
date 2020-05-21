@@ -31,11 +31,7 @@ namespace SemiPatch {
 
             for (var i = 0; i < ev.CustomAttributes.Count; i++) {
                 var attr = ev.CustomAttributes[i];
-                var new_attr = new CustomAttribute(
-                    target_module.ImportReference(attr.Constructor),
-                    attr.GetBlob()
-                );
-                new_event.CustomAttributes.Add(new_attr);
+                new_event.CustomAttributes.Add(ev.CustomAttributes[i].Clone(target_module));
             }
 
             return new_event;
@@ -65,11 +61,7 @@ namespace SemiPatch {
 
             for (var i = 0; i < prop.CustomAttributes.Count; i++) {
                 var attr = prop.CustomAttributes[i];
-                var new_attr = new CustomAttribute(
-                    target_module.ImportReference(attr.Constructor),
-                    attr.GetBlob()
-                );
-                new_prop.CustomAttributes.Add(new_attr);
+                new_prop.CustomAttributes.Add(attr.Clone(target_module));
             }
 
             return new_prop;
@@ -91,11 +83,7 @@ namespace SemiPatch {
 
             for (var i = 0; i < field.CustomAttributes.Count; i++) {
                 var attr = field.CustomAttributes[i];
-                var new_attr = new CustomAttribute(
-                    target_module.ImportReference(attr.Constructor),
-                    attr.GetBlob()
-                );
-                new_field.CustomAttributes.Add(new_attr);
+                new_field.CustomAttributes.Add(attr.Clone(target_module));
             }
 
             return new_field;
@@ -175,11 +163,7 @@ namespace SemiPatch {
 
             for (var i = 0; i < method.CustomAttributes.Count; i++) {
                 var attr = method.CustomAttributes[i];
-                var new_attr = new CustomAttribute(
-                    target_module.ImportReference(attr.Constructor),
-                    attr.GetBlob()
-                );
-                new_method.CustomAttributes.Add(new_attr);
+                new_method.CustomAttributes.Add(attr.Clone(target_module));
             }
 
             for (var i = 0; i < method.Parameters.Count; i++) {
@@ -228,6 +212,57 @@ namespace SemiPatch {
             }
 
             return new_body;
+        }
+
+        public static TypeDefinition Clone(this TypeDefinition type, ModuleDefinition target_module, Func<TypeDefinition, bool> exclude = null) {
+            var new_type = new TypeDefinition(
+                type.Namespace,
+                type.Name,
+                type.Attributes,
+                type.BaseType != null ? target_module.ImportReference(type.BaseType) : null
+            );
+
+            target_module.Types.Add(new_type);
+
+            for (var i = 0; i < type.Fields.Count; i++) {
+                new_type.Fields.Add(type.Fields[i].Clone(new_type, target_module));
+            }
+
+            // since properties and events depend on existing methods,
+            // methods have to be copied first so that they can be resolved
+
+            for (var i = 0; i < type.Methods.Count; i++) {
+                var new_method = type.Methods[i].Clone(new_type, target_module);
+                new_type.Methods.Add(new_method);
+            }
+
+            for (var i = 0; i < type.Properties.Count; i++) {
+                new_type.Properties.Add(type.Properties[i].Clone(new_type, target_module));
+            }
+
+            for (var i = 0; i < type.Events.Count; i++) {
+                new_type.Events.Add(type.Events[i].Clone(new_type, target_module));
+            }
+
+            for (var i = 0; i < type.GenericParameters.Count; i++) {
+                new_type.GenericParameters.Add(type.GenericParameters[i].Clone(new_type, target_module));
+            }
+
+            for (var i = 0; i < type.CustomAttributes.Count; i++) {
+                new_type.CustomAttributes.Add(type.CustomAttributes[i].Clone(target_module));
+            }
+
+            for (var i = 0; i < type.Interfaces.Count; i++) {
+                new_type.Interfaces.Add(type.Interfaces[i].Clone(target_module));
+            }
+
+            for (var i = 0; i < type.NestedTypes.Count; i++) {
+                var nested_type = type.NestedTypes[i];
+                if (exclude != null && exclude(nested_type)) continue;
+                new_type.NestedTypes.Add(nested_type.Clone(target_module, exclude));
+            }
+
+            return new_type;
         }
     }
 }

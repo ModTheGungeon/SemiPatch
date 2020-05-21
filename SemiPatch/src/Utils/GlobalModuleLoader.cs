@@ -27,10 +27,13 @@ namespace SemiPatch {
             return null;
         }
 
-        public static TypeDefinition FindType(ModuleDefinition module, string full_name) {
+        public static TypeDefinition FindType(ModuleDefinition module, string full_name, HashSet<string> visited_modules = null) {
+            if (visited_modules == null) visited_modules = new HashSet<string>();
             for (var i = 0; i < module.AssemblyReferences.Count; i++) {
                 var dep_module_name = module.AssemblyReferences[i].FullName;
-                var type = FindType(GetModule(dep_module_name), full_name);
+                if (visited_modules.Contains(dep_module_name)) continue;
+                visited_modules.Add(dep_module_name);
+                var type = FindType(GetModule(dep_module_name), full_name, visited_modules);
                 if (type != null) return type;
             }
 

@@ -116,7 +116,7 @@ namespace SemiPatch {
             }
 
             il.InsertAfter(instr, instr = il.Create(OpCodes.Dup));
-            il.InsertAfter(instr, instr = il.Create(OpCodes.Ldc_I4, 1));
+            il.InsertAfter(instr, instr = il.Create(OpCodes.Ldc_I4, _PushThis ? 1 : 0));
             il.InsertAfter(instr, instr = il.Create(OpCodes.Ldloc, state_loc));
             il.InsertAfter(instr, instr = il.Create(OpCodes.Stelem_Ref));
 

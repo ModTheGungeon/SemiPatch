@@ -84,6 +84,8 @@ namespace SemiPatch {
         /// </summary>
         public abstract MemberType MemberType { get; }
 
+        public virtual bool EffectivelyIgnored => ExplicitlyIgnored || Proxy;
+
         protected PatchMemberData() { } 
 
         protected PatchMemberData(

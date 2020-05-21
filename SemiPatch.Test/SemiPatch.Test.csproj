@@ -1,19 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\libs\Logger\Logger.csproj" />
     <ProjectReference Include="..\SemiPatch\SemiPatch.csproj" />
     <ProjectReference Include="..\SemiPatch.MonoMod\SemiPatch.MonoMod.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="commandlineparser" Version="2.8.0" />
-    <PackageReference Include="Mono.Cecil" Version="0.11.2" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.4" />
+    <PackageReference Include="nunit" Version="3.12.0" />
   </ItemGroup>
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net40</TargetFramework>
+    <TargetFramework>net35</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefaultItemExcludes>$(DefaultItemExcludes);src\TestUnits\**</DefaultItemExcludes>
+  </PropertyGroup>
 </Project>

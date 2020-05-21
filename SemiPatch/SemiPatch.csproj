@@ -1,110 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4CA58FDE-E581-4269-82DD-166739E4114B}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>SemiPatch</RootNamespace>
-    <AssemblyName>SemiPatch</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release</OutputPath>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="Mono.Cecil">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Mdb">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Mdb.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Pdb">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Pdb.dll</HintPath>
-    </Reference>
-    <Reference Include="Mono.Cecil.Rocks">
-      <HintPath>..\packages\Mono.Cecil.0.10.4\lib\net35\Mono.Cecil.Rocks.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="src\Attributes.cs" />
-    <Compile Include="src\SpecialAttributeData.cs" />
-    <Compile Include="src\SemiPatch.cs" />
-    <Compile Include="src\Analyzer\PatchData.cs" />
-    <Compile Include="src\Analyzer\PatchMethodData.cs" />
-    <Compile Include="src\Analyzer\PatchTypeData.cs" />
-    <Compile Include="src\Analyzer\Analyzer.cs" />
-    <Compile Include="src\Orig\VoidOrig.cs" />
-    <Compile Include="src\Orig\OrigFactory.cs" />
-    <Compile Include="src\Orig\Orig.cs" />
-    <Compile Include="src\Analyzer\PatchFieldData.cs" />
-    <Compile Include="src\Analyzer\PatchPropertyData.cs" />
-    <Compile Include="src\AsmDiff\AssemblyDiff.cs" />
-    <Compile Include="src\AsmDiff\Difference.cs" />
-    <Compile Include="src\Paths.cs" />
-    <Compile Include="src\Analyzer\PatchMemberData.cs" />
-    <Compile Include="src\Utils\EndOfPositionalArguments.cs" />
-    <Compile Include="src\Relinker\Relinker.cs" />
-    <Compile Include="src\Exceptions.cs" />
-    <Compile Include="src\AsmDiff\AbsoluteDiffSourceMode.cs" />
-    <Compile Include="src\AsmDiff\DiffSources\CILAbsoluteDiffSource.cs" />
-    <Compile Include="src\AsmDiff\DiffSources\CILDiffSource.cs" />
-    <Compile Include="src\AsmDiff\DiffSources\SemiPatchAbsoluteDiffSource.cs" />
-    <Compile Include="src\AsmDiff\DiffSources\SemiPatchDiffSource.cs" />
-    <Compile Include="src\AsmDiff\IDiffSource.cs" />
-    <Compile Include="src\ILInject\InjectQuery.cs" />
-    <Compile Include="src\ILInject\InjectPosition.cs" />
-    <Compile Include="src\ILInject\Injector.cs" />
-    <Compile Include="src\ILInject\InjectionState.cs" />
-    <Compile Include="src\Analyzer\PatchInjectData.cs" />
-    <Compile Include="src\Analyzer\InjectionAnalysis.cs" />
-    <Compile Include="src\ILInject\InjectionHandlerProxy.cs" />
-    <Compile Include="src\Orig\ExplicitOrig.cs" />
-    <Compile Include="src\Orig\ExplicitVoidOrig.cs" />
-    <Compile Include="src\ILInject\InjectionSignature.cs" />
-    <Compile Include="src\Extensions\Miscellaneous.cs" />
-    <Compile Include="src\Extensions\CecilComparisons.cs" />
-    <Compile Include="src\Extensions\Signatures.cs" />
-    <Compile Include="src\Extensions\BinarySerialization.cs" />
-    <Compile Include="src\Extensions\Paths.cs" />
-    <Compile Include="src\Extensions\QuickCecil.cs" />
-    <Compile Include="src\Utils\GlobalModuleLoader.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="src\" />
-    <Folder Include="src\Analyzer\" />
-    <Folder Include="src\Orig\" />
-    <Folder Include="src\AsmDiff\" />
-    <Folder Include="src\Utils\" />
-    <Folder Include="src\Relinker\" />
-    <Folder Include="src\AsmDiff\DiffSources\" />
-    <Folder Include="src\ILInject\" />
-    <Folder Include="src\Extensions\" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\libs\Logger\Logger.csproj">
-      <Project>{1C734127-AC83-4ECB-ABCA-32B98DFE49C7}</Project>
-      <Name>Logger</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net35</TargetFramework>
+    </PropertyGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\libs\Logger\Logger.csproj" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <PackageReference Include="Mono.Cecil" Version="0.10.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>SemiPatch.MonoMod</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
 </Project>

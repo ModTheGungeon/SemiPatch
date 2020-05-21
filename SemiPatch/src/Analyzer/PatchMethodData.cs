@@ -61,6 +61,8 @@ namespace SemiPatch {
         /// </summary>
         public bool FalseDefaultConstructor = false;
 
+        public override bool EffectivelyIgnored => base.EffectivelyIgnored || FalseDefaultConstructor;
+
         /// <summary>
         /// Typed version of <see cref="PatchMemberData.TargetMember"/>;
         /// </summary>

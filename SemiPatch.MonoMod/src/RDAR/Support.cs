@@ -32,30 +32,58 @@ namespace SemiPatch.RDARSupport {
         public HasPreinjectInAttribute(string name) { PreinjectName = name; }
     }
 
+    public class StaticInjectionHandlerAttribute : Attribute {
+        public string Signature;
+        public string HandlerName;
+        public string HandlerSignature;
+        public int InstructionIndex;
+        public InjectPosition Position;
+
+        public StaticInjectionHandlerAttribute(string sig, string handler_name, string handler_path, int instr_idx, InjectPosition pos) {
+            Signature = sig;
+            HandlerName = handler_name;
+            HandlerSignature = handler_path;
+            InstructionIndex = instr_idx;
+            Position = pos;
+        }
+
+        public static StaticInjectionHandlerAttribute MakeFromCecil(CustomAttribute attr) {
+            return new StaticInjectionHandlerAttribute(
+                (string)attr.ConstructorArguments[0].Value,
+                (string)attr.ConstructorArguments[1].Value,
+                (string)attr.ConstructorArguments[2].Value,
+                (int)attr.ConstructorArguments[3].Value,
+                (InjectPosition)attr.ConstructorArguments[4].Value
+            );
+        }
+    }
+
     public class StaticallyInjectedAttribute : Attribute { }
 
     internal struct SupportAttributeData {
         public string OrigName;
         public string PreinjectName;
         public bool IsStaticallyInjected;
+        public List<StaticInjectionHandlerAttribute> StaticInjectionHandlers;
 
         public SupportAttributeData(IList<CustomAttribute> attrs) {
             OrigName = null;
             PreinjectName = null;
             IsStaticallyInjected = false;
+            StaticInjectionHandlers = null;
 
             for (var i = 0; i < attrs.Count; i++) {
                 var attr = attrs[i];
 
                 if (attr.AttributeType.IsSame(RDARSupport.RDARSupportHasPreinjectInAttribute)) {
                     PreinjectName = (string)attr.ConstructorArguments[0].Value;
-                    break;
                 } else if (attr.AttributeType.IsSame(RDARSupport.RDARSupportHasOriginalInAttribute)) {
                     OrigName = (string)attr.ConstructorArguments[0].Value;
-                    break;
                 } else if (attr.AttributeType.IsSame(RDARSupport.RDARSupportStaticallyInjectedAttribute)) {
                     IsStaticallyInjected = true;
-                    break;
+                } else if (attr.AttributeType.IsSame(RDARSupport.RDARSupportStaticInjectionHandlerAttribute)) {
+                    if (StaticInjectionHandlers == null) StaticInjectionHandlers = new List<StaticInjectionHandlerAttribute>();
+                    StaticInjectionHandlers.Add(StaticInjectionHandlerAttribute.MakeFromCecil(attr));
                 }
             }
         }
@@ -67,6 +95,7 @@ namespace SemiPatch.RDARSupport {
         public static TypeDefinition RDARSupportHasOriginalInAttribute;
         public static TypeDefinition RDARSupportHasPreinjectInAttribute;
         public static TypeDefinition RDARSupportStaticallyInjectedAttribute;
+        public static TypeDefinition RDARSupportStaticInjectionHandlerAttribute;
 
         static RDARSupport() {
             SemiPatchMonoModModule = ModuleDefinition.ReadModule(System.Reflection.Assembly.GetExecutingAssembly().Location);
@@ -74,6 +103,7 @@ namespace SemiPatch.RDARSupport {
             RDARSupportHasOriginalInAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDARSupport.HasOriginalInAttribute");
             RDARSupportHasPreinjectInAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDARSupport.HasPreinjectInAttribute");
             RDARSupportStaticallyInjectedAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDARSupport.StaticallyInjectedAttribute");
+            RDARSupportStaticInjectionHandlerAttribute = SemiPatchMonoModModule.GetType("SemiPatch.RDARSupport.StaticInjectionHandlerAttribute");
         }
     }
 }

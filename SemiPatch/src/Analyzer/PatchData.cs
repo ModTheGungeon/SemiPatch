@@ -104,6 +104,7 @@ namespace SemiPatch {
                     throw new PatchDataDeserializationException($"Failed loading target assembly (version must match exactly): '{target_module_name}'");
                 }
                 target_module = ModuleDefinition.ReadModule(patch_asm.Location);
+
             }
 
             var patch_modules_count = reader.ReadInt32();
@@ -148,7 +149,6 @@ namespace SemiPatch {
             foreach (var type in Types) {
                 foreach (var method in type.Methods) {
                     if (!method.IsInsert) continue;
-                    writer.WriteLine($"[{type.PatchType.Module.Assembly.FullName};{type.PatchType};{type.TargetType}]M {method.PatchPath} --> {method.TargetPath}");
                 }
             }
         }

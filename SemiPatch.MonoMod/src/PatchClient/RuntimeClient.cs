@@ -23,10 +23,10 @@ namespace SemiPatch {
         public Logger Logger;
 
         public RuntimeClient(System.Reflection.Assembly asm, ModuleDefinition target_module, ModuleDefinition running_module) {
-            PatchManager = new RuntimePatchManager(asm, running_module);
             TargetModule = target_module;
             RunningModule = running_module;
             Relinker = new Relinker();
+            PatchManager = new RuntimePatchManager(Relinker, asm, running_module);
             Logger = new Logger($"{nameof(RuntimeClient)}({TargetModule.Name})");
         }
 
@@ -45,7 +45,7 @@ namespace SemiPatch {
             if (!diff.HasChanges) return Result.NoChanges;
             if (!PatchManager.CanPatchAtRuntime(diff)) return Result.RequiresStaticPatching;
 
-            PatchManager.ProcessDifference(Relinker, diff, update_running_module: false);
+            PatchManager.ProcessDifference(diff, update_running_module: false);
             return Result.Success;
         }
 

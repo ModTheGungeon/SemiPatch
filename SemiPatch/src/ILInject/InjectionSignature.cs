@@ -3,27 +3,36 @@ namespace SemiPatch {
     public struct InjectionSignature {
         private MethodPath _HandlerPath;
         private MethodPath _TargetPath;
+        private string _Value;
+
+        public InjectionSignature(string value) {
+            _Value = value;
+            _HandlerPath = null;
+            _TargetPath = null;
+        }
 
         public InjectionSignature(MethodPath handler_path, MethodPath target_path) {
+            _Value = null;
             _HandlerPath = handler_path;
             _TargetPath = target_path;
         }
 
         public InjectionSignature(AssemblyDiff.InjectionDifference diff) {
+            _Value = null;
             _HandlerPath = diff.HandlerPath;
             _TargetPath = diff.TargetPath;
         }
 
         public override string ToString() {
-            return $"{_HandlerPath} -> {_TargetPath}";
+            return _Value ?? $"{_HandlerPath.Signature} -> {_TargetPath}";
         }
 
         public override int GetHashCode() {
-            return _HandlerPath.GetHashCode() ^ (_TargetPath.GetHashCode() * 73561);
+            return ToString().GetHashCode();
         }
 
         public bool Equals(InjectionSignature sig) {
-            return _HandlerPath == sig._HandlerPath && _TargetPath == sig._TargetPath;
+            return ToString() == sig.ToString();
         }
 
         public override bool Equals(object obj) {

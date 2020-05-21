@@ -16,7 +16,7 @@ namespace SemiPatch {
         private readonly string _Value;
         public readonly string Name;
 
-        internal Signature(string value, string name) { _Value = value; Name = name; }
+        public Signature(string value, string name) { _Value = value; Name = name; }
 
         // cecil
         public Signature(MethodReference method, bool skip_first_arg = false, string forced_name = null) : this(method.BuildSignature(skip_first_arg, forced_name), method.Name) { }
@@ -201,7 +201,12 @@ namespace SemiPatch {
             if (_TypeName != null) {
                 for (var i = 0; i < asm_types.Length; i++) {
                     var type = asm_types[i];
-                    if (type.Name == _TypeName && type.Namespace == Namespace) return type;
+                    var cecilized_ns = type.Namespace;
+                    if (cecilized_ns == null) {
+                        cecilized_ns = "";
+                    }
+
+                    if (type.Name == _TypeName && cecilized_ns == Namespace) return type;
                 }
                 throw PathSearchException();
             } else {
@@ -209,7 +214,13 @@ namespace SemiPatch {
                 Type found_type = null;
                 for (var i = 0; i < asm_types.Length; i++) {
                     var type = asm_types[i];
-                    if (type.Name == _TypeNames[idx] && type.Namespace == Namespace) {
+
+                    var cecilized_ns = type.Namespace;
+                    if (cecilized_ns == null) {
+                        cecilized_ns = "";
+                    }
+
+                    if (type.Name == _TypeNames[idx] && cecilized_ns == Namespace) {
                         found_type = type;
                         break;
                     }
@@ -221,7 +232,13 @@ namespace SemiPatch {
                     Type new_found_type = null;
                     for (var i = 0; i < nested_types.Length; i++) {
                         var type = nested_types[i];
-                        if (type.Name == _TypeNames[idx] && type.Namespace == Namespace) {
+
+                        var cecilized_ns = type.Namespace;
+                        if (cecilized_ns == null) {
+                            cecilized_ns = "";
+                        }
+
+                        if (type.Name == _TypeNames[idx] && cecilized_ns == Namespace) {
                             new_found_type = type;
                             break;
                         }
@@ -622,7 +639,7 @@ namespace SemiPatch {
 
         public TypePath(Signature sig, TypeDefinition decl_type) {
             _InitTypePath(decl_type);
-            Namespace = decl_type.Namespace;
+            Namespace = decl_type?.Namespace ?? "";
             Signature = sig;
         }
 
