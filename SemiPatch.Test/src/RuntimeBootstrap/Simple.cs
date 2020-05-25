@@ -9,26 +9,24 @@ namespace SemiPatch.Test
     public class RuntimeBootstrapSimpleMethodsTest {
         [Test]
         public void RuntimeBootstrapSimpleMethodOverwrite() {
-            var test = new Test("RuntimeBootstrapSimpleMethodOverwrite");
-            test.Target(typeof(SimpleMethodTarget));
-            test.WriteTarget();
+            var test = new Test(
+                "RuntimeBootstrapSimpleMethodOverwrite",
+                typeof(SimpleMethodTarget)
+            );
+            test.ReloadFromDisk();
             var target_asm = test.LoadTarget();
             var type = target_asm.GetType("SimpleMethodTarget");
 
             var method = new Func<int>(() => (int)type.GetMethod("HelloWorld").Invoke(null, new object[0]));
             Assert.AreEqual(42, method());
 
-            test.Patch("foo", typeof(SimpleMethodPatch));
-            test.AnalyzeAll();
-            test.WritePatches();
-            test.ReloadFromDisk();
-
-            var rm = test.Reloadable("foo");
+            var pm = test.CreatePatchModule("foo", typeof(SimpleMethodPatch));
+            var rm = test.MakeReloadable(pm);
 
             var client = new RuntimeClient(
                 target_asm,
-                test.TargetModule.Definition,
-                test.TargetModule.Definition
+                test.TargetModule,
+                test.TargetModule
             );
 
             client.BeginProcessing();
@@ -41,9 +39,10 @@ namespace SemiPatch.Test
 
         [Test]
         public void RuntimeBootstrapHeadInjection() {
-            var test = new Test("RuntimeBootstrapHeadInjection");
-            test.Target(typeof(CommonInjectionTarget));
-            test.WriteTarget();
+            var test = new Test(
+                "RuntimeBootstrapHeadInjection",
+                typeof(CommonInjectionTarget)
+            );
             var target_asm = test.LoadTarget();
             var type = target_asm.GetType("CommonInjectionTarget");
 
@@ -51,17 +50,15 @@ namespace SemiPatch.Test
                 return (string)type.GetMethod("Test").Invoke(null, new object[] { name, age });
             });
             Assert.AreEqual("Bob - age 42", method("bob", 42));
-
-            test.Patch("foo", typeof(HeadInjectionPatch));
-            test.AnalyzeAll();
-            test.WritePatches();
             test.ReloadFromDisk();
 
-            var rm = test.Reloadable("foo");
+            var pm = test.CreatePatchModule("foo", typeof(HeadInjectionPatch));
+            var rm = test.MakeReloadable(pm);
+
             var client = new RuntimeClient(
                 target_asm,
-                test.TargetModule.Definition,
-                test.TargetModule.Definition
+                test.TargetModule,
+                test.TargetModule
             );
 
             client.BeginProcessing();

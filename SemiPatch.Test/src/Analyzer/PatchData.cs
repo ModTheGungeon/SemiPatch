@@ -8,11 +8,13 @@ namespace SemiPatch.Test
     public partial class AnalyzerTests {
         [Test]
         public void Completeness() {
-            var test = new Test("Completeness");
-            test.Target(typeof(CompleteTarget));
-            test.Patch("foo", typeof(CompletePatch));
+            var test = new Test(
+                "Completeness",
+                typeof(CompleteTarget),
+                typeof(CompletePatch)
+            );
 
-            var analyzer = new Analyzer(test.TargetModule.Definition, new ModuleDefinition[] { test.PatchModules[0].Definition });
+            var analyzer = new Analyzer(test.TargetModule, new ModuleDefinition[] { test.PatchModules[0] });
             var data = analyzer.Analyze();
 
             Assert.AreEqual(1, data.Types.Count);

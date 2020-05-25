@@ -14,6 +14,9 @@ namespace SemiPatch.Test {
                 typeof(SimpleInsertsPatch2)
             );
 
+            Console.WriteLine(result.Target.Assembly);
+            Console.WriteLine(result.Patched.Assembly);
+
             Assert.IsNotNull(result.Target.GetField("Foo"));
             Assert.IsNotNull(result.Target.GetField("Bar"));
             Assert.IsNotNull(result.Target.GetProperty("Baz"));

@@ -551,6 +551,7 @@ namespace SemiPatch {
         }
 
         private void _ProcessPatch(PatchData patch) {
+            Console.WriteLine(patch.TargetModule);
             for (var i = 0; i < patch.Types.Count; i++) {
                 _ProcessPatch(patch.Types[i]);
             }

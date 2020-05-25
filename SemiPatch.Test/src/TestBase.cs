@@ -12,111 +12,125 @@ namespace SemiPatch.Test {
         public TestPatchAttribute(string type) {}
     }
 
+    public class ModuleContext : IAssemblyResolver {
+        private Dictionary<string, AssemblyDefinition> _AssemblyMap = new Dictionary<string, AssemblyDefinition>();
+        private Dictionary<string, ModuleDefinition> _ModuleMap = new Dictionary<string, ModuleDefinition>();
+        public DefaultAssemblyResolver FallbackResolver;
+        
+        public ModuleContext() {
+            FallbackResolver = new DefaultAssemblyResolver();
+        }
+
+
+        public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters reader_params) {
+            if (_AssemblyMap.TryGetValue(name.FullName, out AssemblyDefinition mapped)) {
+                return mapped;
+            }
+            return FallbackResolver.Resolve(name, reader_params);
+        }
+
+        public AssemblyDefinition Resolve(AssemblyNameReference name) {
+            if (_AssemblyMap.TryGetValue(name.FullName, out AssemblyDefinition mapped)) {
+                return mapped;
+            }
+            return FallbackResolver.Resolve(name);
+        }
+
+        public void Dispose() {
+            FallbackResolver.Dispose();
+        }
+
+        public ModuleDefinition Read(string path) {
+            return Read(path, new ReaderParameters());
+        }
+        
+        public ModuleDefinition Read(string path, ReaderParameters reader_params) {
+            reader_params.AssemblyResolver = this;
+            var m = ModuleDefinition.ReadModule(
+                path, reader_params
+            );
+
+            var name = m.Assembly.Name.FullName;
+            if (_ModuleMap.TryGetValue(name, out ModuleDefinition mapped)) {
+                m.Dispose();
+                return mapped;
+            }
+
+            return _ModuleMap[name] = m;
+        }
+
+        public ModuleDefinition Create(string name, ModuleKind kind) {
+            return Create(name, new ModuleParameters {
+                Kind = kind
+            });
+        }
+
+        public ModuleDefinition Create(string name, ModuleParameters mod_params) {
+            mod_params.AssemblyResolver = this;
+            var m = ModuleDefinition.CreateModule(name, mod_params);
+            var full_name = m.Assembly.Name.FullName;
+            if (_ModuleMap.TryGetValue(name, out ModuleDefinition _)) {
+                throw new InvalidOperationException($"Module '{full_name}' already exists in this context and cannot be created.");
+            }
+
+            return _ModuleMap[full_name] = m;
+
+        }
+    }
+
     public class Test {
-        public static DefaultAssemblyResolver AssemblyResolver = new DefaultAssemblyResolver();
+        public const string TMP_DIR = ".sptest";
+
+        private static string _TempPath(string part) {
+            if (!Directory.Exists(TMP_DIR)) {
+                Directory.CreateDirectory(TMP_DIR);
+            }
+            return Path.Combine(TMP_DIR, part);
+        }
+        
+
         public static bool Debug = false;
         static Test() {
             Logger.WriteConsoleDefault = Debug;
-            AssemblyResolver.AddSearchDirectory(".sptest");
-        }
-        public struct Module : IDisposable {
-            public ModuleDefinition Definition;
-            public string Name;
-            public PatchData PatchData;
-
-            public Module(string name, ModuleDefinition module) {
-                Definition = module;
-                Name = name;
-                PatchData = null;
-            }
-
-            public Module Analyzed(Module target) {
-                var m = new Module(Name, Definition);
-                var analyzer = new Analyzer(target.Definition, new ModuleDefinition[] { Definition });
-                m.PatchData = analyzer.Analyze();
-                return m;
-            }
-
-            public void Dispose() {
-                Definition.Dispose();
-            }
         }
 
         public string Name;
 
-        public Module TargetModule;
-        public List<Module> PatchModules = new List<Module>();
+        public ModuleContext ModuleContext;
+        public ModuleDefinition TargetModule;
+        private string _OriginalTargetModuleName;
+        public IList<ModuleDefinition> PatchModules;
+
+        public ModuleDefinition PatchModule {
+            get {
+                if (PatchModules.Count != 1) {
+                    throw new InvalidOperationException("PatchModule can only be used with exactly 1 patch module");
+                }
+
+                return PatchModules[0];
+            }
+        }
+
         public Logger Logger;
         
-        public Test(string name) {
+        public Test(string name, Type target_type, params Type[] patch_types) {
             Name = name;
             Logger = new Logger($"Test({Name})");
-        }
-
-        public struct QuickTestResult<T> {
-            public T Target; 
-            public T Patched;
-        }
-
-        public static QuickTestResult<T> StaticTest<T>(string name, string method_name, object[] args, Type target_type, params Type[] patch_types) {
-            var test = new Test(name);
-            test.Target(target_type);
+            ModuleContext = new ModuleContext();
+            ModuleContext.FallbackResolver.AddSearchDirectory(".sptest");
+            TargetModule = _TypeToModule($"{Name}_Target", target_type);
+            _OriginalTargetModuleName = TargetModule.Name;
+            Write(TargetModule);
+            PatchModules = new List<ModuleDefinition>();
             for (var i = 0; i < patch_types.Length; i++) {
-                test.Patch($"patch{i + 1}", patch_types[i]);
+                PatchModules.Add(_TypeToModule($"{Name}_Patch{i + 1}", patch_types[i]));
             }
-            test.DoStaticPatchRoundtrip();
-
-            var type_name = target_type.Name;
-            var target_method = test.LoadTarget().GetType(type_name).GetMethod(method_name);
-            var patched_method = test.LoadPatched().GetType(type_name).GetMethod(method_name);
-            return new QuickTestResult<T> {
-                Target = (T)target_method.Invoke(null, args),
-                Patched = (T)patched_method.Invoke(null, args)
-            };
+            WritePatches();
         }
 
-        public static QuickTestResult<Type> SimpleTest(string name, Type target_type, params Type[] patch_types) {
-            var test = new Test(name);
-            test.Target(target_type);
-            for (var i = 0; i < patch_types.Length; i++) {
-                test.Patch($"patch{i + 1}", patch_types[i]);
-            }
-            test.DoStaticPatchRoundtrip();
-
-            var type_name = target_type.Name;
-            var post_target_type = test.LoadTarget().GetType(type_name);
-            var post_patched_type = test.LoadPatched().GetType(type_name);
-            return new QuickTestResult<Type> {
-                Target = post_target_type,
-                Patched = post_patched_type
-            };
-        }
-
-        public void Target(params Type[] types) {
-            var name = $"{Name}_Target";
-            Logger.Debug($"Adding target '{name}' from {types.Length} types");
-            var module = ModuleDefinition.CreateModule(name, new ModuleParameters {
-                AssemblyResolver = AssemblyResolver,
-                Kind = ModuleKind.Dll
-            });
-            var relinker = new Relinker();
-            for (var i = 0; i < types.Length; i++) {
-                var imported_type = module.ImportReference(types[i]);
-                var cecil_type = imported_type.Resolve().Clone(module);
-                cecil_type.Namespace = "";
-                cecil_type.Attributes &= ~TypeAttributes.NestedPublic & ~TypeAttributes.NestedPrivate;
-                relinker.Map(imported_type.Resolve().ToPath(), new Relinker.TypeEntry { TargetType = cecil_type });
-            }
-            relinker.Relink(module);
-            TargetModule = new Module(name, module);
-            WriteTarget();
-        }
-
-        public void Patch(string patch_name, params Type[] types) {
-            var name = $"{Name}_Patch_{patch_name}";
+        private ModuleDefinition _TypeToModule(string name, params Type[] types) {
             Logger.Debug($"Adding patch '{name}' from {types.Length} types");
-            var module = ModuleDefinition.CreateModule(name, new ModuleParameters {
-                AssemblyResolver = AssemblyResolver,
+            var module = ModuleContext.Create(name, new ModuleParameters {
                 Kind = ModuleKind.Dll
             });
             var relinker = new Relinker();
@@ -131,8 +145,7 @@ namespace SemiPatch.Test {
                         var type_name = attr.ConstructorArguments[0].Value as string;
                         var sig = new Signature(type_name, null);
                         var path = new TypePath(sig, null);
-                        var target_type = path.FindIn(TargetModule.Definition);
-
+                        var target_type = path.FindIn(TargetModule);
                         attr = new CustomAttribute(
                             module.ImportReference(module.ImportReference(typeof(PatchAttribute)).Resolve().Methods[0])
                         );
@@ -140,7 +153,7 @@ namespace SemiPatch.Test {
 
                         attr.ConstructorArguments.Add(new CustomAttributeArgument(
                                 module.ImportReference(typeof(Type)),
-                                module.ImportReference(target_type)
+                                target_type
                         ));
 
                     }
@@ -148,124 +161,124 @@ namespace SemiPatch.Test {
                 relinker.Map(imported_type.Resolve().ToPath(), new Relinker.TypeEntry { TargetType = cecil_type });
             }
             relinker.Relink(module);
-            PatchModules.Add(new Module(name, module));
+            return module;
         }
 
-        public ReloadableModule Reloadable(string patch_name) {
-            for (var i = 0; i < PatchModules.Count; i++) {
-                var m = PatchModules[i];
-                if (m.Name == $"{Name}_Patch_{patch_name}") {
-                    return new ReloadableModule(
-                        target_module: TargetModule.Definition,
-                        patch_module: m.Definition,
-                        patch_data: m.PatchData
-                    );
-                }
-            }
-            throw new Exception($"Could not find patch module '{patch_name}'");
+        public struct QuickTestResult<T> {
+            public T Target; 
+            public T Patched;
         }
 
-        public void AnalyzeAll() {
-            Logger.Debug($"Analyzing {PatchModules.Count} patches");
-            for (var i = 0; i < PatchModules.Count; i++) {
-                Logger.Debug($"Analyzing patch '{PatchModules[i].Name}'");
-                PatchModules[i] = PatchModules[i].Analyzed(TargetModule);
-            }
+        public static QuickTestResult<T> StaticTest<T>(string name, string method_name, object[] args, Type target_type, params Type[] patch_types) {
+            var test = new Test(name, target_type, patch_types);
+            test.StaticPatch();
+
+            var type_name = target_type.Name;
+            var target_method = test.LoadTarget().GetType(type_name).GetMethod(method_name);
+            var patched_method = test.LoadPatched().GetType(type_name).GetMethod(method_name);
+            return new QuickTestResult<T> {
+                Target = (T)target_method.Invoke(null, args),
+                Patched = (T)patched_method.Invoke(null, args)
+            };
         }
 
-        public void WriteTarget() {
-            Logger.Debug($"Writing target to disk");
-            if (!Directory.Exists(".sptest")) {
-                Directory.CreateDirectory(".sptest");
-            }
-            TargetModule.Definition.Write(Path.Combine(".sptest", TargetModule.Name + ".dll"));
+        public static QuickTestResult<Type> SimpleTest(string name, Type target_type, params Type[] patch_types) {
+            var test = new Test(name, target_type, patch_types);
+            test.StaticPatch();
+
+            var type_name = target_type.Name;
+            var post_target_type = test.LoadTarget().GetType(type_name);
+            var post_patched_type = test.LoadPatched().GetType(type_name);
+            return new QuickTestResult<Type> {
+                Target = post_target_type,
+                Patched = post_patched_type
+            };
+        }
+
+        public ReloadableModule MakeReloadable(ModuleDefinition mod) {
+            var analyzer = new Analyzer(TargetModule, new ModuleDefinition[] { mod });
+            var rm = new ReloadableModule(
+                target_module: TargetModule,
+                patch_module: mod,
+                patch_data: analyzer.Analyze()
+            );
+            Console.WriteLine($"EQ? {rm.PatchData.TargetModule == TargetModule}");
+            Console.WriteLine($"EQ2? {rm.PatchData.Types[0].TargetType.Module == TargetModule}");
+            return rm;
+        }
+
+        public ModuleDefinition CreatePatchModule(string name, Type type) {
+            var mod = _TypeToModule($"{Name}_{name}", type);
+            return mod;
+        }
+
+        public void Write(ModuleDefinition module) {
+            Logger.Debug($"Writing module '{module.Name}' to disk");
+            module.Write(_TempPath(module.Name + ".dll"));
         }
 
         public void WritePatches() {
             Logger.Debug($"Writing all patches to disk");
-            if (!Directory.Exists(".sptest")) {
-                Directory.CreateDirectory(".sptest");
-            }
 
             for (var i = 0; i < PatchModules.Count; i++) {
                 var mod = PatchModules[i];
                 Logger.Debug($"Writing patch '{mod.Name}' to disk");
-                mod.Definition.Write(Path.Combine(".sptest", mod.Name + ".dll"));
-
-                var reloadable = new ReloadableModule(
-                    target_module: TargetModule.Definition,
-                    patch_module: mod.Definition,
-                    patch_data: mod.PatchData
-                );
-
-                using (var f = File.Create(Path.Combine(".sptest", mod.Name + ".spr"))) {
-                    reloadable.Write(f);
-                }
-
+                Write(mod);
             }
         }
 
         public void ReloadFromDisk() {
             Logger.Debug($"Reloading all from disk");
+            var name = TargetModule.Name;
             TargetModule.Dispose();
-            TargetModule.Definition = ModuleDefinition.ReadModule(Path.Combine(".sptest", TargetModule.Name + ".dll"), new ReaderParameters {
-                AssemblyResolver = AssemblyResolver
-            });
+            TargetModule = ModuleContext.Read(_TempPath(name + ".dll"));
 
             for (var i = 0; i < PatchModules.Count; i++) {
                 var mod = PatchModules[i];
+                var patch_name = mod.Name;
                 mod.Dispose();
-                var reloadable = ReloadableModule.Read(Path.Combine(".sptest", mod.Name + ".spr"), TargetModule.Definition);
-                PatchModules[i] = new Module(mod.Name, ModuleDefinition.ReadModule(
-                    Path.Combine(".sptest", mod.Name + ".dll"),
-                    new ReaderParameters {
-                        AssemblyResolver = AssemblyResolver
-                    }
-                )) { PatchData = reloadable.PatchData };
+                PatchModules[i] = ModuleContext.Read(
+                    _TempPath(patch_name + ".dll")
+                );
             }
         }
 
         public void StaticPatch() {
             Logger.Debug($"Statically patching target");
-            var sp = new StaticPatcher(TargetModule.Definition);
+            var sc = new StaticClient(TargetModule);
+
+            var whatthefuck = TargetModule;
+
+            Console.WriteLine($"modules: {PatchModules.Count}");
             for (var i = 0; i < PatchModules.Count; i++) {
                 var mod = PatchModules[i];
-
-                sp.LoadPatch(mod.PatchData, mod.Definition);
+                var reloadable = MakeReloadable(mod);
+                Console.WriteLine(mod);
+                sc.Preload(reloadable);
             }
-            sp.Patch();
-            TargetModule.Definition.Name = TargetModule.Name + "_Patched";
-            var asm = TargetModule.Definition.Assembly;
-            asm.Name = new AssemblyNameDefinition(TargetModule.Name + "_Patched", asm.Name.Version);
+
+            sc.Commit();
+            TargetModule.Name = TargetModule.Name + "_Patched";
+            var asm = TargetModule.Assembly;
+            asm.Name = new AssemblyNameDefinition(TargetModule.Name, asm.Name.Version);
+            Write(TargetModule);
         }
 
-        public void WritePatched() {
-            Logger.Debug($"Writing statically patched target");
-            TargetModule.Definition.Write(Path.Combine(".sptest", TargetModule.Name + "_Patched.dll"));
+        public Assembly LoadTarget() {
+            Logger.Debug($"Loading original target assembly");
+            var asm = Assembly.LoadFrom(_TempPath(_OriginalTargetModuleName + ".dll"));
+            return asm;
         }
 
         public Assembly LoadPatched() {
             Logger.Debug($"Loading statically patched assembly");
-            var asm = Assembly.LoadFrom(Path.Combine(".sptest", TargetModule.Name + "_Patched.dll"));
-            return asm;
-        }
-
-        public void DoStaticPatchRoundtrip() {
-            AnalyzeAll();
-            WritePatches();
-            ReloadFromDisk();
-            StaticPatch();
-            WritePatched();
-        }
-
-        public Assembly LoadTarget() {
-            Logger.Debug($"Loading unpatched target assembly");
-            var asm = Assembly.LoadFrom(Path.Combine(".sptest", TargetModule.Name + ".dll"));
+            var asm = Assembly.LoadFrom(_TempPath(TargetModule.Name + ".dll"));
             return asm;
         }
 
         public void Dispose() {
             TargetModule.Dispose();
+            TargetModule = null;
             for (var i = 0; i < PatchModules.Count; i++) {
                 PatchModules[i].Dispose();
             }

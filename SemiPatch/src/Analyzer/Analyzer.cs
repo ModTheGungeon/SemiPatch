@@ -147,7 +147,7 @@ namespace SemiPatch {
                 throw new TargetMethodSearchFailureException(error_target_path, $"target of injection handler '{handler_path}', within the type '{type_data.TargetType.FullName}'");
             }
 
-            if (target.RVA == 0 || !target.HasBody || target.Body.Instructions.Count == 0) {
+            if (!target.HasBody || target.Body.Instructions.Count == 0) {
                 throw new EmptyInjectTargetMethodException(target.ToPath());
             }
 
@@ -561,7 +561,8 @@ namespace SemiPatch {
                     throw new InvalidTargetTypeScopeException($"Patch target must be a type within the target module ('{TargetModule.FileName}')", attrs.PatchType.ToPath());
                 }
 
-                var type_data = new PatchTypeData(attrs.PatchType, type);
+                var target_type = attrs.PatchType.ToPath().FindIn(TargetModule);
+                var type_data = new PatchTypeData(target_type, type);
                 PatchData.Types.Add(type_data);
 
                 ScanProperties(type_data, type.Properties);
