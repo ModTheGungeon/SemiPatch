@@ -17,6 +17,9 @@ namespace SemiPatch.Compiler.Options {
         [Value(1, MetaName = "patch_dll_path", HelpText = "Path to a SemiPatch compliant patch assembly.", Required = true)]
         public string PatchPath { get; set; }
 
+        [Option('u', "uncompressed", HelpText = "Do not compress the resulting SPR module.")]
+        public bool Uncompressed { get; set; }
+
         [Option('o', "output", HelpText = "Path to write the new SemiPatch Reloadable module into.")]
         public string OutputPath { get; set; } = null;
     }

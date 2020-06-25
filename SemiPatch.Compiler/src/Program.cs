@@ -44,7 +44,7 @@ namespace SemiPatch.MonoMod.Compiler {
             var output_path = opts.OutputPath ?? $"{patch_path.Substring(0, patch_path.Length - 4)}.spr";
 
             using (var f = File.OpenWrite(output_path)) {
-                spr.Write(f, true);
+                spr.Write(f, !opts.Uncompressed);
             }
 
             return 0;
