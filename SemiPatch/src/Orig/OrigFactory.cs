@@ -377,13 +377,21 @@ namespace SemiPatch {
 
 
         public static Signature GetMethodSignatureFromOrig(TypeReference orig, string name, Collection<GenericParameter> generic_param_source = null) {
-            if (!orig.IsGenericInstance) throw new ArgumentException("Argument must be an Orig or VoidOrig TypeReference", nameof(orig));
-            var inst = (GenericInstanceType)orig;
-            var is_void = TypeIsGenericVoidOrig(inst.ElementType);
-            TypeReference return_type = null;
-            if (!TypeIsGenericOrig(inst.ElementType) && !is_void) throw new ArgumentException("Argument must be an Orig or VoidOrig TypeReference", nameof(orig));
+            int n = 0;
+            GenericInstanceType inst = null;
+            bool is_void = false; 
 
-            var n = inst.GenericArguments.Count;
+            if (orig is GenericInstanceType) {
+                inst = (GenericInstanceType)orig;
+                is_void = TypeIsGenericVoidOrig(inst.ElementType);
+                n = inst.GenericArguments.Count;
+            } else {
+                is_void = true;
+            }
+
+            TypeReference return_type = null;
+            if (inst != null && !TypeIsGenericOrig(inst.ElementType)) throw new ArgumentException("Argument must be an Orig or VoidOrig TypeReference", nameof(orig));
+
             if (!is_void) {
                 n -= 1;
                 return_type = inst.GenericArguments[inst.GenericArguments.Count - 1];
