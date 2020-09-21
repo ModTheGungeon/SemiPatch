@@ -78,6 +78,17 @@ namespace SemiPatch {
         /// <c>false</c>.</value>
         public bool IsInsert => TargetMember == null;
 
+
+        /// <summary>
+        /// Determines the effective name of this element in the final assembly.
+        /// If <see cref="TargetNameAttribute"/> is present on this patch member,
+        /// the effective name will be the argument given to that attribute.
+        /// Otherwise, it is the name of the patch member.
+        /// For members which patch existing members and are not inserted,
+        /// this is equivalent to the Name field of the TargetMember.
+        /// </summary>
+        public string EffectiveName => AliasedName ?? PatchMember.Name;
+
         /// <summary>
         /// The type of member that this object represents. Used only for
         /// hashing and equality comparison.
@@ -123,7 +134,7 @@ namespace SemiPatch {
             proxy: proxy
         ) {}
 
-        public string ToString(string indent) {
+        public virtual string ToString(string indent) {
             var s = new StringBuilder();
             s.Append(indent);
             if (IsInsert) {

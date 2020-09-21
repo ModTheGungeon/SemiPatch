@@ -19,8 +19,17 @@ namespace SemiPatch.MonoMod.Compiler {
             if (!File.Exists(target_path)) throw new CompilerException($"Target assembly '{target_path}' doesn't exist.");
             if (!File.Exists(patch_path)) throw new CompilerException($"Patch assembly '{patch_path}' doesn't exist");
 
-            var target_mod = ModuleDefinition.ReadModule(target_path);
-            var patch_mod = ModuleDefinition.ReadModule(patch_path);
+            var asm_resolver = new DefaultAssemblyResolver();
+            if (opts.AssemblyDirectories != null) {
+                for (var i = 0; i < opts.AssemblyDirectories.Count; i++) {
+                    var dir = opts.AssemblyDirectories[i];
+                    asm_resolver.AddSearchDirectory(dir);
+                }
+            }
+
+            var target_mod = ModuleDefinition.ReadModule(target_path, new ReaderParameters { AssemblyResolver = asm_resolver });
+            var patch_mod = ModuleDefinition.ReadModule(patch_path, new ReaderParameters { AssemblyResolver = asm_resolver });
+
             var p = new Analyzer(target_mod, new ModuleDefinition[] { patch_mod });
             var patch_data = p.Analyze();
             Console.WriteLine(patch_data);
@@ -32,7 +41,13 @@ namespace SemiPatch.MonoMod.Compiler {
             patch_module.Write(patch_module_ms);
             patch_module_ms.Position = 0;
 
+            var identifier = opts.ForcedIdentifier;
+            if (identifier == null) {
+                identifier = $"TARGET {target_mod.Assembly.FullName}; PATCH {patch_module.Assembly.FullName}";
+            }
+
             var spr = new ReloadableModule(
+                identifier,
                 patch_data.TargetModule,
                 null,
                 patch_asm_stream: patch_module_ms,
@@ -122,22 +137,27 @@ namespace SemiPatch.MonoMod.Compiler {
         }
 
         public static int StaticPatchMain(StaticPatchOptions opts) {
-            var target = ModuleDefinition.ReadModule(opts.TargetPath);
-
-            var client = new StaticClient(target);
-
-            var any_module_has_mmsg = false;
-            for (var i = 0; i < opts.PatchModules.Count; i++) {
-                var patch_path = opts.PatchModules[i];
-                var result = client.Preload(client.Load(patch_path));
-                if (result == StaticClient.PreloadResult.NoMMSGModule) {
-                    Stderr.WriteLine($"WARNING: Patch module '{patch_path}' has no MMSG module, and will therefore not be patched.");
-                } else any_module_has_mmsg = true;
+            var asm_resolver = new DefaultAssemblyResolver();
+            if (opts.AssemblyDirectories != null) {
+                for (var i = 0; i < opts.AssemblyDirectories.Count; i++) {
+                    var dir = opts.AssemblyDirectories[i];
+                    asm_resolver.AddSearchDirectory(dir);
+                }
             }
 
-            if (!any_module_has_mmsg) {
-                Stderr.WriteLine($"ERROR: No modules to patch.");
-                return 1;
+            var target = ModuleDefinition.ReadModule(opts.TargetPath, new ReaderParameters { AssemblyResolver = asm_resolver });
+
+            var client = new StaticClient(target);
+            if (opts.AssemblyDirectories != null) {
+                for (var i = 0; i < opts.AssemblyDirectories.Count; i++) {
+                    var dir = opts.AssemblyDirectories[i];
+                    client.AddAssemblySearchDirectory(dir);
+                }
+            }
+
+            for (var i = 0; i < opts.PatchModules.Count; i++) {
+                var patch_path = opts.PatchModules[i];
+                var result = client.AddModule(client.Load(patch_path));
             }
 
             var output_path = opts.OutputPath;

@@ -200,6 +200,7 @@ namespace SemiPatch {
             patch.Body.SimplifyMacros();
             var instr_map = new Dictionary<Instruction, Instruction>();
             target.Body.Instructions.Clear();
+            target.Body.ExceptionHandlers.Clear();
             for (var i = 0; i < patch.Body.Instructions.Count; i++) {
                 var instr = patch.Body.Instructions[i];
                 var new_instr = Instruction.Create(OpCodes.Nop);
@@ -218,6 +219,27 @@ namespace SemiPatch {
                     instr.Operand = instr_map[op_instr];
                 }
             }
+
+            for (var i = 0; i < patch.Body.ExceptionHandlers.Count; i++) {
+                var patch_handler = patch.Body.ExceptionHandlers[i];
+                var new_handler = new ExceptionHandler(patch_handler.HandlerType);
+                if (patch_handler.TryStart != null) {
+                    new_handler.TryStart = instr_map[patch_handler.TryStart];
+                }
+                if (patch_handler.TryEnd != null) {
+                    new_handler.TryEnd = instr_map[patch_handler.TryEnd];
+                }
+                if (patch_handler.HandlerStart != null) {
+                    new_handler.HandlerStart = instr_map[patch_handler.HandlerStart];
+                }
+                if (patch_handler.HandlerEnd != null) {
+                    new_handler.HandlerEnd = instr_map[patch_handler.HandlerEnd];
+                }
+                new_handler.CatchType = patch_handler.CatchType;
+                target.Body.ExceptionHandlers.Add(new_handler);
+            }
+
+            target.Body.ExceptionHandlers.AddRange(patch.Body.ExceptionHandlers);
 
             if (method.ReceivesOriginal) {
                 VariableDefinition orig_delegate_local = null;
@@ -417,6 +439,10 @@ namespace SemiPatch {
                 } else {
                     target_method.Body = method.Patch.Body.Clone(target_method, TargetModule);
                 }
+
+                if (method.SideEffect != null) {
+                    method.SideEffect.Apply(target_method, TargetModule);
+                }
             }
 
             _Relinker.Map(method.PatchPath, Relinker.MemberEntry.FromPatchData(
@@ -562,7 +588,8 @@ namespace SemiPatch {
                 var type = mod.Types[i];
                 if (_IsExcludedFromMerging(type)) continue;
                 Logger.Debug($"Merging type: {type.BuildSignature()}");
-                type.Clone(TargetModule, _IsExcludedFromMerging);
+                var new_type = type.Clone(TargetModule, _IsExcludedFromMerging);
+                mod.Types.Add(new_type);
             }
         }
 
@@ -585,6 +612,18 @@ namespace SemiPatch {
                 _MergeModule(_PatchModules[i]);
             }
             _Relinker.Relink(TargetModule);
+            Console.WriteLine("targetname: " + TargetModule.Assembly.FullName);
+            int self_asm_ref_idx = -1;
+            for (var i = 0; i < TargetModule.AssemblyReferences.Count; i++) {
+                var asm_ref = TargetModule.AssemblyReferences[i];
+                Console.WriteLine("asmref: " + asm_ref);
+                if (asm_ref.FullName == TargetModule.Assembly.FullName) {
+                    self_asm_ref_idx = i;
+                }
+            }
+            if (self_asm_ref_idx >= 0) {
+                TargetModule.AssemblyReferences.RemoveAt(self_asm_ref_idx);
+            }
         }
     }
 }

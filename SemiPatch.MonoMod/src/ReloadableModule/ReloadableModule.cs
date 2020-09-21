@@ -83,10 +83,12 @@ namespace SemiPatch {
         public readonly Stream RDBSAssemblyStream;
         public readonly Stream PatchDataStream;
 
+        public readonly string Identifier;
         private ModuleDefinition _PatchModule;
         private ModuleDefinition _MMSGModule;
         private ModuleDefinition _RDBSModule;
         private PatchData _PatchData;
+        private IAssemblyResolver _AssemblyResolver = new DefaultAssemblyResolver();
 
         private Dictionary<string, ModuleDefinition> _ModuleMap;
 
@@ -106,7 +108,9 @@ namespace SemiPatch {
             get {
                 if (_PatchModule != null) return _PatchModule;
                 if (PatchAssemblyStream == null) return null;
-                return _PatchModule = ModuleDefinition.ReadModule(PatchAssemblyStream);
+                return _PatchModule = ModuleDefinition.ReadModule(PatchAssemblyStream, new ReaderParameters {
+                    AssemblyResolver = _AssemblyResolver
+                });
             }
             set {
                 _PatchModule = value;
@@ -117,7 +121,9 @@ namespace SemiPatch {
             get {
                 if (_MMSGModule != null) return _MMSGModule;
                 if (MMSGAssemblyStream == null) return null;
-                return _MMSGModule = ModuleDefinition.ReadModule(MMSGAssemblyStream);
+                return _MMSGModule = ModuleDefinition.ReadModule(MMSGAssemblyStream, new ReaderParameters {
+                    AssemblyResolver = _AssemblyResolver
+                });
             }
             set {
                 _MMSGModule = value;
@@ -128,7 +134,9 @@ namespace SemiPatch {
             get {
                 if (_RDBSModule != null) return _RDBSModule;
                 if (RDBSAssemblyStream == null) return null;
-                return _RDBSModule = ModuleDefinition.ReadModule(RDBSAssemblyStream);
+                return _RDBSModule = ModuleDefinition.ReadModule(RDBSAssemblyStream, new ReaderParameters {
+                    AssemblyResolver = _AssemblyResolver
+                });
             }
             set {
                 _RDBSModule = value;
@@ -151,38 +159,48 @@ namespace SemiPatch {
         public bool HasMMSG => _MMSGModule != null || MMSGAssemblyStream != null;
         public bool HasRDBS => _RDBSModule != null || RDBSAssemblyStream != null;
 
-
         public ReloadableModule(
+            string identifier,
             ModuleDefinition target_module,
             Stream patch_asm_stream,
             Stream mmsg_asm_stream,
             Stream rdbs_asm_stream,
-            Stream patch_data_stream
+            Stream patch_data_stream,
+            IAssemblyResolver asm_resolver = null
         ) {
+            Identifier = identifier;
             _TargetModule = target_module;
 
             PatchAssemblyStream = patch_asm_stream;
             MMSGAssemblyStream = mmsg_asm_stream;
             RDBSAssemblyStream = rdbs_asm_stream;
             PatchDataStream = patch_data_stream;
+
+            _AssemblyResolver = asm_resolver ?? new DefaultAssemblyResolver();
         }
 
         public ReloadableModule(
+            string identifier,
             ModuleDefinition target_module,
             ModuleDefinition patch_module,
             ModuleDefinition mmsg_module,
             ModuleDefinition rdbs_module,
-            PatchData patch_data
+            PatchData patch_data,
+            IAssemblyResolver asm_resolver = null
         ) {
+            Identifier = identifier;
             _TargetModule = target_module;
 
             _PatchModule = patch_module;
             _MMSGModule = mmsg_module;
             _RDBSModule = rdbs_module;
             _PatchData = patch_data;
+
+            _AssemblyResolver = asm_resolver ?? new DefaultAssemblyResolver();
         }
 
         public ReloadableModule(
+            string identifier,
             ModuleDefinition target_module,
             ModuleDefinition patch_module = null,
             ModuleDefinition mmsg_module = null,
@@ -191,8 +209,10 @@ namespace SemiPatch {
             Stream patch_asm_stream = null,
             Stream mmsg_asm_stream = null,
             Stream rdbs_asm_stream = null,
-            Stream patch_data_stream = null
+            Stream patch_data_stream = null,
+            IAssemblyResolver asm_resolver = null
         ) {
+            Identifier = identifier;
             _TargetModule = target_module;
 
             PatchAssemblyStream = patch_asm_stream;
@@ -205,6 +225,7 @@ namespace SemiPatch {
             _RDBSModule = rdbs_module;
             _PatchData = patch_data;
 
+            _AssemblyResolver = asm_resolver ?? new DefaultAssemblyResolver();
         }
 
         public static AssemblyDiff Compare(ReloadableModule a, ReloadableModule b) {
@@ -235,12 +256,12 @@ namespace SemiPatch {
             return true;
         }
 
-        public static ReloadableModule Read(string file_path, ModuleDefinition target_module) {
+        public static ReloadableModule Read(string file_path, ModuleDefinition target_module, IAssemblyResolver asm_resolver = null) {
             Stream stream = File.Open(file_path, FileMode.Open, FileAccess.Read, FileShare.Read);
-            return Read(stream, target_module);
+            return Read(stream, target_module, asm_resolver);
         }
 
-        public static ReloadableModule Read(Stream stream, ModuleDefinition target_module) {
+        public static ReloadableModule Read(Stream stream, ModuleDefinition target_module, IAssemblyResolver asm_resolver = null) {
             var compression_flag = stream.ReadByte();
             if (compression_flag == 1) {
                 var file_stream = stream;
@@ -269,6 +290,8 @@ namespace SemiPatch {
                 throw new InvalidVersionReloadableModuleException(ver);
             }
 
+            var identifier = reader.ReadString();
+
             var patch_asm_file = SPRFile.ReadFrom(reader);
             if (!patch_asm_file.IsPresent) {
                 throw new CorruptedReloadableModuleException("header.patch_asm_file");
@@ -285,11 +308,13 @@ namespace SemiPatch {
             var patch_data_stream = patch_data_file.OpenStreamTo(stream);
 
             return new ReloadableModule(
+                identifier,
                 target_module,
                 patch_asm_stream,
                 mmsg_asm_stream,
                 rdbs_asm_stream,
-                patch_data_stream
+                patch_data_stream,
+                asm_resolver: asm_resolver
             ) { _SourceStream = stream };
         }
 
@@ -306,6 +331,7 @@ namespace SemiPatch {
 
                 writer.Write(MAGIC);
                 writer.Write(VERSION);
+                writer.Write(Identifier);
 
                 using (var patch_module_ms = new MemoryStream())
                 using (var mmsg_module_ms = new MemoryStream())

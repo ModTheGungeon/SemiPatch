@@ -334,44 +334,47 @@ namespace SemiPatch {
                 return method;
             }
 
-            var path = method.Resolve().ToPath();
-            MemberEntry entry;
-            if (MemberEntries.TryGetValue(path, out entry) && (entry.TargetMember is MethodDefinition entry_target)) {
-                entry.CheckIfValid();
+            var resolved = method.Resolve();
+            if (resolved != null) { 
+                var path = resolved.ToPath();
+                MemberEntry entry;
+                if (MemberEntries.TryGetValue(path, out entry) && (entry.TargetMember is MethodDefinition entry_target)) {
+                    entry.CheckIfValid();
 
-                var old_method = method;
-                method = new MethodReference(
-                    entry.TargetMember.Name,
-                    state.Module.ImportReference(entry_target.ReturnType),
-                    state.Module.ImportReference(entry.TargetMember.DeclaringType)
-                );
-                for (var i = 0; i < old_method.GenericParameters.Count; i++) {
-                    var param = old_method.GenericParameters[i];
-                    var new_param = new GenericParameter(param.Name, method);
-                    new_param.Attributes = param.Attributes;
-                    for (var j = 0; j < param.CustomAttributes.Count; j++) {
-                        new_param.CustomAttributes.Add(param.CustomAttributes[j]);
+                    var old_method = method;
+                    method = new MethodReference(
+                        entry.TargetMember.Name,
+                        state.Module.ImportReference(entry_target.ReturnType),
+                        state.Module.ImportReference(entry.TargetMember.DeclaringType)
+                    );
+                    for (var i = 0; i < old_method.GenericParameters.Count; i++) {
+                        var param = old_method.GenericParameters[i];
+                        var new_param = new GenericParameter(param.Name, method);
+                        new_param.Attributes = param.Attributes;
+                        for (var j = 0; j < param.CustomAttributes.Count; j++) {
+                            new_param.CustomAttributes.Add(param.CustomAttributes[j]);
+                        }
+                        method.GenericParameters.Add(new_param);
                     }
-                    method.GenericParameters.Add(new_param);
+                    method.HasThis = old_method.HasThis;
+                    method.ExplicitThis = old_method.ExplicitThis;
+                    for (var i = 0; i < old_method.Parameters.Count; i++) {
+                        var param = old_method.Parameters[i];
+                        var new_param = new ParameterDefinition(param.Name, param.Attributes, Relink(state, param.ParameterType));
+                        if (param.HasConstant) {
+                            new_param.Constant = param.Constant;
+                        }
+                        for (var j = 0; j < param.CustomAttributes.Count; j++) {
+                            var attr = param.CustomAttributes[j];
+                            new_param.CustomAttributes.Add(attr);
+                        }
+                        method.Parameters.Add(new_param);
+                    }
+
+                    method = state.Module.ImportReference(method);
+
+                    Logger.Debug($"Relinked method reference '{path}' to '{entry.TargetMember.ToPathGeneric()}'");
                 }
-                method.HasThis = old_method.HasThis;
-                method.ExplicitThis = old_method.ExplicitThis;
-                for (var i = 0; i < old_method.Parameters.Count; i++) {
-                    var param = old_method.Parameters[i];
-                    var new_param = new ParameterDefinition(param.Name, param.Attributes, Relink(state, param.ParameterType));
-                    if (param.HasConstant) {
-                        new_param.Constant = param.Constant;
-                    }
-                    for (var j = 0; j < param.CustomAttributes.Count; j++) {
-                        var attr = param.CustomAttributes[j];
-                        new_param.CustomAttributes.Add(attr);
-                    }
-                    method.Parameters.Add(new_param);
-                }
-
-                method = state.Module.ImportReference(method);
-
-                Logger.Debug($"Relinked method reference '{path}' to '{entry.TargetMember.ToPathGeneric()}'");
             }
 
             method.ReturnType = Relink(state, method.ReturnType);

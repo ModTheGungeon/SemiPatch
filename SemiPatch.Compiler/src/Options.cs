@@ -20,8 +20,14 @@ namespace SemiPatch.Compiler.Options {
         [Option('u', "uncompressed", HelpText = "Do not compress the resulting SPR module.")]
         public bool Uncompressed { get; set; }
 
+        [Option('a', "assembly-dir", HelpText = "Add a directory to resolve assemblies from.", Separator = ';')]
+        public IList<string> AssemblyDirectories { get; set; } = null;
+
         [Option('o', "output", HelpText = "Path to write the new SemiPatch Reloadable module into.")]
         public string OutputPath { get; set; } = null;
+
+        [Option('i', "identifier", HelpText = "Force a certain value as the SemiPatch Reloadable module identifier.")]
+        public string ForcedIdentifier { get; set; } = null;
     }
 
     [Verb("extract", HelpText = "Extract the files that make up a SemiPatch Reloadable module.")]
@@ -40,6 +46,9 @@ namespace SemiPatch.Compiler.Options {
 
         [Value(1, MetaName = "patch_modules", HelpText = "List of SemiPatch Reloadable modules to patch the target with.", Required = true)]
         public IList<string> PatchModules { get; set; }
+
+        [Option('a', "assembly-dir", HelpText = "Add a directory to resolve assemblies from.", Separator = ';')]
+        public IList<string> AssemblyDirectories { get; set; } = null;
 
         [Option('o', "output", HelpText = "Path to write the resulting patched assembly into.")]
         public string OutputPath { get; set; } = null;

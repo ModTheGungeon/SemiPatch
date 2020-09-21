@@ -170,7 +170,7 @@ namespace SemiPatch {
     /// 
     /// To minimize confusion, SemiPatch does not allow you to patch properties
     /// by specifying properties in the patch class - instead, you have to define
-    /// methods tagged with <see cref="GetterAttribute"/> and/or <see cref="SetterAttribute"/>.
+    /// methods tagged with <see cref="GetMethodAttribute"/> and/or <see cref="SetMethodAttribute"/>.
     /// 
     /// This is superior to specifying the compiler-generated getter method directly
     /// (e.g. <c>get_SomeProperty</c>), as it allows you to name the patch
@@ -182,9 +182,9 @@ namespace SemiPatch {
     /// <see cref="ProxyAttribute"/>, <see cref="ReceiveOriginalAttribute"/> etc.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public class GetterAttribute : Attribute {
+    public class GetMethodAttribute : Attribute {
         /// <param name="prop">Name of the property to patch the getter of.</param>
-        public GetterAttribute(string prop) { }
+        public GetMethodAttribute(string prop) { }
     }
 
     /// <summary>
@@ -193,7 +193,7 @@ namespace SemiPatch {
     /// 
     /// To minimize confusion, SemiPatch does not allow you to patch properties
     /// by specifying properties in the patch class - instead, you have to define
-    /// methods tagged with <see cref="GetterAttribute"/> and/or <see cref="SetterAttribute"/>.
+    /// methods tagged with <see cref="GetMethodAttribute"/> and/or <see cref="SetMethodAttribute"/>.
     /// 
     /// This is superior to specifying the compiler-generated setter method directly
     /// (e.g. <c>set_SomeProperty</c>), as it allows you to name the patch
@@ -205,9 +205,9 @@ namespace SemiPatch {
     /// <see cref="ProxyAttribute"/>, <see cref="ReceiveOriginalAttribute"/> etc.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public class SetterAttribute : Attribute {
+    public class SetMethodAttribute : Attribute {
         /// <param name="prop">Name of the property to patch the setter of.</param>
-        public SetterAttribute(string prop) { }
+        public SetMethodAttribute(string prop) { }
     }
 
 

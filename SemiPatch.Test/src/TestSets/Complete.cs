@@ -61,11 +61,11 @@ namespace SemiPatch.Test {
             public int AddedInstanceProperty { get; set; }
 
             [Insert]
-            [Setter("StaticGetProperty")]
+            [SetMethod("StaticGetProperty")]
             public void SetStaticGetProperty(int value) {}
 
             [Insert]
-            [Getter("StaticSetProperty")]
+            [GetMethod("StaticSetProperty")]
             public int GetStaticSetProperty() => 0;
 
             public static void StaticVoidMethod() { /* changed */ }
@@ -93,5 +93,14 @@ namespace SemiPatch.Test {
             [Insert]
             public static void AddedStaticMethod() {}
         }
+    }
+
+    [TestPatch("CompleteTarget")]
+    public class CompletePatchInsertsOnly {
+        [Insert]
+        public float NewFloatField;
+
+        [Insert]
+        public void AnotherNewMethod() {}
     }
 }

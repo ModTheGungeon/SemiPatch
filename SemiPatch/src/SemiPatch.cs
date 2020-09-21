@@ -21,8 +21,8 @@ namespace SemiPatch {
         public static TypeDefinition ReceiveOriginalAttribute;
         public static TypeDefinition ProxyAttribute;
         public static TypeDefinition TreatLikeMethodAttribute;
-        public static TypeDefinition GetterAttribute;
-        public static TypeDefinition SetterAttribute;
+        public static TypeDefinition GetMethodAttribute;
+        public static TypeDefinition SetMethodAttribute;
         public static TypeDefinition InjectAttribute;
         public static TypeDefinition CaptureLocalAttribute;
         public static TypeDefinition OrigType;
@@ -51,8 +51,8 @@ namespace SemiPatch {
             ReceiveOriginalAttribute = SemiPatchModule.GetType("SemiPatch.ReceiveOriginalAttribute");
             ProxyAttribute = SemiPatchModule.GetType("SemiPatch.ProxyAttribute");
             TreatLikeMethodAttribute = SemiPatchModule.GetType("SemiPatch.TreatLikeMethodAttribute");
-            GetterAttribute = SemiPatchModule.GetType("SemiPatch.GetterAttribute");
-            SetterAttribute = SemiPatchModule.GetType("SemiPatch.SetterAttribute");
+            GetMethodAttribute = SemiPatchModule.GetType("SemiPatch.GetMethodAttribute");
+            SetMethodAttribute = SemiPatchModule.GetType("SemiPatch.SetMethodAttribute");
             InjectAttribute = SemiPatchModule.GetType("SemiPatch.InjectAttribute");
             CaptureLocalAttribute = SemiPatchModule.GetType("SemiPatch.CaptureLocalAttribute");
             OrigType = SemiPatchModule.GetType("SemiPatch.Orig");

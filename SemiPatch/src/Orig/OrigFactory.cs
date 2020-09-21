@@ -318,6 +318,12 @@ namespace SemiPatch {
         }
 
         public static TypeReference OrigTypeForMethod(ModuleDefinition module, MethodReference method, bool skip_first_arg = false) {
+            var is_void = method.ReturnType.IsSame(SemiPatch.VoidType);
+
+            if (is_void && method.Parameters.Count == 0) {
+                return module.ImportReference(VoidOrig_n0);
+            }
+
             var type = OrigGenericTypeForMethod(method, skip_first_arg);
             var inst = new GenericInstanceType(module.ImportReference(type));
             for (var i = skip_first_arg ? 1 : 0; i < method.Parameters.Count; i++) {

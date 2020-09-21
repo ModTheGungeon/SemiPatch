@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using MonoMod.Utils;
@@ -15,18 +17,29 @@ namespace SemiPatch {
                 ev.Name,
                 ev.Attributes,
                 target_module.ImportReference(ev.EventType)
-            ) {
-                AddMethod = ev.AddMethod?.ToPath()?.WithDeclaringType(decl_type)?.FindIn<MethodDefinition>(target_module),
-                RemoveMethod = ev.RemoveMethod?.ToPath()?.WithDeclaringType(decl_type)?.FindIn<MethodDefinition>(target_module),
-                InvokeMethod = ev.InvokeMethod?.ToPath()?.WithDeclaringType(decl_type)?.FindIn<MethodDefinition>(target_module)
-            };
+            );
 
+            HashSet<Signature> other_method_sigs = null;
+            if (ev.OtherMethods.Count > 0) {
+                other_method_sigs = new HashSet<Signature>();
+                for (var i = 0; i < ev.OtherMethods.Count; i++) {
+                    other_method_sigs.Add(new Signature(ev.OtherMethods[i]));
+                }
+            }
 
-            for (var i = 0; i < ev.OtherMethods.Count; i++) {
-                var other_method = ev.OtherMethods[i];
-                new_event.OtherMethods.Add(
-                    other_method.ToPath().WithDeclaringType(decl_type).FindIn<MethodDefinition>(target_module)
-                );
+            for (var i = 0; i < decl_type.Methods.Count; i++) {
+                var m = decl_type.Methods[i];
+                var sig = new Signature(m);
+
+                if (ev.RemoveMethod != null && sig == new Signature(ev.RemoveMethod)) new_event.RemoveMethod = m;
+                if (ev.AddMethod != null && sig == new Signature(ev.AddMethod)) new_event.AddMethod = m;
+                if (ev.InvokeMethod != null && sig == new Signature(ev.InvokeMethod)) new_event.InvokeMethod = m;
+
+                if (other_method_sigs != null) {
+                    if (other_method_sigs.Contains(sig)) {
+                        new_event.OtherMethods.Add(m);
+                    }
+                }
             }
 
             for (var i = 0; i < ev.CustomAttributes.Count; i++) {
@@ -38,31 +51,49 @@ namespace SemiPatch {
         }
 
         public static PropertyDefinition Clone(this PropertyDefinition prop, TypeDefinition decl_type, ModuleDefinition target_module) {
+            /* using (var w = new StreamWriter(Console.OpenStandardError())) { */
+            /*     w.WriteLine($"end {prop.FullName}"); */
+            /* } */
+
             var new_prop = new PropertyDefinition(
                 prop.Name,
                 prop.Attributes,
                 target_module.ImportReference(prop.PropertyType)
             ) {
                 HasDefault = prop.HasDefault,
-                GetMethod = prop.GetMethod?.ToPath()?.WithDeclaringType(decl_type)?.FindIn<MethodDefinition>(target_module),
-                SetMethod = prop.SetMethod?.ToPath()?.WithDeclaringType(decl_type)?.FindIn<MethodDefinition>(target_module)
             };
 
             if (prop.HasConstant) {
                 new_prop.Constant = ImportUntyped(prop.Constant, target_module);
             }
 
-            for (var i = 0; i < prop.OtherMethods.Count; i++) {
-                var other_method = prop.OtherMethods[i];
-                new_prop.OtherMethods.Add(
-                    other_method.ToPath().WithDeclaringType(decl_type).FindIn<MethodDefinition>(target_module)
-                );
+            HashSet<Signature> other_method_sigs = null;
+            if (prop.OtherMethods.Count > 0) {
+                other_method_sigs = new HashSet<Signature>();
+
+                for (var i = 0; i < prop.OtherMethods.Count; i++) {
+                    other_method_sigs.Add(new Signature(prop.OtherMethods[i]));
+                }
+            }
+
+            for (var i = 0; i < decl_type.Methods.Count; i++) {
+                var m = decl_type.Methods[i];
+                var sig = new Signature(m);
+
+                if (prop.GetMethod != null && sig == new Signature(prop.GetMethod)) new_prop.GetMethod = m;
+                if (prop.SetMethod != null && sig == new Signature(prop.SetMethod)) new_prop.SetMethod = m;
+
+                if (other_method_sigs != null) {
+                    if (other_method_sigs.Contains(sig)) new_prop.OtherMethods.Add(m);
+                }
             }
 
             for (var i = 0; i < prop.CustomAttributes.Count; i++) {
                 var attr = prop.CustomAttributes[i];
                 new_prop.CustomAttributes.Add(attr.Clone(target_module));
             }
+
+            new_prop.DeclaringType = decl_type;
 
             return new_prop;
         }
@@ -85,6 +116,8 @@ namespace SemiPatch {
                 var attr = field.CustomAttributes[i];
                 new_field.CustomAttributes.Add(attr.Clone(target_module));
             }
+
+            new_field.DeclaringType = decl_type;
 
             return new_field;
         }
@@ -145,7 +178,7 @@ namespace SemiPatch {
             return new_param;
         }
 
-        public static MethodDefinition Clone(this MethodDefinition method, TypeDefinition decl_type, ModuleDefinition target_module) {
+        public static MethodDefinition Clone(this MethodDefinition method, TypeDefinition decl_type, ModuleDefinition target_module, bool strip_body = false) {
             var new_method = new MethodDefinition(
                 method.Name,
                 method.Attributes,
@@ -179,7 +212,16 @@ namespace SemiPatch {
                 new_method.GenericParameters.Add(new_param);
             }
 
-            new_method.Body = method.Body.Clone(new_method, target_module);
+            if (strip_body) {
+                method.Attributes = method.Attributes | MethodAttributes.PInvokeImpl;
+                method.IsPInvokeImpl = true;
+            } else {
+                new_method.Body = method.Body.Clone(new_method, target_module);
+            }
+
+            //@NOTE 18.08.2020 added recently - for some reason decl_type was never used,
+            //perhaps this causes problems
+            new_method.DeclaringType = decl_type;
 
             return new_method;
         }
@@ -214,15 +256,13 @@ namespace SemiPatch {
             return new_body;
         }
 
-        public static TypeDefinition Clone(this TypeDefinition type, ModuleDefinition target_module, Func<TypeDefinition, bool> exclude = null) {
+        public static TypeDefinition Clone(this TypeDefinition type, ModuleDefinition target_module, Func<TypeDefinition, bool> exclude = null, bool strip_method_bodies = false) {
             var new_type = new TypeDefinition(
                 type.Namespace,
                 type.Name,
                 type.Attributes,
                 type.BaseType != null ? target_module.ImportReference(type.BaseType) : null
             );
-
-            target_module.Types.Add(new_type);
 
             for (var i = 0; i < type.Fields.Count; i++) {
                 new_type.Fields.Add(type.Fields[i].Clone(new_type, target_module));
@@ -232,7 +272,7 @@ namespace SemiPatch {
             // methods have to be copied first so that they can be resolved
 
             for (var i = 0; i < type.Methods.Count; i++) {
-                var new_method = type.Methods[i].Clone(new_type, target_module);
+                var new_method = type.Methods[i].Clone(new_type, target_module, strip_body: strip_method_bodies);
                 new_type.Methods.Add(new_method);
             }
 

@@ -16,6 +16,10 @@ namespace SemiPatch {
         public AnalyzerException(string msg) : base(msg) { }
     }
 
+    public class NonPatchTypeException : AnalyzerException {
+        public NonPatchTypeException(TypeDefinition type) : base($"Type '{type.FullName}' is not marked with the Patch attribute") {}
+    }
+
     /// <summary>
     /// Thrown when attempting to deserialize an outdated <see cref="PatchData"/>
     /// object.

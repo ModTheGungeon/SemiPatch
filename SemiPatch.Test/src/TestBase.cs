@@ -158,6 +158,7 @@ namespace SemiPatch.Test {
 
                     }
                 }
+                module.Types.Add(cecil_type);
                 relinker.Map(imported_type.Resolve().ToPath(), new Relinker.TypeEntry { TargetType = cecil_type });
             }
             relinker.Relink(module);
@@ -198,12 +199,11 @@ namespace SemiPatch.Test {
         public ReloadableModule MakeReloadable(ModuleDefinition mod) {
             var analyzer = new Analyzer(TargetModule, new ModuleDefinition[] { mod });
             var rm = new ReloadableModule(
+                identifier: $"TEST_RELOADABLE {TargetModule.Assembly.FullName}",
                 target_module: TargetModule,
                 patch_module: mod,
                 patch_data: analyzer.Analyze()
             );
-            Console.WriteLine($"EQ? {rm.PatchData.TargetModule == TargetModule}");
-            Console.WriteLine($"EQ2? {rm.PatchData.Types[0].TargetType.Module == TargetModule}");
             return rm;
         }
 
@@ -215,6 +215,10 @@ namespace SemiPatch.Test {
         public void Write(ModuleDefinition module) {
             Logger.Debug($"Writing module '{module.Name}' to disk");
             module.Write(_TempPath(module.Name + ".dll"));
+        }
+        
+        public string TemporaryPath(string name) {
+            return _TempPath(name);
         }
 
         public void WritePatches() {
@@ -249,12 +253,10 @@ namespace SemiPatch.Test {
 
             var whatthefuck = TargetModule;
 
-            Console.WriteLine($"modules: {PatchModules.Count}");
             for (var i = 0; i < PatchModules.Count; i++) {
                 var mod = PatchModules[i];
                 var reloadable = MakeReloadable(mod);
-                Console.WriteLine(mod);
-                sc.Preload(reloadable);
+                sc.AddModule(reloadable);
             }
 
             sc.Commit();

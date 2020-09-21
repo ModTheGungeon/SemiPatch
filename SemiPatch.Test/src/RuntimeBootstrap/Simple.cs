@@ -29,9 +29,8 @@ namespace SemiPatch.Test
                 test.TargetModule
             );
 
-            client.BeginProcessing();
-            client.Process(null, rm);
-            client.FinishProcessing();
+            client.AddModule(rm);
+            client.Commit();
 
             Assert.AreEqual(10, method());
 
@@ -61,9 +60,8 @@ namespace SemiPatch.Test
                 test.TargetModule
             );
 
-            client.BeginProcessing();
-            client.Process(null, rm);
-            client.FinishProcessing();
+            client.AddModule(rm);
+            client.Commit();
 
             Assert.AreEqual("i don't like bob", method("bob", 42));
         }

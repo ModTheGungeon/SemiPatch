@@ -318,7 +318,21 @@ namespace SemiPatch {
 
                     var target_prop = TryGetTargetProperty(target_prop_path);
 
+                    PatchMethodData.MemberSideEffect side_effect = null;
+
                     if (method_attrs.Insert) {
+                        if (method_attrs.PropertyGetter != null) {
+                            side_effect = new PatchMethodData.PropertySideEffect(
+                                PatchMethodData.PropertySideEffect.EffectType.SetSet,
+                                target_prop_path
+                            );
+                        } else if (method_attrs.PropertySetter != null) {
+                            side_effect = new PatchMethodData.PropertySideEffect(
+                                PatchMethodData.PropertySideEffect.EffectType.SetGet,
+                                target_prop_path
+                            );
+                        }
+
                         if (target_prop != null && ((target_prop.GetMethod != null && method_attrs.PropertyGetter != null) || (target_prop.SetMethod != null && method_attrs.PropertySetter != null))) {
                             throw new InsertTargetExistsException($"Found matching property '{target_prop_path}', but Getter/Setter patch method '{patch_path}' was marked Insert - drop the attribute if you want to modify the getter/setter of this property.", patch_path, target_prop_path);
                         }
@@ -330,7 +344,14 @@ namespace SemiPatch {
                         if (target_prop != null && ((target_prop.GetMethod == null && method_attrs.PropertyGetter != null) || (target_prop.SetMethod == null && method_attrs.PropertySetter != null))) {
                             throw new PatchTargetNotFoundException($"Found matching property '{target_prop_path}', but the getter/setter targetted by the patch method '{patch_path}' doesn't exist - use the Insert attribute on the Getter/Setter method to add it.", patch_path, target_prop_path);
                         }
+
                     }
+
+                    if (side_effect != null) {
+                        Logger.Debug($"Applied side effect: {side_effect}");
+                    }
+
+                    method_data.SideEffect = side_effect;
                 }
 
                 if (method_attrs.Proxy) {
@@ -550,10 +571,15 @@ namespace SemiPatch {
         public void ScanTypes(Mono.Collections.Generic.Collection<TypeDefinition> types) {
             Logger.Info($"Scanning {types.Count} types");
             foreach (var type in types) {
+                if (type.FullName == "<Module>") continue;
+
                 Logger.Debug($"Scanning type: {type.Name}");
                 var attrs = new SpecialAttributeData(type.CustomAttributes);
-                if (attrs.PatchType == null) continue;
                 if (attrs.Ignore) continue;
+                if (attrs.PatchType == null) {
+                    Logger.Error($"Non-patch type: {type.FullName}");
+                    throw new NonPatchTypeException(type);
+                }
 
                 Logger.Debug($"Patch attribute detected on type: {type.Name}");
 

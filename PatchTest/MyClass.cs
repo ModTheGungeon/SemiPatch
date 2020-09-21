@@ -144,9 +144,8 @@ namespace PatchTest.Patches {
 
             if (cmd == "reload") {
                 var rm = Client.Load("PatchTest.spr");
-                Client.BeginProcessing();
-                Client.Process(CurrentModule, rm);
-                Client.FinishProcessing();
+                Client.AddModule(rm);
+                Client.Commit();
 
                 CurrentModule = rm;
 

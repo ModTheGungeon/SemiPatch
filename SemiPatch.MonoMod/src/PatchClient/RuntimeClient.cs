@@ -16,41 +16,86 @@ namespace SemiPatch {
             NoChanges
         }
 
+        public struct QueuedReloadableModule {
+            public ReloadableModule Module;
+            public AssemblyDiff Diff;
+
+            public QueuedReloadableModule(ReloadableModule mod, AssemblyDiff diff) {
+                Module = mod;
+                Diff = diff;
+            }
+        }
+
         public readonly RuntimePatchManager PatchManager;
         public ModuleDefinition RunningModule;
         public Relinker Relinker;
 
+        private IDictionary<string, ReloadableModule> _ModuleMap;
+        private IDictionary<string, QueuedReloadableModule> _QueuedModuleMap;
+
         public Logger Logger;
 
-        public RuntimeClient(System.Reflection.Assembly asm, ModuleDefinition target_module, ModuleDefinition running_module) {
-            TargetModule = target_module;
+        public RuntimeClient(System.Reflection.Assembly asm, ModuleDefinition target_module, ModuleDefinition running_module)
+        : base(target_module) {
             RunningModule = running_module;
+
             Relinker = new Relinker();
             PatchManager = new RuntimePatchManager(Relinker, asm, running_module);
+
             Logger = new Logger($"{nameof(RuntimeClient)}({TargetModule.Name})");
+
+            _ModuleMap = new Dictionary<string, ReloadableModule>();
+            _QueuedModuleMap = new Dictionary<string, QueuedReloadableModule>();
         }
 
-        public void BeginProcessing() {
-            Logger.Debug("Reset");
+        public override AddModuleResult AddModule(ReloadableModule mod) {
+            Logger.Debug($"Adding module: {mod.Identifier}");
+
+            ReloadableModule prev_mod = null;
+            _ModuleMap.TryGetValue(mod.Identifier, out prev_mod);
+
+            var diff = ReloadableModule.Compare(prev_mod, mod);
+
+            if (!diff.HasChanges) return AddModuleResult.NoChanges;
+            if (!PatchManager.CanPatchAtRuntime(diff)) return AddModuleResult.IncompatibleWithClient;
+
+            _QueuedModuleMap[mod.Identifier] = new QueuedReloadableModule(mod, diff);
+
+            return AddModuleResult.Success;
+        }
+
+        public override CommitResult Commit() {
+            Logger.Debug($"Committing modules");
+
+            // reset relinker only
             Relinker.Clear();
-            PatchManager.ResetPatches();
-        }
 
-        public Result Process(ReloadableModule old_module, ReloadableModule new_module) {
-            Logger.Debug($"Processing: {old_module} -> {new_module}");
+            // re-register modules that haven't changed in relinker
+            foreach (var kv in _ModuleMap) {
+                if (_QueuedModuleMap.TryGetValue(kv.Key, out QueuedReloadableModule prev_mod)) {
+                    continue;
+                }
 
-            Relinker.LoadRelinkMapFrom(new_module.PatchData, RunningModule);
+                var mod = kv.Value;
+                Relinker.LoadRelinkMapFrom(mod.PatchData, RunningModule);
+            }
 
-            var diff = ReloadableModule.Compare(old_module, new_module);
-            if (!diff.HasChanges) return Result.NoChanges;
-            if (!PatchManager.CanPatchAtRuntime(diff)) return Result.RequiresStaticPatching;
+            foreach (var kv in _QueuedModuleMap) {
+                ReloadableModule old_mod = null;
+                _ModuleMap.TryGetValue(kv.Key, out old_mod);
 
-            PatchManager.ProcessDifference(diff, update_running_module: false);
-            return Result.Success;
-        }
+                var new_mod = kv.Value;
+                Relinker.LoadRelinkMapFrom(new_mod.Module.PatchData, RunningModule);
+                PatchManager.ProcessDifference(new_mod.Diff, update_running_module: false);
+                
+                _ModuleMap[kv.Key] = new_mod.Module;
+            }
 
-        public void FinishProcessing() {
+            _QueuedModuleMap.Clear();
+
             PatchManager.FinalizeProcessing();
+
+            return CommitResult.Success;
         }
 
         public override void Dispose() {

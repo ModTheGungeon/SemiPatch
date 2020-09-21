@@ -23,6 +23,13 @@ namespace SemiPatch {
             if (a.Name != b.Name) return false;
             if (a.Namespace != b.Namespace) return false;
 
+            var scope_name = a.Scope.Name;
+            if (scope_name == "mscorlib.dll") {
+                // special case: mscorlib is weird, and e.g. on mono a ref to 2.0 will still resolve to 4.0
+                // so we avoid doing any further checks
+                return true;
+            }
+
             if (a is TypeDefinition && b is TypeDefinition) {
                 var ad = a as TypeDefinition;
                 var bd = b as TypeDefinition;
@@ -38,17 +45,31 @@ namespace SemiPatch {
         }
 
         public static bool IsSame(this IMetadataScope a, IMetadataScope b) {
+            string a_full_name = null;
             string a_name = null;
             if (a is ModuleDefinition) {
-                a_name = ((ModuleDefinition)a).Assembly.Name.FullName;
-            } else if (a is AssemblyNameReference) a_name = ((AssemblyNameReference)a).FullName;
+                a_full_name = ((ModuleDefinition)a).Assembly.Name.FullName;
+                a_name = ((ModuleDefinition)a).Assembly.Name.Name;
+            } else if (a is AssemblyNameReference) {
+                a_full_name = ((AssemblyNameReference)a).FullName;
+                a_name = ((AssemblyNameReference)a).Name;
+            }
 
+            string b_full_name = null;
             string b_name = null;
             if (b is ModuleDefinition) {
-                b_name = ((ModuleDefinition)b).Assembly.Name.FullName;
-            } else if (b is AssemblyNameReference) b_name = ((AssemblyNameReference)b).FullName;
+                b_full_name = ((ModuleDefinition)b).Assembly.Name.FullName;
+                b_name = ((ModuleDefinition)b).Assembly.Name.Name;
+            } else if (b is AssemblyNameReference) {
+                b_full_name = ((AssemblyNameReference)b).FullName;
+                b_name = ((AssemblyNameReference)b).Name;
+            }
 
-            return a_name == b_name;
+            if (a_name == "mscorlib" && b_name == "mscorlib") {
+                return true;
+            }
+
+            return a_full_name == b_full_name;
         }
 
         public static bool IsSame(this MethodReference a, MethodReference b, bool exclude_generic_args = false) {

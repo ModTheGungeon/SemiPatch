@@ -46,9 +46,9 @@ namespace SemiPatch {
                     Proxy = true;
                 } else if (attr.AttributeType.IsSame(SemiPatch.TreatLikeMethodAttribute)) {
                     TreatConstructorLikeMethod = true;
-                } else if (attr.AttributeType.IsSame(SemiPatch.GetterAttribute)) {
+                } else if (attr.AttributeType.IsSame(SemiPatch.GetMethodAttribute)) {
                     PropertyGetter = attr.ConstructorArguments[0].Value as string;
-                } else if (attr.AttributeType.IsSame(SemiPatch.SetterAttribute)) {
+                } else if (attr.AttributeType.IsSame(SemiPatch.SetMethodAttribute)) {
                     PropertySetter = attr.ConstructorArguments[0].Value as string;
                 } else if (attr.AttributeType.IsSame(SemiPatch.InjectAttribute)) {
                     InjectData = InjectAttribute.MakeFromCecil(attr.ConstructorArguments);
