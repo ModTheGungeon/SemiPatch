@@ -65,6 +65,41 @@ namespace SemiPatch.MonoMod.Compiler {
             return 0;
         }
 
+        public static int BuildProxyMain(BuildProxyOptions opts) {
+            var asm_resolver = new DefaultAssemblyResolver();
+            if (opts.AssemblyDirectories != null) {
+                for (var i = 0; i < opts.AssemblyDirectories.Count; i++) {
+                    var dir = opts.AssemblyDirectories[i];
+                    asm_resolver.AddSearchDirectory(dir);
+                }
+            }
+
+            var target = ModuleDefinition.ReadModule(opts.TargetPath, new ReaderParameters { AssemblyResolver = asm_resolver });
+            var client = new ProxyClient(target);
+
+            for (var i = 0; i < opts.ModulePaths.Count; i++) {
+                var rm = client.Load(opts.ModulePaths[i]);
+                client.AddModule(rm);
+            }
+
+            client.Commit();
+
+            var output_path = opts.OutputPath;
+            if (output_path == null) {
+                var ext = Path.GetExtension(opts.TargetPath);
+                var filename = Path.GetFileNameWithoutExtension(opts.TargetPath);
+
+                if (ext == "") {
+                    ext = ".dll";
+                }
+
+                output_path = $"{filename}.proxy{ext}";
+            }
+            client.WriteResult(output_path);
+
+            return 0;
+        }
+
         public static int TypeMain(TypeOptions opts) {
             using (var f = File.OpenRead(opts.Path)) {
                 var compression_byte = f.ReadByte();
@@ -196,7 +231,8 @@ namespace SemiPatch.MonoMod.Compiler {
                 TypeOptions,
                 BuildOptions,
                 ExtractOptions,
-                StaticPatchOptions
+                StaticPatchOptions,
+                BuildProxyOptions
             >(args);
 
             try {
@@ -205,6 +241,7 @@ namespace SemiPatch.MonoMod.Compiler {
                     (BuildOptions opts) => BuildMain(opts),
                     (ExtractOptions opts) => ExtractMain(opts),
                     (StaticPatchOptions opts) => StaticPatchMain(opts),
+                    (BuildProxyOptions opts) => BuildProxyMain(opts),
                     errors => HandleErrors(errors)
                 );
             } catch (Exception e) {

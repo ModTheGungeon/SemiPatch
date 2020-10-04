@@ -30,6 +30,21 @@ namespace SemiPatch.Compiler.Options {
         public string ForcedIdentifier { get; set; } = null;
     }
 
+    [Verb("build-proxy", HelpText = "Build a proxy DLL from the target DLL and a number of SPR modules")]
+    public class BuildProxyOptions {
+        [Value(0, MetaName = "target_dll_path", HelpText = "Path to the target assembly.", Required = true)]
+        public string TargetPath { get; set; }
+
+        [Value(1, MetaName = "module_paths", HelpText = "List of SPR modules to include in the proxy.", Required = false)]
+        public IList<string> ModulePaths { get; set; } = new List<string>();
+
+        [Option('a', "assembly-dir", HelpText = "Add a directory to resolve assemblies from.", Separator = ';')]
+        public IList<string> AssemblyDirectories { get; set; } = null;
+
+        [Option('o', "output", HelpText = "Path to write the proxy assembly into.")]
+        public string OutputPath { get; set; } = null;
+    }
+
     [Verb("extract", HelpText = "Extract the files that make up a SemiPatch Reloadable module.")]
     public class ExtractOptions {
         [Value(0, MetaName = "spr_path", HelpText = "Path to a SemiPatch Reloadable module.", Required = true)]
