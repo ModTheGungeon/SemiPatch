@@ -135,6 +135,7 @@ namespace SemiPatch {
                 if (_PatchData != null) return _PatchData;
                 if (PatchDataStream == null) return null;
                 _AssemblyResolver.AddOverride(PatchModule.Assembly);
+                _AssemblyResolver.AddOverride(_TargetModule.Assembly);
                 using (var reader = new BinaryReader(PatchDataStream)) {
                     return _PatchData = PatchData.Deserialize(reader, _AssemblyResolver);
                 }
