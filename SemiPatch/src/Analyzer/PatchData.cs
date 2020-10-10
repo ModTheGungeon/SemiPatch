@@ -14,7 +14,7 @@ namespace SemiPatch {
         /// A magic number that is used to ensure that loading outdated
         /// binary metadata files errors early on.
         /// </summary>
-        public const int CURRENT_VERSION = 10;
+        public const int CURRENT_VERSION = 20;
 
         /// <summary>
         /// The format version of this PatchData object.
@@ -87,9 +87,8 @@ namespace SemiPatch {
         /// </summary>
         /// <returns>The deserialized PatchData object.</returns>
         /// <param name="reader">The binary reader.</param>
-        /// <param name="fallback_module_map">A dictionary that maps fully qualified assembly names to ModuleDefinitions 
-        /// - borderline necessary if you're comparing two metadata files from two different iterations of a patch.</param>
-        public static PatchData Deserialize(BinaryReader reader, Dictionary<string, ModuleDefinition> fallback_module_map = null) {
+        /// <param name="asm_resolver">Assembly resolver for the target and patch assemblies.</param>
+        public static PatchData Deserialize(BinaryReader reader, IAssemblyResolver asm_resolver) {
             var version = reader.ReadInt32();
             if (version != CURRENT_VERSION) {
                 throw new PatchDataVersionMismatchException(version);
@@ -97,29 +96,14 @@ namespace SemiPatch {
 
             var target_module_name = reader.ReadString();
 
-            ModuleDefinition target_module = null;
-            if (fallback_module_map?.TryGetValue(target_module_name, out target_module) != true) {
-                var patch_asm = System.Reflection.Assembly.ReflectionOnlyLoad(target_module_name);
-                if (patch_asm == null || target_module_name != patch_asm.FullName) {
-                    throw new PatchDataDeserializationException($"Failed loading target assembly (version must match exactly): '{target_module_name}'");
-                }
-                target_module = ModuleDefinition.ReadModule(patch_asm.Location);
-
-            }
+            var target_module = asm_resolver.Resolve(AssemblyNameDefinition.Parse(target_module_name)).MainModule;
 
             var patch_modules_count = reader.ReadInt32();
             var patch_modules = new List<ModuleDefinition>();
             var patch_module_map = new Dictionary<string, ModuleDefinition>();
             for (var i = 0; i < patch_modules_count; i++) {
                 var patch_asm_name = reader.ReadString();
-                ModuleDefinition patch_module = null;
-                if (fallback_module_map?.TryGetValue(patch_asm_name, out patch_module) != true) {
-                    var patch_asm = System.Reflection.Assembly.ReflectionOnlyLoad(patch_asm_name);
-                    if (patch_asm == null || patch_asm_name != patch_asm.FullName) {
-                        throw new PatchDataDeserializationException($"Failed loading patch assembly (version must match exactly): '{patch_asm_name}'");
-                    }
-                    patch_module = ModuleDefinition.ReadModule(patch_asm.Location);
-                }
+                var patch_module = asm_resolver.Resolve(AssemblyNameDefinition.Parse(patch_asm_name)).MainModule;
                 patch_modules.Add(patch_module);
                 patch_module_map[patch_asm_name] = patch_module;
             }
@@ -136,11 +120,10 @@ namespace SemiPatch {
         /// </summary>
         /// <returns>The deserialized PatchData.</returns>
         /// <param name="path">Path of the serialized PatchData file.</param>
-        /// <param name="fallback_module_map">A dictionary that maps fully qualified assembly names to ModuleDefinitions 
-        /// - borderline necessary if you're comparing two metadata files from two different iterations of a patch.</param>
-        public static PatchData ReadFrom(string path, Dictionary<string, ModuleDefinition> fallback_module_map = null) {
+        /// <param name="asm_resolver">Assembly resolver for the target and patch assemblies.</param>
+        public static PatchData ReadFrom(string path, IAssemblyResolver asm_resolver) {
             using (var r = new BinaryReader(File.OpenRead(path))) {
-                return Deserialize(r, fallback_module_map);
+                return Deserialize(r, asm_resolver);
             }
         }
 

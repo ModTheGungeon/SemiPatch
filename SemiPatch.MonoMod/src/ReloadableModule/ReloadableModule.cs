@@ -88,26 +88,13 @@ namespace SemiPatch {
         private ModuleDefinition _MMSGModule;
         private ModuleDefinition _RDBSModule;
         private PatchData _PatchData;
-        private IAssemblyResolver _AssemblyResolver = new DefaultAssemblyResolver();
-
-        private Dictionary<string, ModuleDefinition> _ModuleMap;
-
-        public Dictionary<string, ModuleDefinition> ModuleMap {
-            get {
-                if (_ModuleMap != null) return _ModuleMap;
-                _ModuleMap = new Dictionary<string, ModuleDefinition>();
-                _ModuleMap.Add(PatchModule.Assembly.FullName, PatchModule);
-                if (_TargetModule != null) {
-                    _ModuleMap.Add(_TargetModule.Assembly.FullName, _TargetModule);
-                }
-                return _ModuleMap;
-            }
-        }
+        private OverridableAssemblyResolver _AssemblyResolver;
 
         public ModuleDefinition PatchModule {
             get {
                 if (_PatchModule != null) return _PatchModule;
                 if (PatchAssemblyStream == null) return null;
+                _AssemblyResolver.AddOverride(_PatchModule.Assembly);
                 return _PatchModule = ModuleDefinition.ReadModule(PatchAssemblyStream, new ReaderParameters {
                     AssemblyResolver = _AssemblyResolver
                 });
@@ -147,8 +134,9 @@ namespace SemiPatch {
             get {
                 if (_PatchData != null) return _PatchData;
                 if (PatchDataStream == null) return null;
+                _AssemblyResolver.AddOverride(PatchModule.Assembly);
                 using (var reader = new BinaryReader(PatchDataStream)) {
-                    return _PatchData = PatchData.Deserialize(reader, ModuleMap);
+                    return _PatchData = PatchData.Deserialize(reader, _AssemblyResolver);
                 }
             }
             set {
@@ -176,7 +164,7 @@ namespace SemiPatch {
             RDBSAssemblyStream = rdbs_asm_stream;
             PatchDataStream = patch_data_stream;
 
-            _AssemblyResolver = asm_resolver ?? new DefaultAssemblyResolver();
+            _AssemblyResolver = new OverridableAssemblyResolver(asm_resolver ?? new DefaultAssemblyResolver());
         }
 
         public ReloadableModule(
@@ -196,7 +184,7 @@ namespace SemiPatch {
             _RDBSModule = rdbs_module;
             _PatchData = patch_data;
 
-            _AssemblyResolver = asm_resolver ?? new DefaultAssemblyResolver();
+            _AssemblyResolver = new OverridableAssemblyResolver(asm_resolver ?? new DefaultAssemblyResolver());
         }
 
         public ReloadableModule(
@@ -225,7 +213,7 @@ namespace SemiPatch {
             _RDBSModule = rdbs_module;
             _PatchData = patch_data;
 
-            _AssemblyResolver = asm_resolver ?? new DefaultAssemblyResolver();
+            _AssemblyResolver = new OverridableAssemblyResolver(asm_resolver ?? new DefaultAssemblyResolver());
         }
 
         public static AssemblyDiff Compare(ReloadableModule a, ReloadableModule b) {
